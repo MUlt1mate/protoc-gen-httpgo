@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package example;
+option go_package = "github.com/MUlt1mate/protoc-gen-httpgo;proto";
+
+import "google/api/annotations.proto";
+
+service ServiceName {
+  rpc RPCName (InputMsgName) returns (OutputMsgName) {
+    option (google.api.http) = {
+      post: "/v1/test/{stringArgument}/{int64Argument}"
+    };
+  }
+}
+
+message InputMsgName {
+  int64 int64Argument = 1;
+  string stringArgument = 2;
+}
+
+message OutputMsgName {
+  string stringValue = 1;
+  int64 intValue = 2;
+}
