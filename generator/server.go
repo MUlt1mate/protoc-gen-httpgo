@@ -1,7 +1,7 @@
 package generator
 
 import (
-	"strings"
+	"fmt"
 
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -98,8 +98,10 @@ func genBuildRequestMethod(g *protogen.GeneratedFile, method *protogen.Method) e
 	}
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(params.pattern, -1) {
 		for _, f := range method.Input.Fields {
-			if f.GoName == strings.Title(match[1]) {
-				genBuildRequestArgument(g, match[1], f.Desc.Kind())
+			if f.GoName == capitalizeFirstLetter(match[1]) {
+				if err = genBuildRequestArgument(g, match[1], f.Desc.Kind()); err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -110,20 +112,24 @@ func genBuildRequestMethod(g *protogen.GeneratedFile, method *protogen.Method) e
 }
 
 // genBuildRequestArgument generates code for request argument
-func genBuildRequestArgument(g *protogen.GeneratedFile, parameterName string, parameterKind protoreflect.Kind) {
+func genBuildRequestArgument(g *protogen.GeneratedFile, parameterName string, parameterKind protoreflect.Kind) error {
 	g.P(parameterName, "Str, ok := ctx.UserValue(\"", parameterName, "\").(string)")
 	g.P("	if !ok {")
 	g.P("		return nil, ", errorsPackage.Ident("New"), "(\"incorrect type for parameter ", parameterName, "\")")
 	g.P("	}")
 	switch parameterKind {
 	case protoreflect.Int64Kind:
-		g.P("	arg.", strings.Title(parameterName), ", err = ", strconvPackage.Ident("ParseInt"), "(", parameterName, "Str, 10, 64)")
+		g.P("	arg.", capitalizeFirstLetter(parameterName), ", err = ", strconvPackage.Ident("ParseInt"), "(", parameterName, "Str, 10, 64)")
 		g.P("	if err != nil {")
 		g.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", parameterName, ": %w\", err)")
 		g.P("	}")
+		// todo other int types
+	case protoreflect.StringKind:
+		g.P("	arg.", capitalizeFirstLetter(parameterName), " = ", parameterName, "Str")
 	default:
-		g.P("	arg.", strings.Title(parameterName), " = ", parameterName, "Str")
+		return fmt.Errorf("unsupported type %s for path variable", parameterKind.String())
 	}
+	return nil
 }
 
 // genResponseHandler generates common handler for any response
