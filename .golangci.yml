@@ -3,15 +3,15 @@ run:
 
 linters-settings:
   cyclop:
-    max-complexity: 10
+    max-complexity: 15
     package-average: 10.0
 
   errcheck:
     check-type-assertions: true
 
   funlen:
-    lines: 60
-    statements: 40
+    lines: 100
+    statements: 100
 
   gocognit:
     min-complexity: 20

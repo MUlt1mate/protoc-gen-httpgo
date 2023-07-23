@@ -99,7 +99,11 @@ func genBuildRequestMethod(g *protogen.GeneratedFile, method *protogen.Method) e
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(params.pattern, -1) {
 		for _, f := range method.Input.Fields {
 			if f.GoName == capitalizeFirstLetter(match[1]) {
-				if err = genBuildRequestArgument(g, match[1], f.Desc.Kind()); err != nil {
+				var enumName string
+				if f.Desc.Kind() == protoreflect.EnumKind {
+					enumName = f.Enum.GoIdent.GoName
+				}
+				if err = genBuildRequestArgument(g, match[1], f.Desc.Kind(), enumName); err != nil {
 					return err
 				}
 			}
@@ -112,24 +116,87 @@ func genBuildRequestMethod(g *protogen.GeneratedFile, method *protogen.Method) e
 }
 
 // genBuildRequestArgument generates code for request argument
-func genBuildRequestArgument(g *protogen.GeneratedFile, parameterName string, parameterKind protoreflect.Kind) error {
+func genBuildRequestArgument(
+	g *protogen.GeneratedFile,
+	parameterName string,
+	parameterKind protoreflect.Kind,
+	parameterEnumName string,
+) error {
 	g.P(parameterName, "Str, ok := ctx.UserValue(\"", parameterName, "\").(string)")
 	g.P("	if !ok {")
 	g.P("		return nil, ", errorsPackage.Ident("New"), "(\"incorrect type for parameter ", parameterName, "\")")
 	g.P("	}")
 	switch parameterKind {
-	case protoreflect.Int64Kind:
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind:
+		g.P("	", capitalizeFirstLetter(parameterName), ", err := ", strconvPackage.Ident("ParseInt"), "(", parameterName, "Str, 10, 32)")
+		g.P("	if err != nil {")
+		g.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", parameterName, ": %w\", err)")
+		g.P("	}")
+		g.P("	arg.", capitalizeFirstLetter(parameterName), " = ", getGolangTypeName(parameterKind), "(", capitalizeFirstLetter(parameterName), ")")
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
 		g.P("	arg.", capitalizeFirstLetter(parameterName), ", err = ", strconvPackage.Ident("ParseInt"), "(", parameterName, "Str, 10, 64)")
 		g.P("	if err != nil {")
 		g.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", parameterName, ": %w\", err)")
 		g.P("	}")
-		// todo other int types
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		g.P("	", capitalizeFirstLetter(parameterName), ", err := ", strconvPackage.Ident("ParseInt"), "(", parameterName, "Str, 10, 64)")
+		g.P("	if err != nil {")
+		g.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", parameterName, ": %w\", err)")
+		g.P("	}")
+		g.P("	arg.", capitalizeFirstLetter(parameterName), " = ", getGolangTypeName(parameterKind), "(", capitalizeFirstLetter(parameterName), ")")
+	case protoreflect.DoubleKind:
+		g.P("	arg.", capitalizeFirstLetter(parameterName), ", err = ", strconvPackage.Ident("ParseFloat"), "(", parameterName, "Str, 64)")
+		g.P("	if err != nil {")
+		g.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", parameterName, ": %w\", err)")
+		g.P("	}")
+	case protoreflect.FloatKind:
+		g.P("	", capitalizeFirstLetter(parameterName), ", err := ", strconvPackage.Ident("ParseFloat"), "(", parameterName, "Str, 32)")
+		g.P("	if err != nil {")
+		g.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", parameterName, ": %w\", err)")
+		g.P("	}")
+		g.P("	arg.", capitalizeFirstLetter(parameterName), " = float32(", capitalizeFirstLetter(parameterName), ")")
 	case protoreflect.StringKind:
 		g.P("	arg.", capitalizeFirstLetter(parameterName), " = ", parameterName, "Str")
+	case protoreflect.BytesKind:
+		g.P("	arg.", capitalizeFirstLetter(parameterName), " = []byte(", parameterName, "Str)")
+	case protoreflect.BoolKind:
+		g.P(" switch ", capitalizeFirstLetter(parameterName), "Str {")
+		g.P("     case \"true\", \"t\", \"1\":")
+		g.P("         arg.BoolValue = true")
+		g.P("     case \"false\", \"f\", \"0\":")
+		g.P("         arg.BoolValue = false")
+		g.P("     default:")
+		g.P("         return nil, ", fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", ", capitalizeFirstLetter(parameterName), "Str)")
+		g.P(" }")
+	case protoreflect.EnumKind:
+		g.P("	if ", parameterEnumName, "Value, ok := ", parameterEnumName, "_value[", stringsPackage.Ident("ToUpper"), "(", capitalizeFirstLetter(parameterName), "Str)]; ok {")
+		g.P("		arg.", capitalizeFirstLetter(parameterName), " = ", parameterEnumName, "(", parameterEnumName, "Value)")
+		g.P("	} else {")
+		g.P("		if intOptionValue, err := ", strconvPackage.Ident("ParseInt"), "(", capitalizeFirstLetter(parameterName), "Str, 10, 32); err == nil {")
+		g.P("			if _, ok := ", parameterEnumName, "_name[int32(intOptionValue)]; ok {")
+		g.P("				arg.", capitalizeFirstLetter(parameterName), " = ", parameterEnumName, "(intOptionValue)")
+		g.P("			}")
+		g.P("		}")
+		g.P("	}")
 	default:
 		return fmt.Errorf("unsupported type %s for path variable", parameterKind.String())
 	}
+	g.P("")
 	return nil
+}
+
+// getGolangTypeName we have to substitute some of the type names for go compiler
+func getGolangTypeName(parameterKind protoreflect.Kind) string {
+	switch parameterKind {
+	case protoreflect.Fixed64Kind:
+		return protoreflect.Uint64Kind.String()
+	case protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
+		return protoreflect.Int32Kind.String()
+	case protoreflect.Fixed32Kind:
+		return protoreflect.Uint32Kind.String()
+	}
+
+	return parameterKind.String()
 }
 
 // genResponseHandler generates common handler for any response

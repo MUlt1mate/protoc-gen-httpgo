@@ -7,7 +7,7 @@ protoc plugin that generates HTTP server and client
 - server and client generation
 - native go json Marshal/Unmarshal
 - uses google.api.http for path
-- supports string and integer path parameters
+- supports many types in path parameters
 
 ## TODO
 

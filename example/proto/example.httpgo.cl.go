@@ -38,3 +38,17 @@ func (p *ServiceNameClient) RPCName(ctx context.Context, request *InputMsgName) 
 	err = json.Unmarshal(reqResp.Body(), resp)
 	return resp, err
 }
+func (p *ServiceNameClient) AllTypesTest(ctx context.Context, request *AllTypesMsg) (resp *AllTypesMsg, err error) {
+	body, _ := json.Marshal(request)
+	req := &fasthttp.Request{}
+	req.SetBody(body)
+	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%t/%s/%d/%d/%d/%d/%d/%d/%d/%d/%.0f/%d/%d/%.0f/%s/%s", request.BoolValue, request.EnumValue, request.Int32Value, request.Sint32Value, request.Uint32Value, request.Int64Value, request.Sint64Value, request.Uint64Value, request.Sfixed32Value, request.Fixed32Value, request.FloatValue, request.Sfixed64Value, request.Fixed64Value, request.DoubleValue, request.StringValue, request.BytesValue))
+	req.Header.SetMethod("POST")
+	reqResp := &fasthttp.Response{}
+	if err = p.cl.Do(req, reqResp); err != nil {
+		return nil, err
+	}
+	resp = &AllTypesMsg{}
+	err = json.Unmarshal(reqResp.Body(), resp)
+	return resp, err
+}

@@ -12,10 +12,12 @@ import (
 	fasthttp "github.com/valyala/fasthttp"
 	log "log"
 	strconv "strconv"
+	strings "strings"
 )
 
 type ServiceNameHTTPService interface {
 	RPCName(context.Context, *InputMsgName) (*OutputMsgName, error)
+	AllTypesTest(context.Context, *AllTypesMsg) (*AllTypesMsg, error)
 }
 
 func RegisterServiceNameHTTPServer(ctx context.Context, r *router.Router, h ServiceNameHTTPService) error {
@@ -30,6 +32,17 @@ func RegisterServiceNameHTTPServer(ctx context.Context, r *router.Router, h Serv
 	})
 
 	return nil
+	r.POST("/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}", func(ctx *fasthttp.RequestCtx) {
+		input, err := buildAllTypesMsg(ctx)
+		if err != nil {
+			responseHandler(ctx, nil, err)
+			return
+		}
+		response, err := h.AllTypesTest(ctx, input)
+		responseHandler(ctx, response, err)
+	})
+
+	return nil
 }
 func buildInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
 	arg = &InputMsgName{}
@@ -39,6 +52,7 @@ func buildInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) 
 		return nil, errors.New("incorrect type for parameter stringArgument")
 	}
 	arg.StringArgument = stringArgumentStr
+
 	int64ArgumentStr, ok := ctx.UserValue("int64Argument").(string)
 	if !ok {
 		return nil, errors.New("incorrect type for parameter int64Argument")
@@ -47,6 +61,167 @@ func buildInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) 
 	if err != nil {
 		return nil, fmt.Errorf("conversion failed for parameter int64Argument: %w", err)
 	}
+
+	return arg, nil
+}
+func buildAllTypesMsg(ctx *fasthttp.RequestCtx) (arg *AllTypesMsg, err error) {
+	arg = &AllTypesMsg{}
+	json.Unmarshal(ctx.PostBody(), arg)
+	BoolValueStr, ok := ctx.UserValue("BoolValue").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter BoolValue")
+	}
+	switch BoolValueStr {
+	case "true", "t", "1":
+		arg.BoolValue = true
+	case "false", "f", "0":
+		arg.BoolValue = false
+	default:
+		return nil, fmt.Errorf("unknown bool string value %s", BoolValueStr)
+	}
+
+	EnumValueStr, ok := ctx.UserValue("EnumValue").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter EnumValue")
+	}
+	if OptionsValue, ok := Options_value[strings.ToUpper(EnumValueStr)]; ok {
+		arg.EnumValue = Options(OptionsValue)
+	} else {
+		if intOptionValue, err := strconv.ParseInt(EnumValueStr, 10, 32); err == nil {
+			if _, ok := Options_name[int32(intOptionValue)]; ok {
+				arg.EnumValue = Options(intOptionValue)
+			}
+		}
+	}
+
+	Int32ValueStr, ok := ctx.UserValue("Int32Value").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter Int32Value")
+	}
+	Int32Value, err := strconv.ParseInt(Int32ValueStr, 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", err)
+	}
+	arg.Int32Value = int32(Int32Value)
+
+	Sint32ValueStr, ok := ctx.UserValue("Sint32Value").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter Sint32Value")
+	}
+	Sint32Value, err := strconv.ParseInt(Sint32ValueStr, 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Sint32Value: %w", err)
+	}
+	arg.Sint32Value = int32(Sint32Value)
+
+	Uint32ValueStr, ok := ctx.UserValue("Uint32Value").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter Uint32Value")
+	}
+	Uint32Value, err := strconv.ParseInt(Uint32ValueStr, 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Uint32Value: %w", err)
+	}
+	arg.Uint32Value = uint32(Uint32Value)
+
+	Int64ValueStr, ok := ctx.UserValue("Int64Value").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter Int64Value")
+	}
+	arg.Int64Value, err = strconv.ParseInt(Int64ValueStr, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
+	}
+
+	Sint64ValueStr, ok := ctx.UserValue("Sint64Value").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter Sint64Value")
+	}
+	arg.Sint64Value, err = strconv.ParseInt(Sint64ValueStr, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", err)
+	}
+
+	Uint64ValueStr, ok := ctx.UserValue("Uint64Value").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter Uint64Value")
+	}
+	Uint64Value, err := strconv.ParseInt(Uint64ValueStr, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
+	}
+	arg.Uint64Value = uint64(Uint64Value)
+
+	Sfixed32ValueStr, ok := ctx.UserValue("Sfixed32Value").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter Sfixed32Value")
+	}
+	Sfixed32Value, err := strconv.ParseInt(Sfixed32ValueStr, 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Sfixed32Value: %w", err)
+	}
+	arg.Sfixed32Value = int32(Sfixed32Value)
+
+	Fixed32ValueStr, ok := ctx.UserValue("Fixed32Value").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter Fixed32Value")
+	}
+	Fixed32Value, err := strconv.ParseInt(Fixed32ValueStr, 10, 32)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Fixed32Value: %w", err)
+	}
+	arg.Fixed32Value = uint32(Fixed32Value)
+
+	FloatValueStr, ok := ctx.UserValue("FloatValue").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter FloatValue")
+	}
+	FloatValue, err := strconv.ParseFloat(FloatValueStr, 32)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", err)
+	}
+	arg.FloatValue = float32(FloatValue)
+
+	Sfixed64ValueStr, ok := ctx.UserValue("Sfixed64Value").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter Sfixed64Value")
+	}
+	arg.Sfixed64Value, err = strconv.ParseInt(Sfixed64ValueStr, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", err)
+	}
+
+	Fixed64ValueStr, ok := ctx.UserValue("Fixed64Value").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter Fixed64Value")
+	}
+	Fixed64Value, err := strconv.ParseInt(Fixed64ValueStr, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Fixed64Value: %w", err)
+	}
+	arg.Fixed64Value = uint64(Fixed64Value)
+
+	DoubleValueStr, ok := ctx.UserValue("DoubleValue").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter DoubleValue")
+	}
+	arg.DoubleValue, err = strconv.ParseFloat(DoubleValueStr, 64)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
+	}
+
+	StringValueStr, ok := ctx.UserValue("StringValue").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter StringValue")
+	}
+	arg.StringValue = StringValueStr
+
+	BytesValueStr, ok := ctx.UserValue("BytesValue").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter BytesValue")
+	}
+	arg.BytesValue = []byte(BytesValueStr)
+
 	return arg, nil
 }
 
