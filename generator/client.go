@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -55,11 +56,16 @@ func genClientMethod(
 	srvName string,
 	method *protogen.Method,
 ) (err error) {
-	var params methodParams
+	var (
+		params                methodParams
+		requestURI, paramsURI string
+	)
 	if params, err = getRuleMethodAndURI(method); err != nil {
 		return err
 	}
-	requestURI, paramsURI := getRequestURIAndParams(params.pattern, method)
+	if requestURI, paramsURI, err = getRequestURIAndParams(params.pattern, method); err != nil {
+		return err
+	}
 	g.P("func (p * ", srvName, "Client) ", method.GoName, "(ctx ", contextPackage.Ident("Context"), ", request *", method.Input.GoIdent, ") (resp *", method.Output.GoIdent, ", err error) {")
 	g.P("    body, _ := ", jsonPackage.Ident("Marshal"), "(request)")
 	g.P("    req := &fasthttp.Request{}")
@@ -78,24 +84,55 @@ func genClientMethod(
 }
 
 // getRequestURIAndParams returns the request URI and parameters for the HTTP client method
-func getRequestURIAndParams(pattern string, method *protogen.Method) (requestURI, paramsURI string) {
+func getRequestURIAndParams(pattern string, method *protogen.Method) (requestURI, paramsURI string, err error) {
 	requestURI = pattern
+	var placeholder string
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(pattern, -1) {
 		for _, f := range method.Input.Fields {
-			if f.GoName == strings.Title(match[1]) {
-				requestURI = strings.Replace(requestURI, match[0], getVariablePlaceholder(f.Desc.Kind()), -1)
-				paramsURI += ", request." + strings.Title(match[1])
+			if f.GoName == capitalizeFirstLetter(match[1]) {
+				if placeholder, err = getVariablePlaceholder(f.Desc.Kind()); err != nil {
+					return "", "", err
+				}
+				requestURI = strings.ReplaceAll(requestURI, match[0], placeholder)
+				paramsURI += ", request." + capitalizeFirstLetter(match[1])
 			}
 		}
 	}
-	return requestURI, paramsURI
+	return requestURI, paramsURI, nil
 }
 
-func getVariablePlaceholder(parameterKind protoreflect.Kind) string {
+func getVariablePlaceholder(parameterKind protoreflect.Kind) (string, error) {
 	switch parameterKind {
 	case protoreflect.StringKind:
-		return "%s"
+		return "%s", nil
+	case protoreflect.Int32Kind,
+		protoreflect.Sint32Kind,
+		protoreflect.Uint32Kind,
+		protoreflect.Int64Kind,
+		protoreflect.Sint64Kind,
+		protoreflect.Uint64Kind:
+		return "%d", nil
+
+	case protoreflect.BoolKind,
+		protoreflect.EnumKind,
+		protoreflect.Sfixed32Kind,
+		protoreflect.Fixed32Kind,
+		protoreflect.FloatKind,
+		protoreflect.Sfixed64Kind,
+		protoreflect.Fixed64Kind,
+		protoreflect.DoubleKind,
+		protoreflect.BytesKind,
+		protoreflect.MessageKind,
+		protoreflect.GroupKind:
+		fallthrough
 	default:
-		return "%d"
+		return "", fmt.Errorf("unsupported type %s for path variable", parameterKind.String())
 	}
+}
+
+func capitalizeFirstLetter(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
