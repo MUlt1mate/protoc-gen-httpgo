@@ -9,6 +9,7 @@ var (
 	jsonPackage    = protogen.GoImportPath("encoding/json")
 	fmtPackage     = protogen.GoImportPath("fmt")
 	strconvPackage = protogen.GoImportPath("strconv")
+	stringsPackage = protogen.GoImportPath("strings")
 
 	fasthttpPackage = protogen.GoImportPath("github.com/valyala/fasthttp")
 	routerPackage   = protogen.GoImportPath("github.com/fasthttp/router")

@@ -103,28 +103,27 @@ func getRequestURIAndParams(pattern string, method *protogen.Method) (requestURI
 
 func getVariablePlaceholder(parameterKind protoreflect.Kind) (string, error) {
 	switch parameterKind {
-	case protoreflect.StringKind:
+	case protoreflect.StringKind,
+		protoreflect.EnumKind,
+		protoreflect.BytesKind:
 		return "%s", nil
 	case protoreflect.Int32Kind,
 		protoreflect.Sint32Kind,
 		protoreflect.Uint32Kind,
 		protoreflect.Int64Kind,
 		protoreflect.Sint64Kind,
-		protoreflect.Uint64Kind:
-		return "%d", nil
-
-	case protoreflect.BoolKind,
-		protoreflect.EnumKind,
+		protoreflect.Uint64Kind,
 		protoreflect.Sfixed32Kind,
 		protoreflect.Fixed32Kind,
-		protoreflect.FloatKind,
 		protoreflect.Sfixed64Kind,
-		protoreflect.Fixed64Kind,
-		protoreflect.DoubleKind,
-		protoreflect.BytesKind,
-		protoreflect.MessageKind,
-		protoreflect.GroupKind:
-		fallthrough
+		protoreflect.Fixed64Kind:
+		return "%d", nil
+	case
+		protoreflect.FloatKind,
+		protoreflect.DoubleKind:
+		return "%.0f", nil
+	case protoreflect.BoolKind:
+		return "%t", nil
 	default:
 		return "", fmt.Errorf("unsupported type %s for path variable", parameterKind.String())
 	}

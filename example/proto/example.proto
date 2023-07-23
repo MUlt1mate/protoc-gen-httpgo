@@ -11,12 +11,42 @@ service ServiceName {
       post: "/v1/test/{stringArgument}/{int64Argument}"
     };
   }
+  rpc AllTypesTest (AllTypesMsg) returns (AllTypesMsg) {
+    option (google.api.http) = {
+      post: "/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}"
+    };
+  }
 }
 
 message InputMsgName {
   int64 int64Argument = 1;
   string stringArgument = 2;
 }
+
+message AllTypesMsg {
+  bool BoolValue = 1;
+  options EnumValue = 2;
+  int32 Int32Value = 3;
+  sint32 Sint32Value = 4;
+  uint32 Uint32Value = 5;
+  int64 Int64Value = 6;
+  sint64 Sint64Value = 7;
+  uint64 Uint64Value = 8;
+  sfixed32 Sfixed32Value = 9;
+  fixed32 Fixed32Value = 10;
+  float FloatValue = 11;
+  sfixed64 Sfixed64Value = 12;
+  fixed64 Fixed64Value = 13;
+  double DoubleValue = 14;
+  string StringValue = 15;
+  bytes BytesValue = 16;
+  //  InputMsgName MessageValue = 17; // not supported
+}
+
+enum options {
+  FIRST = 0;
+  SECOND = 1;
+} ;
 
 message OutputMsgName {
   string stringValue = 1;
