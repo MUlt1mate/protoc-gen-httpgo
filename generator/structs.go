@@ -9,14 +9,18 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
+type Generator struct {
+	methods []methodParams
+}
+
 type methodParams struct {
-	serverMethod string
-	pattern      string
+	httpMethodName string
+	pathPattern    string
 }
 
 func getRuleMethodAndURI(protoMethod *protogen.Method) (methodParams, error) {
-	options, ok := protoMethod.Desc.Options().(*descriptorpb.MethodOptions)
 	m := methodParams{}
+	options, ok := protoMethod.Desc.Options().(*descriptorpb.MethodOptions)
 	if !ok {
 		return m, errors.New("empty option")
 	}
@@ -29,28 +33,28 @@ func getRuleMethodAndURI(protoMethod *protogen.Method) (methodParams, error) {
 	switch httpRule.GetPattern().(type) {
 	case *annotations.HttpRule_Get:
 		m = methodParams{
-			serverMethod: "GET",
-			pattern:      httpRule.GetGet(),
+			httpMethodName: "GET",
+			pathPattern:    httpRule.GetGet(),
 		}
 	case *annotations.HttpRule_Put:
 		m = methodParams{
-			serverMethod: "PUT",
-			pattern:      httpRule.GetPut(),
+			httpMethodName: "PUT",
+			pathPattern:    httpRule.GetPut(),
 		}
 	case *annotations.HttpRule_Post:
 		m = methodParams{
-			serverMethod: "POST",
-			pattern:      httpRule.GetPost(),
+			httpMethodName: "POST",
+			pathPattern:    httpRule.GetPost(),
 		}
 	case *annotations.HttpRule_Delete:
 		m = methodParams{
-			serverMethod: "DELETE",
-			pattern:      httpRule.GetDelete(),
+			httpMethodName: "DELETE",
+			pathPattern:    httpRule.GetDelete(),
 		}
 	case *annotations.HttpRule_Patch:
 		m = methodParams{
-			serverMethod: "PATCH",
-			pattern:      httpRule.GetPatch(),
+			httpMethodName: "PATCH",
+			pathPattern:    httpRule.GetPatch(),
 		}
 	}
 	return m, nil

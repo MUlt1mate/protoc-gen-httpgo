@@ -31,7 +31,6 @@ func RegisterServiceNameHTTPServer(ctx context.Context, r *router.Router, h Serv
 		responseHandler(ctx, response, err)
 	})
 
-	return nil
 	r.POST("/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}", func(ctx *fasthttp.RequestCtx) {
 		input, err := buildAllTypesMsg(ctx)
 		if err != nil {

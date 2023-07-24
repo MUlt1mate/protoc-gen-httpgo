@@ -12,10 +12,11 @@ func main() {
 			if !f.Generate {
 				continue
 			}
-			if err = generator.GenerateServers(gen, f); err != nil {
+			g := &generator.Generator{}
+			if err = g.GenerateServers(gen, f); err != nil {
 				return err
 			}
-			if err = generator.GenerateClients(gen, f); err != nil {
+			if err = g.GenerateClients(gen, f); err != nil {
 				return err
 			}
 		}
