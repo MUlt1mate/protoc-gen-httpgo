@@ -53,19 +53,19 @@ func NewGenerator(file *protogen.File) Generator {
 }
 
 type methodParams struct {
-	name           string
+	fields         map[string]field
 	inputMsgName   protogen.GoIdent
 	outputMsgName  protogen.GoIdent
+	name           string
 	httpMethodName string
 	uri            string
-	fields         map[string]field
 }
 
 type field struct {
 	goName    string
 	protoName string
-	kind      protoreflect.Kind
 	enumName  string
+	kind      protoreflect.Kind
 }
 
 // getGolangTypeName we have to substitute some of the type names for go compiler
