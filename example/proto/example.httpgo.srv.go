@@ -31,7 +31,6 @@ func RegisterServiceNameHTTPServer(ctx context.Context, r *router.Router, h Serv
 		responseHandler(ctx, response, err)
 	})
 
-	return nil
 	r.POST("/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}", func(ctx *fasthttp.RequestCtx) {
 		input, err := buildAllTypesMsg(ctx)
 		if err != nil {
@@ -47,19 +46,19 @@ func RegisterServiceNameHTTPServer(ctx context.Context, r *router.Router, h Serv
 func buildInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
 	arg = &InputMsgName{}
 	json.Unmarshal(ctx.PostBody(), arg)
-	stringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
+	StringArgumentStr, ok := ctx.UserValue("StringArgument").(string)
 	if !ok {
-		return nil, errors.New("incorrect type for parameter stringArgument")
+		return nil, errors.New("incorrect type for parameter StringArgument")
 	}
-	arg.StringArgument = stringArgumentStr
+	arg.StringArgument = StringArgumentStr
 
-	int64ArgumentStr, ok := ctx.UserValue("int64Argument").(string)
+	Int64ArgumentStr, ok := ctx.UserValue("Int64Argument").(string)
 	if !ok {
-		return nil, errors.New("incorrect type for parameter int64Argument")
+		return nil, errors.New("incorrect type for parameter Int64Argument")
 	}
-	arg.Int64Argument, err = strconv.ParseInt(int64ArgumentStr, 10, 64)
+	arg.Int64Argument, err = strconv.ParseInt(Int64ArgumentStr, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter int64Argument: %w", err)
+		return nil, fmt.Errorf("conversion failed for parameter Int64Argument: %w", err)
 	}
 
 	return arg, nil
