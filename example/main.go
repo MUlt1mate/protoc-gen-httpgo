@@ -20,7 +20,7 @@ func main() {
 	client, _ := proto.GetServiceNameClient(context.TODO(), &fasthttp.Client{}, "http://localhost:8080")
 	resp, err := client.RPCName(context.Background(), &proto.InputMsgName{Int64Argument: 999, StringArgument: "rand"})
 	log.Println(resp, err)
-	allTypesresp, err := client.AllTypesTest(context.Background(), &proto.AllTypesMsg{
+	allTypesResp, err := client.AllTypesTest(context.Background(), &proto.AllTypesMsg{
 		BoolValue:     true,
 		EnumValue:     proto.Options_SECOND,
 		Int32Value:    1,
@@ -38,5 +38,5 @@ func main() {
 		StringValue:   "13",
 		BytesValue:    []byte("14"),
 	})
-	log.Println(allTypesresp, err)
+	log.Println(allTypesResp, err)
 }

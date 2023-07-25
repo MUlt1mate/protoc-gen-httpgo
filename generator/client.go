@@ -1,12 +1,10 @@
 package generator
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
 	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 var uriParametersRegexp = regexp.MustCompile(`(?mU){(.*)}`)
@@ -18,8 +16,8 @@ func (g *Generator) GenerateClients(gen *protogen.Plugin, file *protogen.File) (
 	gf.P("// source: ", file.Desc.Path())
 	gf.P()
 	gf.P("package ", file.GoPackageName)
-	for _, srv := range file.Services {
-		if err = g.genServiceClient(gf, srv); err != nil {
+	for srvName := range g.services {
+		if err = g.genServiceClient(gf, srvName); err != nil {
 			return err
 		}
 	}
@@ -27,23 +25,23 @@ func (g *Generator) GenerateClients(gen *protogen.Plugin, file *protogen.File) (
 }
 
 // genServiceClient generates HTTP client for service
-func (g *Generator) genServiceClient(gf *protogen.GeneratedFile, srv *protogen.Service) (err error) {
-	gf.P("var _  ", srv.GoName, "HTTPService = & ", srv.GoName, "Client{}")
+func (g *Generator) genServiceClient(gf *protogen.GeneratedFile, srvName string) (err error) {
+	gf.P("var _  ", srvName, "HTTPService = & ", srvName, "Client{}")
 	gf.P("")
-	gf.P("type  ", srv.GoName, "Client struct {")
+	gf.P("type  ", srvName, "Client struct {")
 	gf.P("	cl   *", fasthttpPackage.Ident("Client"), "")
 	gf.P("	host string")
 	gf.P("}")
 	gf.P("")
-	gf.P("func Get", srv.GoName, "Client(_ ", contextPackage.Ident("Context"), ", cl *", fasthttpPackage.Ident("Client"), ", host string) (* ", srv.GoName, "Client, error) {")
-	gf.P("	return & ", srv.GoName, "Client{")
+	gf.P("func Get", srvName, "Client(_ ", contextPackage.Ident("Context"), ", cl *", fasthttpPackage.Ident("Client"), ", host string) (* ", srvName, "Client, error) {")
+	gf.P("	return & ", srvName, "Client{")
 	gf.P("		cl:   cl,")
 	gf.P("		host: host,")
 	gf.P("	}, nil")
 	gf.P("}")
 	gf.P("")
-	for _, method := range srv.Methods {
-		if err = g.genClientMethod(gf, srv.GoName, method); err != nil {
+	for _, method := range g.services[srvName] {
+		if err = g.genClientMethod(gf, srvName, method); err != nil {
 			return err
 		}
 	}
@@ -54,29 +52,25 @@ func (g *Generator) genServiceClient(gf *protogen.GeneratedFile, srv *protogen.S
 func (g *Generator) genClientMethod(
 	gf *protogen.GeneratedFile,
 	srvName string,
-	method *protogen.Method,
+	method methodParams,
 ) (err error) {
 	var (
-		params                methodParams
 		requestURI, paramsURI string
 	)
-	if params, err = getRuleMethodAndURI(method); err != nil {
+	if requestURI, paramsURI, err = g.getRequestURIAndParams(method); err != nil {
 		return err
 	}
-	if requestURI, paramsURI, err = g.getRequestURIAndParams(params.pathPattern, method); err != nil {
-		return err
-	}
-	gf.P("func (p * ", srvName, "Client) ", method.GoName, "(ctx ", contextPackage.Ident("Context"), ", request *", method.Input.GoIdent, ") (resp *", method.Output.GoIdent, ", err error) {")
+	gf.P("func (p * ", srvName, "Client) ", method.name, "(ctx ", contextPackage.Ident("Context"), ", request *", method.inputMsgName, ") (resp *", method.outputMsgName, ", err error) {")
 	gf.P("    body, _ := ", jsonPackage.Ident("Marshal"), "(request)")
 	gf.P("    req := &fasthttp.Request{}")
 	gf.P("    req.SetBody(body)")
 	gf.P("    req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"\""+paramsURI+"))")
-	gf.P("    req.Header.SetMethod(\"", params.httpMethodName, "\")")
+	gf.P("    req.Header.SetMethod(\"", method.httpMethodName, "\")")
 	gf.P("    reqResp := &fasthttp.Response{}")
 	gf.P("    if err = p.cl.Do(req, reqResp); err != nil {")
 	gf.P("        return nil, err")
 	gf.P("    }")
-	gf.P("    resp = &", method.Output.GoIdent, "{}")
+	gf.P("    resp = &", method.outputMsgName, "{}")
 	gf.P("    err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), resp)")
 	gf.P("    return resp, err")
 	gf.P("}")
@@ -84,54 +78,17 @@ func (g *Generator) genClientMethod(
 }
 
 // getRequestURIAndParams returns the request URI and parameters for the HTTP client method
-func (g *Generator) getRequestURIAndParams(pattern string, method *protogen.Method) (requestURI, paramsURI string, err error) {
-	requestURI = pattern
+func (g *Generator) getRequestURIAndParams(method methodParams) (requestURI, paramsURI string, err error) {
+	requestURI = method.uri
 	var placeholder string
-	for _, match := range uriParametersRegexp.FindAllStringSubmatch(pattern, -1) {
-		for _, f := range method.Input.Fields {
-			if f.GoName == capitalizeFirstLetter(match[1]) {
-				if placeholder, err = getVariablePlaceholder(f.Desc.Kind()); err != nil {
-					return "", "", err
-				}
-				requestURI = strings.ReplaceAll(requestURI, match[0], placeholder)
-				paramsURI += ", request." + capitalizeFirstLetter(match[1])
+	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
+		if f, ok := method.fields[match[1]]; ok {
+			if placeholder, err = f.getVariablePlaceholder(); err != nil {
+				return "", "", err
 			}
+			requestURI = strings.ReplaceAll(requestURI, match[0], placeholder)
+			paramsURI += ", request." + f.goName
 		}
 	}
 	return requestURI, paramsURI, nil
-}
-
-func getVariablePlaceholder(parameterKind protoreflect.Kind) (string, error) {
-	switch parameterKind {
-	case protoreflect.StringKind,
-		protoreflect.EnumKind,
-		protoreflect.BytesKind:
-		return "%s", nil
-	case protoreflect.Int32Kind,
-		protoreflect.Sint32Kind,
-		protoreflect.Uint32Kind,
-		protoreflect.Int64Kind,
-		protoreflect.Sint64Kind,
-		protoreflect.Uint64Kind,
-		protoreflect.Sfixed32Kind,
-		protoreflect.Fixed32Kind,
-		protoreflect.Sfixed64Kind,
-		protoreflect.Fixed64Kind:
-		return "%d", nil
-	case
-		protoreflect.FloatKind,
-		protoreflect.DoubleKind:
-		return "%.0f", nil
-	case protoreflect.BoolKind:
-		return "%t", nil
-	default:
-		return "", fmt.Errorf("unsupported type %s for path variable", parameterKind.String())
-	}
-}
-
-func capitalizeFirstLetter(s string) string {
-	if len(s) == 0 {
-		return s
-	}
-	return strings.ToUpper(s[:1]) + s[1:]
 }

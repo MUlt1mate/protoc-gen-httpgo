@@ -15,9 +15,9 @@ func (g *Generator) GenerateServers(gen *protogen.Plugin, file *protogen.File) (
 	gf.P()
 	gf.P("package ", file.GoPackageName)
 
-	for _, srv := range file.Services {
-		g.genServiceInterface(gf, srv)
-		if err = g.genServiceServer(gf, srv); err != nil {
+	for srvName := range g.services {
+		g.genServiceInterface(gf, srvName)
+		if err = g.genServiceServer(gf, srvName); err != nil {
 			return err
 		}
 	}
@@ -27,30 +27,28 @@ func (g *Generator) GenerateServers(gen *protogen.Plugin, file *protogen.File) (
 }
 
 // genServiceInterface generates interface for HTTP server and client
-func (g *Generator) genServiceInterface(gf *protogen.GeneratedFile, srv *protogen.Service) {
-	gf.P("type ", srv.GoName, "HTTPService interface {")
-	for _, method := range srv.Methods {
+func (g *Generator) genServiceInterface(gf *protogen.GeneratedFile, serviceName string) {
+	gf.P("type ", serviceName, "HTTPService interface {")
+	for _, method := range g.services[serviceName] {
 		gf.P(
-			method.GoName, "(", contextPackage.Ident("Context"), ", *", method.Input.GoIdent, ") ",
-			"(*", method.Output.GoIdent, ", error)",
+			method.name, "(", contextPackage.Ident("Context"), ", *", method.inputMsgName, ") ",
+			"(*", method.outputMsgName, ", error)",
 		)
 	}
 	gf.P("}")
 }
 
 // genServiceServer generates HTTP server for service
-func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, srv *protogen.Service) (err error) {
-	gf.P("func Register", srv.GoName, "HTTPServer(ctx context.Context, r *", routerPackage.Ident("Router"), ", h ", srv.GoName, "HTTPService) error {")
-	for _, method := range srv.Methods {
-		if err = g.genMethodDeclaration(gf, method); err != nil {
-			return err
-		}
+func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, serviceName string) (err error) {
+	gf.P("func Register", serviceName, "HTTPServer(ctx context.Context, r *", routerPackage.Ident("Router"), ", h ", serviceName, "HTTPService) error {")
+	for _, method := range g.services[serviceName] {
+		g.genMethodDeclaration(gf, method)
 	}
 
 	gf.P("return nil")
 	gf.P("}")
 
-	for _, method := range srv.Methods {
+	for _, method := range g.services[serviceName] {
 		if err = g.genBuildRequestMethod(gf, method); err != nil {
 			return err
 		}
@@ -61,52 +59,30 @@ func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, srv *protogen.S
 }
 
 // genMethodDeclaration generates binding route with handler
-func (g *Generator) genMethodDeclaration(gf *protogen.GeneratedFile, method *protogen.Method) error {
-	var (
-		params methodParams
-		err    error
-	)
-	if params, err = getRuleMethodAndURI(method); err != nil {
-		return err
-	}
-
-	gf.P("r.", params.httpMethodName, "( \"", params.pathPattern, "\", func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
-	gf.P("	   input, err := build", method.Input.GoIdent, "(ctx)")
+func (g *Generator) genMethodDeclaration(gf *protogen.GeneratedFile, method methodParams) {
+	gf.P("r.", method.httpMethodName, "( \"", method.uri, "\", func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
+	gf.P("	   input, err := build", method.inputMsgName, "(ctx)")
 	gf.P("	   if err != nil {")
 	gf.P("	   	responseHandler(ctx, nil, err)")
 	gf.P("	   	return")
 	gf.P("	   }")
-	gf.P("    response, err := h.", method.GoName, "(ctx, input)")
+	gf.P("    response, err := h.", method.name, "(ctx, input)")
 	gf.P("    responseHandler(ctx, response, err)")
 	gf.P("})")
 	gf.P("")
-
-	return nil
 }
 
 // genBuildRequestMethod generates method that build request struct
-func (g *Generator) genBuildRequestMethod(gf *protogen.GeneratedFile, method *protogen.Method) error {
-	gf.P("func build", method.Input.GoIdent, "(ctx *", fasthttpPackage.Ident("RequestCtx"), ") (arg *", method.Input.GoIdent, ", err error) {")
-	gf.P("	arg = &", method.Input.GoIdent, "{}")
+func (g *Generator) genBuildRequestMethod(gf *protogen.GeneratedFile, method methodParams) error {
+	gf.P("func build", method.inputMsgName, "(ctx *", fasthttpPackage.Ident("RequestCtx"), ") (arg *", method.inputMsgName, ", err error) {")
+	gf.P("	arg = &", method.inputMsgName, "{}")
 	gf.P("	", jsonPackage.Ident("Unmarshal"), "(ctx.PostBody(), arg)")
 
-	var (
-		params methodParams
-		err    error
-	)
-	if params, err = getRuleMethodAndURI(method); err != nil {
-		return err
-	}
-	for _, match := range uriParametersRegexp.FindAllStringSubmatch(params.pathPattern, -1) {
-		for _, f := range method.Input.Fields {
-			if f.GoName == capitalizeFirstLetter(match[1]) {
-				var enumName string
-				if f.Desc.Kind() == protoreflect.EnumKind {
-					enumName = f.Enum.GoIdent.GoName
-				}
-				if err = g.genBuildRequestArgument(gf, match[1], f.Desc.Kind(), enumName); err != nil {
-					return err
-				}
+	var err error
+	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
+		if f, ok := method.fields[match[1]]; ok {
+			if err = g.genBuildRequestArgument(gf, f); err != nil {
+				return err
 			}
 		}
 	}
@@ -119,85 +95,69 @@ func (g *Generator) genBuildRequestMethod(gf *protogen.GeneratedFile, method *pr
 // genBuildRequestArgument generates code for request argument
 func (g *Generator) genBuildRequestArgument(
 	gf *protogen.GeneratedFile,
-	parameterName string,
-	parameterKind protoreflect.Kind,
-	parameterEnumName string,
+	field field,
 ) error {
-	gf.P(parameterName, "Str, ok := ctx.UserValue(\"", parameterName, "\").(string)")
+	gf.P(field.goName, "Str, ok := ctx.UserValue(\"", field.goName, "\").(string)")
 	gf.P("	if !ok {")
-	gf.P("		return nil, ", errorsPackage.Ident("New"), "(\"incorrect type for parameter ", parameterName, "\")")
+	gf.P("		return nil, ", errorsPackage.Ident("New"), "(\"incorrect type for parameter ", field.goName, "\")")
 	gf.P("	}")
-	switch parameterKind {
+	switch field.kind {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind:
-		gf.P("	", capitalizeFirstLetter(parameterName), ", err := ", strconvPackage.Ident("ParseInt"), "(", parameterName, "Str, 10, 32)")
+		gf.P("	", field.goName, ", err := ", strconvPackage.Ident("ParseInt"), "(", field.goName, "Str, 10, 32)")
 		gf.P("	if err != nil {")
-		gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", parameterName, ": %w\", err)")
+		gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", field.goName, ": %w\", err)")
 		gf.P("	}")
-		gf.P("	arg.", capitalizeFirstLetter(parameterName), " = ", getGolangTypeName(parameterKind), "(", capitalizeFirstLetter(parameterName), ")")
+		gf.P("	arg.", field.goName, " = ", field.getGolangTypeName(), "(", field.goName, ")")
 	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
-		gf.P("	arg.", capitalizeFirstLetter(parameterName), ", err = ", strconvPackage.Ident("ParseInt"), "(", parameterName, "Str, 10, 64)")
+		gf.P("	arg.", field.goName, ", err = ", strconvPackage.Ident("ParseInt"), "(", field.goName, "Str, 10, 64)")
 		gf.P("	if err != nil {")
-		gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", parameterName, ": %w\", err)")
+		gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", field.goName, ": %w\", err)")
 		gf.P("	}")
 	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
-		gf.P("	", capitalizeFirstLetter(parameterName), ", err := ", strconvPackage.Ident("ParseInt"), "(", parameterName, "Str, 10, 64)")
+		gf.P("	", field.goName, ", err := ", strconvPackage.Ident("ParseInt"), "(", field.goName, "Str, 10, 64)")
 		gf.P("	if err != nil {")
-		gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", parameterName, ": %w\", err)")
+		gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", field.goName, ": %w\", err)")
 		gf.P("	}")
-		gf.P("	arg.", capitalizeFirstLetter(parameterName), " = ", getGolangTypeName(parameterKind), "(", capitalizeFirstLetter(parameterName), ")")
+		gf.P("	arg.", field.goName, " = ", field.getGolangTypeName(), "(", field.goName, ")")
 	case protoreflect.DoubleKind:
-		gf.P("	arg.", capitalizeFirstLetter(parameterName), ", err = ", strconvPackage.Ident("ParseFloat"), "(", parameterName, "Str, 64)")
+		gf.P("	arg.", field.goName, ", err = ", strconvPackage.Ident("ParseFloat"), "(", field.goName, "Str, 64)")
 		gf.P("	if err != nil {")
-		gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", parameterName, ": %w\", err)")
+		gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", field.goName, ": %w\", err)")
 		gf.P("	}")
 	case protoreflect.FloatKind:
-		gf.P("	", capitalizeFirstLetter(parameterName), ", err := ", strconvPackage.Ident("ParseFloat"), "(", parameterName, "Str, 32)")
+		gf.P("	", field.goName, ", err := ", strconvPackage.Ident("ParseFloat"), "(", field.goName, "Str, 32)")
 		gf.P("	if err != nil {")
-		gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", parameterName, ": %w\", err)")
+		gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", field.goName, ": %w\", err)")
 		gf.P("	}")
-		gf.P("	arg.", capitalizeFirstLetter(parameterName), " = float32(", capitalizeFirstLetter(parameterName), ")")
+		gf.P("	arg.", field.goName, " = float32(", field.goName, ")")
 	case protoreflect.StringKind:
-		gf.P("	arg.", capitalizeFirstLetter(parameterName), " = ", parameterName, "Str")
+		gf.P("	arg.", field.goName, " = ", field.goName, "Str")
 	case protoreflect.BytesKind:
-		gf.P("	arg.", capitalizeFirstLetter(parameterName), " = []byte(", parameterName, "Str)")
+		gf.P("	arg.", field.goName, " = []byte(", field.goName, "Str)")
 	case protoreflect.BoolKind:
-		gf.P(" switch ", capitalizeFirstLetter(parameterName), "Str {")
+		gf.P(" switch ", field.goName, "Str {")
 		gf.P("     case \"true\", \"t\", \"1\":")
 		gf.P("         arg.BoolValue = true")
 		gf.P("     case \"false\", \"f\", \"0\":")
 		gf.P("         arg.BoolValue = false")
 		gf.P("     default:")
-		gf.P("         return nil, ", fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", ", capitalizeFirstLetter(parameterName), "Str)")
+		gf.P("         return nil, ", fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", ", field.goName, "Str)")
 		gf.P(" }")
 	case protoreflect.EnumKind:
-		gf.P("	if ", parameterEnumName, "Value, ok := ", parameterEnumName, "_value[", stringsPackage.Ident("ToUpper"), "(", capitalizeFirstLetter(parameterName), "Str)]; ok {")
-		gf.P("		arg.", capitalizeFirstLetter(parameterName), " = ", parameterEnumName, "(", parameterEnumName, "Value)")
+		gf.P("	if ", field.enumName, "Value, ok := ", field.enumName, "_value[", stringsPackage.Ident("ToUpper"), "(", field.goName, "Str)]; ok {")
+		gf.P("		arg.", field.goName, " = ", field.enumName, "(", field.enumName, "Value)")
 		gf.P("	} else {")
-		gf.P("		if intOptionValue, err := ", strconvPackage.Ident("ParseInt"), "(", capitalizeFirstLetter(parameterName), "Str, 10, 32); err == nil {")
-		gf.P("			if _, ok := ", parameterEnumName, "_name[int32(intOptionValue)]; ok {")
-		gf.P("				arg.", capitalizeFirstLetter(parameterName), " = ", parameterEnumName, "(intOptionValue)")
+		gf.P("		if intOptionValue, err := ", strconvPackage.Ident("ParseInt"), "(", field.goName, "Str, 10, 32); err == nil {")
+		gf.P("			if _, ok := ", field.enumName, "_name[int32(intOptionValue)]; ok {")
+		gf.P("				arg.", field.goName, " = ", field.enumName, "(intOptionValue)")
 		gf.P("			}")
 		gf.P("		}")
 		gf.P("	}")
 	default:
-		return fmt.Errorf("unsupported type %s for path variable", parameterKind.String())
+		return fmt.Errorf("unsupported type %s for path variable", field.kind.String())
 	}
 	gf.P("")
 	return nil
-}
-
-// getGolangTypeName we have to substitute some of the type names for go compiler
-func getGolangTypeName(parameterKind protoreflect.Kind) string {
-	switch parameterKind {
-	case protoreflect.Fixed64Kind:
-		return protoreflect.Uint64Kind.String()
-	case protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
-		return protoreflect.Int32Kind.String()
-	case protoreflect.Fixed32Kind:
-		return protoreflect.Uint32Kind.String()
-	}
-
-	return parameterKind.String()
 }
 
 // genResponseHandler generates common handler for any response

@@ -12,7 +12,7 @@ func main() {
 			if !f.Generate {
 				continue
 			}
-			g := &generator.Generator{}
+			g := generator.NewGenerator(f)
 			if err = g.GenerateServers(gen, f); err != nil {
 				return err
 			}
