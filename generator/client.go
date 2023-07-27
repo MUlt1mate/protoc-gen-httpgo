@@ -26,15 +26,15 @@ func (g *Generator) GenerateClients(gen *protogen.Plugin, file *protogen.File) (
 
 // genServiceClient generates HTTP client for service
 func (g *Generator) genServiceClient(gf *protogen.GeneratedFile, srvName string) (err error) {
-	gf.P("var _  ", srvName, "HTTPService = & ", srvName, "Client{}")
+	gf.P("var _  ", srvName, "HTTPGoService = & ", srvName, "HTTPGoClient{}")
 	gf.P("")
-	gf.P("type  ", srvName, "Client struct {")
+	gf.P("type  ", srvName, "HTTPGoClient struct {")
 	gf.P("	cl   *", fasthttpPackage.Ident("Client"), "")
 	gf.P("	host string")
 	gf.P("}")
 	gf.P("")
-	gf.P("func Get", srvName, "Client(_ ", contextPackage.Ident("Context"), ", cl *", fasthttpPackage.Ident("Client"), ", host string) (* ", srvName, "Client, error) {")
-	gf.P("	return & ", srvName, "Client{")
+	gf.P("func Get", srvName, "HTTPGoClient(_ ", contextPackage.Ident("Context"), ", cl *", fasthttpPackage.Ident("Client"), ", host string) (* ", srvName, "HTTPGoClient, error) {")
+	gf.P("	return & ", srvName, "HTTPGoClient{")
 	gf.P("		cl:   cl,")
 	gf.P("		host: host,")
 	gf.P("	}, nil")
@@ -60,7 +60,7 @@ func (g *Generator) genClientMethod(
 	if requestURI, paramsURI, err = g.getRequestURIAndParams(method); err != nil {
 		return err
 	}
-	gf.P("func (p * ", srvName, "Client) ", method.name, "(ctx ", contextPackage.Ident("Context"), ", request *", method.inputMsgName, ") (resp *", method.outputMsgName, ", err error) {")
+	gf.P("func (p * ", srvName, "HTTPGoClient) ", method.name, "(ctx ", contextPackage.Ident("Context"), ", request *", method.inputMsgName, ") (resp *", method.outputMsgName, ", err error) {")
 	gf.P("    body, _ := ", jsonPackage.Ident("Marshal"), "(request)")
 	gf.P("    req := &fasthttp.Request{}")
 	gf.P("    req.SetBody(body)")

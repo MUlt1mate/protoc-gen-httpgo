@@ -10,7 +10,7 @@ import (
 type Handler struct {
 }
 
-var _ proto.ServiceNameHTTPService = &Handler{}
+var _ proto.ServiceNameHTTPGoService = &Handler{}
 
 func (h *Handler) RPCName(_ context.Context, request *proto.InputMsgName) (*proto.OutputMsgName, error) {
 	log.Println("request", request)

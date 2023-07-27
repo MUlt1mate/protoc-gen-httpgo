@@ -15,12 +15,12 @@ import (
 	strings "strings"
 )
 
-type ServiceNameHTTPService interface {
+type ServiceNameHTTPGoService interface {
 	RPCName(context.Context, *InputMsgName) (*OutputMsgName, error)
 	AllTypesTest(context.Context, *AllTypesMsg) (*AllTypesMsg, error)
 }
 
-func RegisterServiceNameHTTPServer(ctx context.Context, r *router.Router, h ServiceNameHTTPService) error {
+func RegisterServiceNameHTTPGoServer(ctx context.Context, r *router.Router, h ServiceNameHTTPGoService) error {
 	r.POST("/v1/test/{stringArgument}/{int64Argument}", func(ctx *fasthttp.RequestCtx) {
 		input, err := buildInputMsgName(ctx)
 		if err != nil {
@@ -46,13 +46,13 @@ func RegisterServiceNameHTTPServer(ctx context.Context, r *router.Router, h Serv
 func buildInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
 	arg = &InputMsgName{}
 	json.Unmarshal(ctx.PostBody(), arg)
-	StringArgumentStr, ok := ctx.UserValue("StringArgument").(string)
+	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
 	if !ok {
 		return nil, errors.New("incorrect type for parameter StringArgument")
 	}
 	arg.StringArgument = StringArgumentStr
 
-	Int64ArgumentStr, ok := ctx.UserValue("Int64Argument").(string)
+	Int64ArgumentStr, ok := ctx.UserValue("int64Argument").(string)
 	if !ok {
 		return nil, errors.New("incorrect type for parameter Int64Argument")
 	}

@@ -28,7 +28,7 @@ func (g *Generator) GenerateServers(gen *protogen.Plugin, file *protogen.File) (
 
 // genServiceInterface generates interface for HTTP server and client
 func (g *Generator) genServiceInterface(gf *protogen.GeneratedFile, serviceName string) {
-	gf.P("type ", serviceName, "HTTPService interface {")
+	gf.P("type ", serviceName, "HTTPGoService interface {")
 	for _, method := range g.services[serviceName] {
 		gf.P(
 			method.name, "(", contextPackage.Ident("Context"), ", *", method.inputMsgName, ") ",
@@ -40,7 +40,7 @@ func (g *Generator) genServiceInterface(gf *protogen.GeneratedFile, serviceName 
 
 // genServiceServer generates HTTP server for service
 func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, serviceName string) (err error) {
-	gf.P("func Register", serviceName, "HTTPServer(ctx context.Context, r *", routerPackage.Ident("Router"), ", h ", serviceName, "HTTPService) error {")
+	gf.P("func Register", serviceName, "HTTPGoServer(ctx context.Context, r *", routerPackage.Ident("Router"), ", h ", serviceName, "HTTPGoService) error {")
 	for _, method := range g.services[serviceName] {
 		g.genMethodDeclaration(gf, method)
 	}
@@ -97,7 +97,7 @@ func (g *Generator) genBuildRequestArgument(
 	gf *protogen.GeneratedFile,
 	field field,
 ) error {
-	gf.P(field.goName, "Str, ok := ctx.UserValue(\"", field.goName, "\").(string)")
+	gf.P(field.goName, "Str, ok := ctx.UserValue(\"", field.protoName, "\").(string)")
 	gf.P("	if !ok {")
 	gf.P("		return nil, ", errorsPackage.Ident("New"), "(\"incorrect type for parameter ", field.goName, "\")")
 	gf.P("	}")

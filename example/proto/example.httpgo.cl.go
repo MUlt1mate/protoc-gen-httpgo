@@ -10,21 +10,21 @@ import (
 	fasthttp "github.com/valyala/fasthttp"
 )
 
-var _ ServiceNameHTTPService = &ServiceNameClient{}
+var _ ServiceNameHTTPGoService = &ServiceNameHTTPGoClient{}
 
-type ServiceNameClient struct {
+type ServiceNameHTTPGoClient struct {
 	cl   *fasthttp.Client
 	host string
 }
 
-func GetServiceNameClient(_ context.Context, cl *fasthttp.Client, host string) (*ServiceNameClient, error) {
-	return &ServiceNameClient{
+func GetServiceNameHTTPGoClient(_ context.Context, cl *fasthttp.Client, host string) (*ServiceNameHTTPGoClient, error) {
+	return &ServiceNameHTTPGoClient{
 		cl:   cl,
 		host: host,
 	}, nil
 }
 
-func (p *ServiceNameClient) RPCName(ctx context.Context, request *InputMsgName) (resp *OutputMsgName, err error) {
+func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *InputMsgName) (resp *OutputMsgName, err error) {
 	body, _ := json.Marshal(request)
 	req := &fasthttp.Request{}
 	req.SetBody(body)
@@ -38,7 +38,7 @@ func (p *ServiceNameClient) RPCName(ctx context.Context, request *InputMsgName) 
 	err = json.Unmarshal(reqResp.Body(), resp)
 	return resp, err
 }
-func (p *ServiceNameClient) AllTypesTest(ctx context.Context, request *AllTypesMsg) (resp *AllTypesMsg, err error) {
+func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *AllTypesMsg) (resp *AllTypesMsg, err error) {
 	body, _ := json.Marshal(request)
 	req := &fasthttp.Request{}
 	req.SetBody(body)
