@@ -8,8 +8,11 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
+	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 	router "github.com/fasthttp/router"
 	fasthttp "github.com/valyala/fasthttp"
+	anypb "google.golang.org/protobuf/types/known/anypb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	log "log"
 	strconv "strconv"
 	strings "strings"
@@ -18,32 +21,66 @@ import (
 type ServiceNameHTTPGoService interface {
 	RPCName(context.Context, *InputMsgName) (*OutputMsgName, error)
 	AllTypesTest(context.Context, *AllTypesMsg) (*AllTypesMsg, error)
+	CommonTypes(context.Context, *anypb.Any) (*emptypb.Empty, error)
+	Imports(context.Context, *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error)
+	SameInputAndOutput(context.Context, *InputMsgName) (*OutputMsgName, error)
 }
 
 func RegisterServiceNameHTTPGoServer(ctx context.Context, r *router.Router, h ServiceNameHTTPGoService) error {
 	r.POST("/v1/test/{stringArgument}/{int64Argument}", func(ctx *fasthttp.RequestCtx) {
-		input, err := buildInputMsgName(ctx)
+		input, err := buildExampleServiceNameRPCNameInputMsgName(ctx)
 		if err != nil {
-			responseHandler(ctx, nil, err)
+			responseHandlerExample(ctx, nil, err)
 			return
 		}
 		response, err := h.RPCName(ctx, input)
-		responseHandler(ctx, response, err)
+		responseHandlerExample(ctx, response, err)
 	})
 
 	r.POST("/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}", func(ctx *fasthttp.RequestCtx) {
-		input, err := buildAllTypesMsg(ctx)
+		input, err := buildExampleServiceNameAllTypesTestAllTypesMsg(ctx)
 		if err != nil {
-			responseHandler(ctx, nil, err)
+			responseHandlerExample(ctx, nil, err)
 			return
 		}
 		response, err := h.AllTypesTest(ctx, input)
-		responseHandler(ctx, response, err)
+		responseHandlerExample(ctx, response, err)
+	})
+
+	r.POST("/v1/test/commonTypes", func(ctx *fasthttp.RequestCtx) {
+		input, err := buildExampleServiceNameCommonTypesAny(ctx)
+		if err != nil {
+			responseHandlerExample(ctx, nil, err)
+			return
+		}
+		response, err := h.CommonTypes(ctx, input)
+		responseHandlerExample(ctx, response, err)
+	})
+
+	r.POST("/v1/test/imports", func(ctx *fasthttp.RequestCtx) {
+		input, err := buildExampleServiceNameImportsSomeCustomMsg1(ctx)
+		if err != nil {
+			responseHandlerExample(ctx, nil, err)
+			return
+		}
+		response, err := h.Imports(ctx, input)
+		responseHandlerExample(ctx, response, err)
+	})
+
+	r.POST("/v1/test/{stringArgument}", func(ctx *fasthttp.RequestCtx) {
+		input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(ctx)
+		if err != nil {
+			responseHandlerExample(ctx, nil, err)
+			return
+		}
+		response, err := h.SameInputAndOutput(ctx, input)
+		responseHandlerExample(ctx, response, err)
 	})
 
 	return nil
 }
-func buildInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
+
+func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
 	arg = &InputMsgName{}
 	json.Unmarshal(ctx.PostBody(), arg)
 	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
@@ -63,7 +100,8 @@ func buildInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) 
 
 	return arg, nil
 }
-func buildAllTypesMsg(ctx *fasthttp.RequestCtx) (arg *AllTypesMsg, err error) {
+
+func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (arg *AllTypesMsg, err error) {
 	arg = &AllTypesMsg{}
 	json.Unmarshal(ctx.PostBody(), arg)
 	BoolValueStr, ok := ctx.UserValue("BoolValue").(string)
@@ -224,7 +262,31 @@ func buildAllTypesMsg(ctx *fasthttp.RequestCtx) (arg *AllTypesMsg, err error) {
 	return arg, nil
 }
 
-func responseHandler(ctx *fasthttp.RequestCtx, resp interface{}, respErr error) {
+func buildExampleServiceNameCommonTypesAny(ctx *fasthttp.RequestCtx) (arg *anypb.Any, err error) {
+	arg = &anypb.Any{}
+	json.Unmarshal(ctx.PostBody(), arg)
+	return arg, nil
+}
+
+func buildExampleServiceNameImportsSomeCustomMsg1(ctx *fasthttp.RequestCtx) (arg *somepackage.SomeCustomMsg1, err error) {
+	arg = &somepackage.SomeCustomMsg1{}
+	json.Unmarshal(ctx.PostBody(), arg)
+	return arg, nil
+}
+
+func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
+	arg = &InputMsgName{}
+	json.Unmarshal(ctx.PostBody(), arg)
+	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter StringArgument")
+	}
+	arg.StringArgument = StringArgumentStr
+
+	return arg, nil
+}
+
+func responseHandlerExample(ctx *fasthttp.RequestCtx, resp interface{}, respErr error) {
 	ctx.SetContentType("application/json")
 
 	if respErr == nil {

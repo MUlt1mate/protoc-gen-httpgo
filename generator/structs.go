@@ -3,6 +3,7 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/compiler/protogen"
@@ -13,13 +14,21 @@ import (
 
 type Generator struct {
 	services map[string][]methodParams
+	filename string
 }
 
 func NewGenerator(file *protogen.File) Generator {
-	g := Generator{services: make(map[string][]methodParams)}
+	g := Generator{
+		services: make(map[string][]methodParams),
+		filename: getFilename(file),
+	}
 	for _, srv := range file.Services {
 		var methods []methodParams
 		for _, protoMethod := range srv.Methods {
+			// not supported
+			if protoMethod.Desc.IsStreamingClient() || protoMethod.Desc.IsStreamingServer() {
+				continue
+			}
 			method, err := getRuleMethodAndURI(protoMethod)
 			if err != nil {
 				// if there is an error, we can't use the method. skip it for now
@@ -50,6 +59,17 @@ func NewGenerator(file *protogen.File) Generator {
 		}
 	}
 	return g
+}
+
+// getFilename returns capitalized filename for generated method naming
+func getFilename(file *protogen.File) string {
+	fileName := file.GeneratedFilenamePrefix
+	i := strings.LastIndex(fileName, "/")
+	if i != -1 {
+		fileName = fileName[i+1:]
+	}
+
+	return strings.ToUpper(fileName[:1]) + fileName[1:]
 }
 
 type methodParams struct {
@@ -148,6 +168,8 @@ func getRuleMethodAndURI(protoMethod *protogen.Method) (methodParams, error) {
 			httpMethodName: "PATCH",
 			uri:            httpRule.GetPatch(),
 		}
+	default:
+		return m, fmt.Errorf("unknown method type %T", httpRule.GetPattern())
 	}
 	return m, nil
 }

@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package example;
+option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/example/proto;proto";
+
+import "google/api/annotations.proto";
+import "somepackage.proto";
+
+service ServiceName2 {
+  rpc Imports (someCustomMsg1) returns (someCustomMsg2) {
+    option (google.api.http) = {
+      post: "/v1/test/imports"
+    };
+  }
+}
+
+service SecondServiceName2 {
+  rpc Imports (someCustomMsg1) returns (someCustomMsg2) {
+    option (google.api.http) = {
+      post: "/v1/test/imports"
+    };
+  }
+}
+
+
+
