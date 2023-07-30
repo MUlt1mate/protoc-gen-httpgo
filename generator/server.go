@@ -2,6 +2,7 @@ package generator
 
 import (
 	"fmt"
+	"strings"
 
 	"google.golang.org/protobuf/compiler/protogen"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -61,7 +62,7 @@ func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, serviceName str
 // genMethodDeclaration generates binding route with handler
 func (g *Generator) genMethodDeclaration(gf *protogen.GeneratedFile, method methodParams) {
 	gf.P("r.", method.httpMethodName, "( \"", method.uri, "\", func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
-	gf.P("	   input, err := build", method.inputMsgName, "(ctx)")
+	gf.P("	   input, err := build", getBuildMethodInputName(method), "(ctx)")
 	gf.P("	   if err != nil {")
 	gf.P("	   	responseHandler(ctx, nil, err)")
 	gf.P("	   	return")
@@ -72,9 +73,14 @@ func (g *Generator) genMethodDeclaration(gf *protogen.GeneratedFile, method meth
 	gf.P("")
 }
 
+// getBuildMethodInputName creates name for function that builds method request
+func getBuildMethodInputName(method methodParams) string {
+	return method.name + strings.ReplaceAll(method.inputMsgName.GoName, ".", "")
+}
+
 // genBuildRequestMethod generates method that build request struct
 func (g *Generator) genBuildRequestMethod(gf *protogen.GeneratedFile, method methodParams) error {
-	gf.P("func build", method.inputMsgName, "(ctx *", fasthttpPackage.Ident("RequestCtx"), ") (arg *", method.inputMsgName, ", err error) {")
+	gf.P("func build", getBuildMethodInputName(method), "(ctx *", fasthttpPackage.Ident("RequestCtx"), ") (arg *", method.inputMsgName, ", err error) {")
 	gf.P("	arg = &", method.inputMsgName, "{}")
 	gf.P("	", jsonPackage.Ident("Unmarshal"), "(ctx.PostBody(), arg)")
 

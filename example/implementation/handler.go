@@ -4,7 +4,11 @@ import (
 	"context"
 	"log"
 
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/emptypb"
+
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto"
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 )
 
 type Handler struct {
@@ -42,4 +46,19 @@ func (h *Handler) AllTypesTest(_ context.Context, msg *proto.AllTypesMsg) (*prot
 		BytesValue:    msg.BytesValue,
 	}
 	return p, nil
+}
+
+func (h *Handler) CommonTypes(ctx context.Context, a *anypb.Any) (*emptypb.Empty, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (h *Handler) Imports(ctx context.Context, msg1 *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (h *Handler) SameInputAndOutput(ctx context.Context, name *proto.InputMsgName) (*proto.OutputMsgName, error) {
+	//TODO implement me
+	panic("implement me")
 }

@@ -7,7 +7,10 @@ import (
 	context "context"
 	json "encoding/json"
 	fmt "fmt"
+	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 	fasthttp "github.com/valyala/fasthttp"
+	anypb "google.golang.org/protobuf/types/known/anypb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 var _ ServiceNameHTTPGoService = &ServiceNameHTTPGoClient{}
@@ -49,6 +52,48 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *All
 		return nil, err
 	}
 	resp = &AllTypesMsg{}
+	err = json.Unmarshal(reqResp.Body(), resp)
+	return resp, err
+}
+func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anypb.Any) (resp *emptypb.Empty, err error) {
+	body, _ := json.Marshal(request)
+	req := &fasthttp.Request{}
+	req.SetBody(body)
+	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/commonTypes"))
+	req.Header.SetMethod("POST")
+	reqResp := &fasthttp.Response{}
+	if err = p.cl.Do(req, reqResp); err != nil {
+		return nil, err
+	}
+	resp = &emptypb.Empty{}
+	err = json.Unmarshal(reqResp.Body(), resp)
+	return resp, err
+}
+func (p *ServiceNameHTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
+	body, _ := json.Marshal(request)
+	req := &fasthttp.Request{}
+	req.SetBody(body)
+	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports"))
+	req.Header.SetMethod("POST")
+	reqResp := &fasthttp.Response{}
+	if err = p.cl.Do(req, reqResp); err != nil {
+		return nil, err
+	}
+	resp = &somepackage.SomeCustomMsg2{}
+	err = json.Unmarshal(reqResp.Body(), resp)
+	return resp, err
+}
+func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, request *InputMsgName) (resp *OutputMsgName, err error) {
+	body, _ := json.Marshal(request)
+	req := &fasthttp.Request{}
+	req.SetBody(body)
+	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%s", request.StringArgument))
+	req.Header.SetMethod("POST")
+	reqResp := &fasthttp.Response{}
+	if err = p.cl.Do(req, reqResp); err != nil {
+		return nil, err
+	}
+	resp = &OutputMsgName{}
 	err = json.Unmarshal(reqResp.Body(), resp)
 	return resp, err
 }

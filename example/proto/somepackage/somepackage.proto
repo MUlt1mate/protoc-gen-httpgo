@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package example;
+option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage;somepackage";
+
+message someCustomMsg1 {
+  string val = 1;
+}
+
+message someCustomMsg2 {
+  string val = 1;
+}

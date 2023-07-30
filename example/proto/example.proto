@@ -1,9 +1,12 @@
 syntax = "proto3";
 
 package example;
-option go_package = "github.com/MUlt1mate/protoc-gen-httpgo;proto";
+option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/example/proto;proto";
 
 import "google/api/annotations.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/any.proto";
+import "somepackage.proto";
 
 service ServiceName {
   rpc RPCName (InputMsgName) returns (OutputMsgName) {
@@ -14,6 +17,22 @@ service ServiceName {
   rpc AllTypesTest (AllTypesMsg) returns (AllTypesMsg) {
     option (google.api.http) = {
       post: "/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}"
+    };
+  }
+  rpc CommonTypes (google.protobuf.Any) returns (google.protobuf.Empty) {
+    option (google.api.http) = {
+      post: "/v1/test/commonTypes"
+    };
+  }
+  rpc Imports (someCustomMsg1) returns (someCustomMsg2) {
+    option (google.api.http) = {
+      post: "/v1/test/imports"
+    };
+  }
+  // same types but different query, we need different query builder function
+  rpc sameInputAndOutput (InputMsgName) returns (OutputMsgName) {
+    option (google.api.http) = {
+      post: "/v1/test/{stringArgument}"
     };
   }
 }

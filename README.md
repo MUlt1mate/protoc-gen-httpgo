@@ -17,5 +17,4 @@ protoc -I=. --httpgo_out=. --httpgo_opt=paths=source_relative example/proto/exam
 
 ## TODO
 
-- support for protobuf struct types
 - tests
