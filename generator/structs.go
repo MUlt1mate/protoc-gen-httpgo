@@ -20,6 +20,10 @@ func NewGenerator(file *protogen.File) Generator {
 	for _, srv := range file.Services {
 		var methods []methodParams
 		for _, protoMethod := range srv.Methods {
+			// not supported
+			if protoMethod.Desc.IsStreamingClient() || protoMethod.Desc.IsStreamingServer() {
+				continue
+			}
 			method, err := getRuleMethodAndURI(protoMethod)
 			if err != nil {
 				// if there is an error, we can't use the method. skip it for now
@@ -148,6 +152,8 @@ func getRuleMethodAndURI(protoMethod *protogen.Method) (methodParams, error) {
 			httpMethodName: "PATCH",
 			uri:            httpRule.GetPatch(),
 		}
+	default:
+		return m, fmt.Errorf("unknown method type %T", httpRule.GetPattern())
 	}
 	return m, nil
 }

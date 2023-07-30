@@ -35,6 +35,14 @@ service ServiceName {
       post: "/v1/test/{stringArgument}"
     };
   }
+  // should be ignored
+  rpc methodWithoutPath (InputMsgName) returns (OutputMsgName) {}
+  // should be ignored
+  rpc streams(stream InputMsgName) returns (stream OutputMsgName){
+    option (google.api.http) = {
+      post: "/v1/test/stream"
+    };
+  };
 }
 
 message InputMsgName {
