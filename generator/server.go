@@ -43,44 +43,45 @@ func (g *Generator) genServiceInterface(gf *protogen.GeneratedFile, serviceName 
 func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, serviceName string) (err error) {
 	gf.P("func Register", serviceName, "HTTPGoServer(ctx context.Context, r *", routerPackage.Ident("Router"), ", h ", serviceName, "HTTPGoService) error {")
 	for _, method := range g.services[serviceName] {
-		g.genMethodDeclaration(gf, method)
+		g.genMethodDeclaration(gf, serviceName, method)
 	}
 
 	gf.P("return nil")
 	gf.P("}")
+	gf.P()
 
 	for _, method := range g.services[serviceName] {
-		if err = g.genBuildRequestMethod(gf, method); err != nil {
+		if err = g.genBuildRequestMethod(gf, serviceName, method); err != nil {
 			return err
 		}
 	}
-	gf.P("")
+	gf.P()
 
 	return nil
 }
 
 // genMethodDeclaration generates binding route with handler
-func (g *Generator) genMethodDeclaration(gf *protogen.GeneratedFile, method methodParams) {
+func (g *Generator) genMethodDeclaration(gf *protogen.GeneratedFile, serviceName string, method methodParams) {
 	gf.P("r.", method.httpMethodName, "( \"", method.uri, "\", func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
-	gf.P("	   input, err := build", getBuildMethodInputName(method), "(ctx)")
+	gf.P("	   input, err := build", g.getBuildMethodInputName(serviceName, method), "(ctx)")
 	gf.P("	   if err != nil {")
-	gf.P("	   	responseHandler(ctx, nil, err)")
+	gf.P("	   	responseHandler", g.filename, "(ctx, nil, err)")
 	gf.P("	   	return")
 	gf.P("	   }")
 	gf.P("    response, err := h.", method.name, "(ctx, input)")
-	gf.P("    responseHandler(ctx, response, err)")
+	gf.P("    responseHandler", g.filename, "(ctx, response, err)")
 	gf.P("})")
-	gf.P("")
+	gf.P()
 }
 
 // getBuildMethodInputName creates name for function that builds method request
-func getBuildMethodInputName(method methodParams) string {
-	return method.name + strings.ReplaceAll(method.inputMsgName.GoName, ".", "")
+func (g *Generator) getBuildMethodInputName(serviceName string, method methodParams) string {
+	return g.filename + serviceName + method.name + strings.ReplaceAll(method.inputMsgName.GoName, ".", "")
 }
 
 // genBuildRequestMethod generates method that build request struct
-func (g *Generator) genBuildRequestMethod(gf *protogen.GeneratedFile, method methodParams) error {
-	gf.P("func build", getBuildMethodInputName(method), "(ctx *", fasthttpPackage.Ident("RequestCtx"), ") (arg *", method.inputMsgName, ", err error) {")
+func (g *Generator) genBuildRequestMethod(gf *protogen.GeneratedFile, serviceName string, method methodParams) error {
+	gf.P("func build", g.getBuildMethodInputName(serviceName, method), "(ctx *", fasthttpPackage.Ident("RequestCtx"), ") (arg *", method.inputMsgName, ", err error) {")
 	gf.P("	arg = &", method.inputMsgName, "{}")
 	gf.P("	", jsonPackage.Ident("Unmarshal"), "(ctx.PostBody(), arg)")
 
@@ -95,6 +96,7 @@ func (g *Generator) genBuildRequestMethod(gf *protogen.GeneratedFile, method met
 
 	gf.P("	return arg, nil")
 	gf.P("}")
+	gf.P()
 	return nil
 }
 
@@ -162,23 +164,24 @@ func (g *Generator) genBuildRequestArgument(
 	default:
 		return fmt.Errorf("unsupported type %s for path variable", field.kind.String())
 	}
-	gf.P("")
+	gf.P()
 	return nil
 }
 
 // genResponseHandler generates common handler for any response
 func (g *Generator) genResponseHandler(gf *protogen.GeneratedFile) {
-	gf.P("func responseHandler(ctx *", fasthttpPackage.Ident("RequestCtx"), ", resp interface{}, respErr error) {")
+	gf.P("func responseHandler", g.filename, "(ctx *", fasthttpPackage.Ident("RequestCtx"), ", resp interface{}, respErr error) {")
 	gf.P("ctx.SetContentType(\"application/json\")")
-	gf.P("")
+	gf.P()
 	gf.P("if respErr == nil {")
 	gf.P("    ctx.SetStatusCode(", fasthttpPackage.Ident("StatusOK"), ")")
 	gf.P("} else {")
 	gf.P("    ", logPackage.Ident("Println"), "(respErr)")
 	gf.P("    ctx.SetStatusCode(", fasthttpPackage.Ident("StatusInternalServerError"), ")")
 	gf.P("}")
-	gf.P("")
+	gf.P()
 	gf.P("var data, _ = ", jsonPackage.Ident("Marshal"), "(resp)")
 	gf.P("_, _ = ctx.Write(data)")
 	gf.P("}")
+	gf.P()
 }
