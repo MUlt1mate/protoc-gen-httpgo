@@ -16,15 +16,28 @@ type ServiceName2HTTPGoService interface {
 	Imports(context.Context, *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error)
 }
 
-func RegisterServiceName2HTTPGoServer(ctx context.Context, r *router.Router, h ServiceName2HTTPGoService) error {
+func RegisterServiceName2HTTPGoServer(
+	ctx context.Context,
+	r *router.Router,
+	h ServiceName2HTTPGoService,
+	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)),
+) error {
+	var middleware = chainMiddlewaresExample2(middlewares)
 	r.POST("/v1/test/imports", func(ctx *fasthttp.RequestCtx) {
-		input, err := buildExample2ServiceName2ImportsSomeCustomMsg1(ctx)
-		if err != nil {
-			responseHandlerExample2(ctx, nil, err)
+		handler := func(ctx *fasthttp.RequestCtx) {
+			input, err := buildExample2ServiceName2ImportsSomeCustomMsg1(ctx)
+			if err != nil {
+				responseHandlerExample2(ctx, nil, err)
+				return
+			}
+			response, err := h.Imports(ctx, input)
+			responseHandlerExample2(ctx, response, err)
+		}
+		if middleware == nil {
+			handler(ctx)
 			return
 		}
-		response, err := h.Imports(ctx, input)
-		responseHandlerExample2(ctx, response, err)
+		middleware(ctx, handler)
 	})
 
 	return nil
@@ -40,15 +53,28 @@ type SecondServiceName2HTTPGoService interface {
 	Imports(context.Context, *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error)
 }
 
-func RegisterSecondServiceName2HTTPGoServer(ctx context.Context, r *router.Router, h SecondServiceName2HTTPGoService) error {
+func RegisterSecondServiceName2HTTPGoServer(
+	ctx context.Context,
+	r *router.Router,
+	h SecondServiceName2HTTPGoService,
+	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)),
+) error {
+	var middleware = chainMiddlewaresExample2(middlewares)
 	r.POST("/v1/test/imports", func(ctx *fasthttp.RequestCtx) {
-		input, err := buildExample2SecondServiceName2ImportsSomeCustomMsg1(ctx)
-		if err != nil {
-			responseHandlerExample2(ctx, nil, err)
+		handler := func(ctx *fasthttp.RequestCtx) {
+			input, err := buildExample2SecondServiceName2ImportsSomeCustomMsg1(ctx)
+			if err != nil {
+				responseHandlerExample2(ctx, nil, err)
+				return
+			}
+			response, err := h.Imports(ctx, input)
+			responseHandlerExample2(ctx, response, err)
+		}
+		if middleware == nil {
+			handler(ctx)
 			return
 		}
-		response, err := h.Imports(ctx, input)
-		responseHandlerExample2(ctx, response, err)
+		middleware(ctx, handler)
 	})
 
 	return nil
@@ -72,4 +98,32 @@ func responseHandlerExample2(ctx *fasthttp.RequestCtx, resp interface{}, respErr
 
 	var data, _ = json.Marshal(resp)
 	_, _ = ctx.Write(data)
+}
+
+func chainMiddlewaresExample2(
+	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)),
+) func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)) {
+	switch len(middlewares) {
+	case 0:
+		return nil
+	case 1:
+		return middlewares[0]
+	default:
+		return func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)) {
+			middlewares[0](ctx, getChainMiddlewareHandlerExample2(middlewares, 0, handler))
+		}
+	}
+}
+
+func getChainMiddlewareHandlerExample2(
+	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)),
+	curr int,
+	finalHandler func(ctx *fasthttp.RequestCtx),
+) func(ctx *fasthttp.RequestCtx) {
+	if curr == len(middlewares)-1 {
+		return finalHandler
+	}
+	return func(ctx *fasthttp.RequestCtx) {
+		middlewares[curr+1](ctx, getChainMiddlewareHandlerExample2(middlewares, curr+1, finalHandler))
+	}
 }

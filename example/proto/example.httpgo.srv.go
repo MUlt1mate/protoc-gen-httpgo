@@ -26,55 +26,96 @@ type ServiceNameHTTPGoService interface {
 	SameInputAndOutput(context.Context, *InputMsgName) (*OutputMsgName, error)
 }
 
-func RegisterServiceNameHTTPGoServer(ctx context.Context, r *router.Router, h ServiceNameHTTPGoService) error {
+func RegisterServiceNameHTTPGoServer(
+	ctx context.Context,
+	r *router.Router,
+	h ServiceNameHTTPGoService,
+	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)),
+) error {
+	var middleware = chainMiddlewaresExample(middlewares)
 	r.POST("/v1/test/{stringArgument}/{int64Argument}", func(ctx *fasthttp.RequestCtx) {
-		input, err := buildExampleServiceNameRPCNameInputMsgName(ctx)
-		if err != nil {
-			responseHandlerExample(ctx, nil, err)
+		handler := func(ctx *fasthttp.RequestCtx) {
+			input, err := buildExampleServiceNameRPCNameInputMsgName(ctx)
+			if err != nil {
+				responseHandlerExample(ctx, nil, err)
+				return
+			}
+			response, err := h.RPCName(ctx, input)
+			responseHandlerExample(ctx, response, err)
+		}
+		if middleware == nil {
+			handler(ctx)
 			return
 		}
-		response, err := h.RPCName(ctx, input)
-		responseHandlerExample(ctx, response, err)
+		middleware(ctx, handler)
 	})
 
 	r.POST("/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}", func(ctx *fasthttp.RequestCtx) {
-		input, err := buildExampleServiceNameAllTypesTestAllTypesMsg(ctx)
-		if err != nil {
-			responseHandlerExample(ctx, nil, err)
+		handler := func(ctx *fasthttp.RequestCtx) {
+			input, err := buildExampleServiceNameAllTypesTestAllTypesMsg(ctx)
+			if err != nil {
+				responseHandlerExample(ctx, nil, err)
+				return
+			}
+			response, err := h.AllTypesTest(ctx, input)
+			responseHandlerExample(ctx, response, err)
+		}
+		if middleware == nil {
+			handler(ctx)
 			return
 		}
-		response, err := h.AllTypesTest(ctx, input)
-		responseHandlerExample(ctx, response, err)
+		middleware(ctx, handler)
 	})
 
 	r.POST("/v1/test/commonTypes", func(ctx *fasthttp.RequestCtx) {
-		input, err := buildExampleServiceNameCommonTypesAny(ctx)
-		if err != nil {
-			responseHandlerExample(ctx, nil, err)
+		handler := func(ctx *fasthttp.RequestCtx) {
+			input, err := buildExampleServiceNameCommonTypesAny(ctx)
+			if err != nil {
+				responseHandlerExample(ctx, nil, err)
+				return
+			}
+			response, err := h.CommonTypes(ctx, input)
+			responseHandlerExample(ctx, response, err)
+		}
+		if middleware == nil {
+			handler(ctx)
 			return
 		}
-		response, err := h.CommonTypes(ctx, input)
-		responseHandlerExample(ctx, response, err)
+		middleware(ctx, handler)
 	})
 
 	r.POST("/v1/test/imports", func(ctx *fasthttp.RequestCtx) {
-		input, err := buildExampleServiceNameImportsSomeCustomMsg1(ctx)
-		if err != nil {
-			responseHandlerExample(ctx, nil, err)
+		handler := func(ctx *fasthttp.RequestCtx) {
+			input, err := buildExampleServiceNameImportsSomeCustomMsg1(ctx)
+			if err != nil {
+				responseHandlerExample(ctx, nil, err)
+				return
+			}
+			response, err := h.Imports(ctx, input)
+			responseHandlerExample(ctx, response, err)
+		}
+		if middleware == nil {
+			handler(ctx)
 			return
 		}
-		response, err := h.Imports(ctx, input)
-		responseHandlerExample(ctx, response, err)
+		middleware(ctx, handler)
 	})
 
 	r.POST("/v1/test/{stringArgument}", func(ctx *fasthttp.RequestCtx) {
-		input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(ctx)
-		if err != nil {
-			responseHandlerExample(ctx, nil, err)
+		handler := func(ctx *fasthttp.RequestCtx) {
+			input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(ctx)
+			if err != nil {
+				responseHandlerExample(ctx, nil, err)
+				return
+			}
+			response, err := h.SameInputAndOutput(ctx, input)
+			responseHandlerExample(ctx, response, err)
+		}
+		if middleware == nil {
+			handler(ctx)
 			return
 		}
-		response, err := h.SameInputAndOutput(ctx, input)
-		responseHandlerExample(ctx, response, err)
+		middleware(ctx, handler)
 	})
 
 	return nil
@@ -298,4 +339,32 @@ func responseHandlerExample(ctx *fasthttp.RequestCtx, resp interface{}, respErr 
 
 	var data, _ = json.Marshal(resp)
 	_, _ = ctx.Write(data)
+}
+
+func chainMiddlewaresExample(
+	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)),
+) func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)) {
+	switch len(middlewares) {
+	case 0:
+		return nil
+	case 1:
+		return middlewares[0]
+	default:
+		return func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)) {
+			middlewares[0](ctx, getChainMiddlewareHandlerExample(middlewares, 0, handler))
+		}
+	}
+}
+
+func getChainMiddlewareHandlerExample(
+	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)),
+	curr int,
+	finalHandler func(ctx *fasthttp.RequestCtx),
+) func(ctx *fasthttp.RequestCtx) {
+	if curr == len(middlewares)-1 {
+		return finalHandler
+	}
+	return func(ctx *fasthttp.RequestCtx) {
+		middlewares[curr+1](ctx, getChainMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
+	}
 }

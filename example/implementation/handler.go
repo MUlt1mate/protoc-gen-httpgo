@@ -2,7 +2,6 @@ package implementation
 
 import (
 	"context"
-	"log"
 
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -17,7 +16,6 @@ type Handler struct {
 var _ proto.ServiceNameHTTPGoService = &Handler{}
 
 func (h *Handler) RPCName(_ context.Context, request *proto.InputMsgName) (*proto.OutputMsgName, error) {
-	log.Println("request", request)
 	p := &proto.OutputMsgName{
 		StringValue: request.StringArgument,
 		IntValue:    request.Int64Argument,
@@ -26,7 +24,6 @@ func (h *Handler) RPCName(_ context.Context, request *proto.InputMsgName) (*prot
 }
 
 func (h *Handler) AllTypesTest(_ context.Context, msg *proto.AllTypesMsg) (*proto.AllTypesMsg, error) {
-	log.Println("request", msg)
 	p := &proto.AllTypesMsg{
 		BoolValue:     msg.BoolValue,
 		EnumValue:     msg.EnumValue,

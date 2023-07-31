@@ -16,32 +16,32 @@ func (g *Generator) GenerateClients(gen *protogen.Plugin, file *protogen.File) (
 	gf.P("// source: ", file.Desc.Path())
 	gf.P()
 	gf.P("package ", file.GoPackageName)
-	for srvName := range g.services {
-		if err = g.genServiceClient(gf, srvName); err != nil {
+	for _, service := range g.services {
+		if err = g.genServiceClient(gf, service); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-// genServiceClient generates HTTP client for service
-func (g *Generator) genServiceClient(gf *protogen.GeneratedFile, srvName string) (err error) {
-	gf.P("var _  ", srvName, "HTTPGoService = & ", srvName, "HTTPGoClient{}")
+// genServiceClient generates HTTP client for serviceParams
+func (g *Generator) genServiceClient(gf *protogen.GeneratedFile, service serviceParams) (err error) {
+	gf.P("var _  ", service.name, "HTTPGoService = & ", service.name, "HTTPGoClient{}")
 	gf.P("")
-	gf.P("type  ", srvName, "HTTPGoClient struct {")
+	gf.P("type  ", service.name, "HTTPGoClient struct {")
 	gf.P("	cl   *", fasthttpPackage.Ident("Client"), "")
 	gf.P("	host string")
 	gf.P("}")
-	gf.P("")
-	gf.P("func Get", srvName, "HTTPGoClient(_ ", contextPackage.Ident("Context"), ", cl *", fasthttpPackage.Ident("Client"), ", host string) (* ", srvName, "HTTPGoClient, error) {")
-	gf.P("	return & ", srvName, "HTTPGoClient{")
+	gf.P()
+	gf.P("func Get", service.name, "HTTPGoClient(_ ", contextPackage.Ident("Context"), ", cl *", fasthttpPackage.Ident("Client"), ", host string) (* ", service.name, "HTTPGoClient, error) {")
+	gf.P("	return & ", service.name, "HTTPGoClient{")
 	gf.P("		cl:   cl,")
 	gf.P("		host: host,")
 	gf.P("	}, nil")
 	gf.P("}")
-	gf.P("")
-	for _, method := range g.services[srvName] {
-		if err = g.genClientMethod(gf, srvName, method); err != nil {
+	gf.P()
+	for _, method := range service.methods {
+		if err = g.genClientMethod(gf, service.name, method); err != nil {
 			return err
 		}
 	}
@@ -61,19 +61,20 @@ func (g *Generator) genClientMethod(
 		return err
 	}
 	gf.P("func (p * ", srvName, "HTTPGoClient) ", method.name, "(ctx ", contextPackage.Ident("Context"), ", request *", method.inputMsgName, ") (resp *", method.outputMsgName, ", err error) {")
-	gf.P("    body, _ := ", jsonPackage.Ident("Marshal"), "(request)")
-	gf.P("    req := &fasthttp.Request{}")
-	gf.P("    req.SetBody(body)")
-	gf.P("    req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"\""+paramsURI+"))")
-	gf.P("    req.Header.SetMethod(\"", method.httpMethodName, "\")")
-	gf.P("    reqResp := &fasthttp.Response{}")
-	gf.P("    if err = p.cl.Do(req, reqResp); err != nil {")
-	gf.P("        return nil, err")
-	gf.P("    }")
-	gf.P("    resp = &", method.outputMsgName, "{}")
-	gf.P("    err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), resp)")
-	gf.P("    return resp, err")
+	gf.P("	body, _ := ", jsonPackage.Ident("Marshal"), "(request)")
+	gf.P("	req := &fasthttp.Request{}")
+	gf.P("	req.SetBody(body)")
+	gf.P("	req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"\""+paramsURI+"))")
+	gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
+	gf.P("	reqResp := &fasthttp.Response{}")
+	gf.P("	if err = p.cl.Do(req, reqResp); err != nil {")
+	gf.P("		return nil, err")
+	gf.P("	}")
+	gf.P("	resp = &", method.outputMsgName, "{}")
+	gf.P("	err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), resp)")
+	gf.P("	return resp, err")
 	gf.P("}")
+	gf.P()
 	return nil
 }
 

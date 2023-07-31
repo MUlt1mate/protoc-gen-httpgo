@@ -41,6 +41,7 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *InputMsg
 	err = json.Unmarshal(reqResp.Body(), resp)
 	return resp, err
 }
+
 func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *AllTypesMsg) (resp *AllTypesMsg, err error) {
 	body, _ := json.Marshal(request)
 	req := &fasthttp.Request{}
@@ -55,6 +56,7 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *All
 	err = json.Unmarshal(reqResp.Body(), resp)
 	return resp, err
 }
+
 func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anypb.Any) (resp *emptypb.Empty, err error) {
 	body, _ := json.Marshal(request)
 	req := &fasthttp.Request{}
@@ -69,6 +71,7 @@ func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anyp
 	err = json.Unmarshal(reqResp.Body(), resp)
 	return resp, err
 }
+
 func (p *ServiceNameHTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
 	body, _ := json.Marshal(request)
 	req := &fasthttp.Request{}
@@ -83,6 +86,7 @@ func (p *ServiceNameHTTPGoClient) Imports(ctx context.Context, request *somepack
 	err = json.Unmarshal(reqResp.Body(), resp)
 	return resp, err
 }
+
 func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, request *InputMsgName) (resp *OutputMsgName, err error) {
 	body, _ := json.Marshal(request)
 	req := &fasthttp.Request{}

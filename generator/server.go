@@ -16,42 +16,49 @@ func (g *Generator) GenerateServers(gen *protogen.Plugin, file *protogen.File) (
 	gf.P()
 	gf.P("package ", file.GoPackageName)
 
-	for srvName := range g.services {
-		g.genServiceInterface(gf, srvName)
-		if err = g.genServiceServer(gf, srvName); err != nil {
+	for _, service := range g.services {
+		g.genServiceInterface(gf, service)
+		if err = g.genServiceServer(gf, service); err != nil {
 			return err
 		}
 	}
 
 	g.genResponseHandler(gf)
+	g.genChainMiddlewares(gf)
 	return nil
 }
 
 // genServiceInterface generates interface for HTTP server and client
-func (g *Generator) genServiceInterface(gf *protogen.GeneratedFile, serviceName string) {
-	gf.P("type ", serviceName, "HTTPGoService interface {")
-	for _, method := range g.services[serviceName] {
+func (g *Generator) genServiceInterface(gf *protogen.GeneratedFile, service serviceParams) {
+	gf.P("type ", service.name, "HTTPGoService interface {")
+	for _, method := range service.methods {
 		gf.P(
-			method.name, "(", contextPackage.Ident("Context"), ", *", method.inputMsgName, ") ",
+			"	", method.name, "(", contextPackage.Ident("Context"), ", *", method.inputMsgName, ") ",
 			"(*", method.outputMsgName, ", error)",
 		)
 	}
 	gf.P("}")
 }
 
-// genServiceServer generates HTTP server for service
-func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, serviceName string) (err error) {
-	gf.P("func Register", serviceName, "HTTPGoServer(ctx context.Context, r *", routerPackage.Ident("Router"), ", h ", serviceName, "HTTPGoService) error {")
-	for _, method := range g.services[serviceName] {
-		g.genMethodDeclaration(gf, serviceName, method)
+// genServiceServer generates HTTP server for serviceParams
+func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, service serviceParams) (err error) {
+	gf.P("func Register", service.name, "HTTPGoServer(")
+	gf.P("	ctx ", contextPackage.Ident("Context"), ",")
+	gf.P("	r *", routerPackage.Ident("Router"), ",")
+	gf.P("	h ", service.name, "HTTPGoService,")
+	gf.P("	middlewares []func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")),")
+	gf.P(") error {")
+	gf.P("	var middleware = chainMiddlewares", g.filename, "(middlewares)")
+	for _, method := range service.methods {
+		g.genMethodDeclaration(gf, service.name, method)
 	}
 
-	gf.P("return nil")
+	gf.P("	return nil")
 	gf.P("}")
 	gf.P()
 
-	for _, method := range g.services[serviceName] {
-		if err = g.genBuildRequestMethod(gf, serviceName, method); err != nil {
+	for _, method := range service.methods {
+		if err = g.genBuildRequestMethod(gf, service.name, method); err != nil {
 			return err
 		}
 	}
@@ -62,21 +69,29 @@ func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, serviceName str
 
 // genMethodDeclaration generates binding route with handler
 func (g *Generator) genMethodDeclaration(gf *protogen.GeneratedFile, serviceName string, method methodParams) {
-	gf.P("r.", method.httpMethodName, "( \"", method.uri, "\", func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
-	gf.P("	   input, err := build", g.getBuildMethodInputName(serviceName, method), "(ctx)")
-	gf.P("	   if err != nil {")
-	gf.P("	   	responseHandler", g.filename, "(ctx, nil, err)")
-	gf.P("	   	return")
-	gf.P("	   }")
-	gf.P("    response, err := h.", method.name, "(ctx, input)")
-	gf.P("    responseHandler", g.filename, "(ctx, response, err)")
-	gf.P("})")
+	gf.P("	r.", method.httpMethodName, "( \"", method.uri, "\", func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
+	gf.P("		handler := func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") {")
+	gf.P("			input, err := build", g.getBuildMethodInputName(serviceName, method), "(ctx)")
+	gf.P("			if err != nil {")
+	gf.P("				responseHandler", g.filename, "(ctx, nil, err)")
+	gf.P("				return")
+	gf.P("			}")
+	gf.P("			response, err := h.", method.name, "(ctx, input)")
+	gf.P("			responseHandler", g.filename, "(ctx, response, err)")
+	gf.P("		}")
+	gf.P("		if middleware == nil {")
+	gf.P("			handler(ctx)")
+	gf.P("			return")
+	gf.P("		}")
+	gf.P("		middleware(ctx, handler)")
+	gf.P("	})")
 	gf.P()
 }
 
 // getBuildMethodInputName creates name for function that builds method request
 func (g *Generator) getBuildMethodInputName(serviceName string, method methodParams) string {
-	return g.filename + serviceName + method.name + strings.ReplaceAll(method.inputMsgName.GoName, ".", "")
+	methodName := g.filename + serviceName + method.name + method.inputMsgName.GoName
+	return strings.NewReplacer(".", "", "-", "", "_", "").Replace(methodName)
 }
 
 // genBuildRequestMethod generates method that build request struct
@@ -105,7 +120,7 @@ func (g *Generator) genBuildRequestArgument(
 	gf *protogen.GeneratedFile,
 	field field,
 ) error {
-	gf.P(field.goName, "Str, ok := ctx.UserValue(\"", field.protoName, "\").(string)")
+	gf.P("	", field.goName, "Str, ok := ctx.UserValue(\"", field.protoName, "\").(string)")
 	gf.P("	if !ok {")
 	gf.P("		return nil, ", errorsPackage.Ident("New"), "(\"incorrect type for parameter ", field.goName, "\")")
 	gf.P("	}")
@@ -143,21 +158,21 @@ func (g *Generator) genBuildRequestArgument(
 	case protoreflect.BytesKind:
 		gf.P("	arg.", field.goName, " = []byte(", field.goName, "Str)")
 	case protoreflect.BoolKind:
-		gf.P(" switch ", field.goName, "Str {")
-		gf.P("     case \"true\", \"t\", \"1\":")
-		gf.P("         arg.BoolValue = true")
-		gf.P("     case \"false\", \"f\", \"0\":")
-		gf.P("         arg.BoolValue = false")
-		gf.P("     default:")
-		gf.P("         return nil, ", fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", ", field.goName, "Str)")
-		gf.P(" }")
+		gf.P("	switch ", field.goName, "Str {")
+		gf.P("	case \"true\", \"t\", \"1\":")
+		gf.P("		arg.BoolValue = true")
+		gf.P("	case \"false\", \"f\", \"0\":")
+		gf.P("		arg.BoolValue = false")
+		gf.P("	default:")
+		gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", ", field.goName, "Str)")
+		gf.P("	}")
 	case protoreflect.EnumKind:
 		gf.P("	if ", field.enumName, "Value, ok := ", field.enumName, "_value[", stringsPackage.Ident("ToUpper"), "(", field.goName, "Str)]; ok {")
 		gf.P("		arg.", field.goName, " = ", field.enumName, "(", field.enumName, "Value)")
 		gf.P("	} else {")
 		gf.P("		if intOptionValue, err := ", strconvPackage.Ident("ParseInt"), "(", field.goName, "Str, 10, 32); err == nil {")
 		gf.P("			if _, ok := ", field.enumName, "_name[int32(intOptionValue)]; ok {")
-		gf.P("				arg.", field.goName, " = ", field.enumName, "(intOptionValue)")
+		gf.P("	arg.", field.goName, " = ", field.enumName, "(intOptionValue)")
 		gf.P("			}")
 		gf.P("		}")
 		gf.P("	}")
@@ -171,17 +186,48 @@ func (g *Generator) genBuildRequestArgument(
 // genResponseHandler generates common handler for any response
 func (g *Generator) genResponseHandler(gf *protogen.GeneratedFile) {
 	gf.P("func responseHandler", g.filename, "(ctx *", fasthttpPackage.Ident("RequestCtx"), ", resp interface{}, respErr error) {")
-	gf.P("ctx.SetContentType(\"application/json\")")
+	gf.P("	ctx.SetContentType(\"application/json\")")
 	gf.P()
-	gf.P("if respErr == nil {")
-	gf.P("    ctx.SetStatusCode(", fasthttpPackage.Ident("StatusOK"), ")")
-	gf.P("} else {")
-	gf.P("    ", logPackage.Ident("Println"), "(respErr)")
-	gf.P("    ctx.SetStatusCode(", fasthttpPackage.Ident("StatusInternalServerError"), ")")
+	gf.P("	if respErr == nil {")
+	gf.P("		ctx.SetStatusCode(", fasthttpPackage.Ident("StatusOK"), ")")
+	gf.P("	} else {")
+	gf.P("		", logPackage.Ident("Println"), "(respErr)")
+	gf.P("		ctx.SetStatusCode(", fasthttpPackage.Ident("StatusInternalServerError"), ")")
+	gf.P("	}")
+	gf.P()
+	gf.P("	var data, _ = ", jsonPackage.Ident("Marshal"), "(resp)")
+	gf.P("	_, _ = ctx.Write(data)")
 	gf.P("}")
 	gf.P()
-	gf.P("var data, _ = ", jsonPackage.Ident("Marshal"), "(resp)")
-	gf.P("_, _ = ctx.Write(data)")
+}
+
+// genChainMiddlewares generates middleware chain functions
+func (g *Generator) genChainMiddlewares(gf *protogen.GeneratedFile) {
+	gf.P("func chainMiddlewares", g.filename, "(")
+	gf.P("	middlewares []func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")),")
+	gf.P(") func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")) {")
+	gf.P("	switch len(middlewares) {")
+	gf.P("	case 0:")
+	gf.P("		return nil")
+	gf.P("	case 1:")
+	gf.P("		return middlewares[0]")
+	gf.P("	default:")
+	gf.P("		return func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")) {")
+	gf.P("			middlewares[0](ctx, getChainMiddlewareHandler", g.filename, "(middlewares, 0, handler))")
+	gf.P("		}")
+	gf.P("	}")
 	gf.P("}")
 	gf.P()
+	gf.P("func getChainMiddlewareHandler", g.filename, "(")
+	gf.P("	middlewares []func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")),")
+	gf.P("	curr int,")
+	gf.P("	finalHandler func(ctx *", fasthttpPackage.Ident("RequestCtx"), "),")
+	gf.P(") func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") {")
+	gf.P("	if curr == len(middlewares)-1 {")
+	gf.P("		return finalHandler")
+	gf.P("	}")
+	gf.P("	return func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") {")
+	gf.P("		middlewares[curr+1](ctx, getChainMiddlewareHandler", g.filename, "(middlewares, curr+1, finalHandler))")
+	gf.P("	}")
+	gf.P("}")
 }
