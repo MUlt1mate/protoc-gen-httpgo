@@ -69,6 +69,8 @@ func getFilename(file *protogen.File) string {
 		fileName = fileName[i+1:]
 	}
 
+	fileName = strings.NewReplacer(".", "", "-", "", "_", "").Replace(fileName)
+
 	return strings.ToUpper(fileName[:1]) + fileName[1:]
 }
 

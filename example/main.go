@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
@@ -13,14 +12,20 @@ import (
 
 func main() {
 	r := router.New()
-	_ = proto.RegisterServiceNameHTTPGoServer(context.TODO(), r, &implementation.Handler{})
+	_ = proto.RegisterServiceNameHTTPGoServer(
+		context.TODO(),
+		r,
+		&implementation.Handler{},
+		[]func(ctx *fasthttp.RequestCtx, next func(ctx *fasthttp.RequestCtx)){
+			implementation.LoggerMiddleware,
+		},
+	)
 
 	go func() { _ = fasthttp.ListenAndServe(":8080", r.Handler) }()
 
 	client, _ := proto.GetServiceNameHTTPGoClient(context.TODO(), &fasthttp.Client{}, "http://localhost:8080")
-	resp, err := client.RPCName(context.Background(), &proto.InputMsgName{Int64Argument: 999, StringArgument: "rand"})
-	log.Println(resp, err)
-	allTypesResp, err := client.AllTypesTest(context.Background(), &proto.AllTypesMsg{
+	_, _ = client.RPCName(context.Background(), &proto.InputMsgName{Int64Argument: 999, StringArgument: "rand"})
+	_, _ = client.AllTypesTest(context.Background(), &proto.AllTypesMsg{
 		BoolValue:     true,
 		EnumValue:     proto.Options_SECOND,
 		Int32Value:    1,
@@ -38,5 +43,4 @@ func main() {
 		StringValue:   "13",
 		BytesValue:    []byte("14"),
 	})
-	log.Println(allTypesResp, err)
 }

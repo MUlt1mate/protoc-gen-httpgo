@@ -24,6 +24,7 @@ func (g *Generator) GenerateServers(gen *protogen.Plugin, file *protogen.File) (
 	}
 
 	g.genResponseHandler(gf)
+	g.genChainMiddlewares(gf)
 	return nil
 }
 
@@ -41,7 +42,13 @@ func (g *Generator) genServiceInterface(gf *protogen.GeneratedFile, serviceName 
 
 // genServiceServer generates HTTP server for service
 func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, serviceName string) (err error) {
-	gf.P("func Register", serviceName, "HTTPGoServer(ctx context.Context, r *", routerPackage.Ident("Router"), ", h ", serviceName, "HTTPGoService) error {")
+	gf.P("func Register", serviceName, "HTTPGoServer(")
+	gf.P("	ctx ", contextPackage.Ident("Context"), ",")
+	gf.P("	r *", routerPackage.Ident("Router"), ",")
+	gf.P("	h ", serviceName, "HTTPGoService,")
+	gf.P("	middlewares []func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")),")
+	gf.P(") error {")
+	gf.P("	var middleware = chainMiddlewares", g.filename, "(middlewares)")
 	for _, method := range g.services[serviceName] {
 		g.genMethodDeclaration(gf, serviceName, method)
 	}
@@ -63,6 +70,7 @@ func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, serviceName str
 // genMethodDeclaration generates binding route with handler
 func (g *Generator) genMethodDeclaration(gf *protogen.GeneratedFile, serviceName string, method methodParams) {
 	gf.P("r.", method.httpMethodName, "( \"", method.uri, "\", func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
+	gf.P("		handler := func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") {")
 	gf.P("	   input, err := build", g.getBuildMethodInputName(serviceName, method), "(ctx)")
 	gf.P("	   if err != nil {")
 	gf.P("	   	responseHandler", g.filename, "(ctx, nil, err)")
@@ -70,13 +78,20 @@ func (g *Generator) genMethodDeclaration(gf *protogen.GeneratedFile, serviceName
 	gf.P("	   }")
 	gf.P("    response, err := h.", method.name, "(ctx, input)")
 	gf.P("    responseHandler", g.filename, "(ctx, response, err)")
+	gf.P("		}")
+	gf.P("		if middleware == nil {")
+	gf.P("			handler(ctx)")
+	gf.P("			return")
+	gf.P("		}")
+	gf.P("		middleware(ctx, handler)")
 	gf.P("})")
 	gf.P()
 }
 
 // getBuildMethodInputName creates name for function that builds method request
 func (g *Generator) getBuildMethodInputName(serviceName string, method methodParams) string {
-	return g.filename + serviceName + method.name + strings.ReplaceAll(method.inputMsgName.GoName, ".", "")
+	methodName := g.filename + serviceName + method.name + method.inputMsgName.GoName
+	return strings.NewReplacer(".", "", "-", "", "_", "").Replace(methodName)
 }
 
 // genBuildRequestMethod generates method that build request struct
@@ -184,4 +199,36 @@ func (g *Generator) genResponseHandler(gf *protogen.GeneratedFile) {
 	gf.P("_, _ = ctx.Write(data)")
 	gf.P("}")
 	gf.P()
+}
+
+// genChainMiddlewares generates middleware chain functions
+func (g *Generator) genChainMiddlewares(gf *protogen.GeneratedFile) {
+	gf.P("func chainMiddlewares", g.filename, "(")
+	gf.P("	middlewares []func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")),")
+	gf.P(") func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")) {")
+	gf.P("	switch len(middlewares) {")
+	gf.P("	case 0:")
+	gf.P("		return nil")
+	gf.P("	case 1:")
+	gf.P("		return middlewares[0]")
+	gf.P("	default:")
+	gf.P("		return func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")) {")
+	gf.P("			middlewares[0](ctx, getChainMiddlewareHandler", g.filename, "(middlewares, 0, handler))")
+	gf.P("		}")
+	gf.P("	}")
+	gf.P("}")
+	gf.P()
+	gf.P("func getChainMiddlewareHandler", g.filename, "(")
+	gf.P("	middlewares []func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")),")
+	gf.P("	curr int,")
+	gf.P("	finalHandler func(ctx *", fasthttpPackage.Ident("RequestCtx"), "),")
+	gf.P(") func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") {")
+	gf.P("	if curr == len(middlewares)-1 {")
+	gf.P("		return finalHandler")
+	gf.P("	}")
+	gf.P("	return func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") {")
+	gf.P("		middlewares[curr+1](ctx, getChainMiddlewareHandler", g.filename, "(middlewares, curr+1, finalHandler))")
+	gf.P("	}")
+	gf.P("}")
+
 }
