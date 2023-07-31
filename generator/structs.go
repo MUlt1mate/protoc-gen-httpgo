@@ -12,14 +12,36 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
-type Generator struct {
-	services map[string][]methodParams
-	filename string
-}
+type (
+	Generator struct {
+		filename string
+		services []serviceParams
+	}
+
+	serviceParams struct {
+		name    string
+		methods []methodParams
+	}
+
+	methodParams struct {
+		fields         map[string]field
+		inputMsgName   protogen.GoIdent
+		outputMsgName  protogen.GoIdent
+		name           string
+		httpMethodName string
+		uri            string
+	}
+
+	field struct {
+		goName    string
+		protoName string
+		enumName  string
+		kind      protoreflect.Kind
+	}
+)
 
 func NewGenerator(file *protogen.File) Generator {
 	g := Generator{
-		services: make(map[string][]methodParams),
 		filename: getFilename(file),
 	}
 	for _, srv := range file.Services {
@@ -55,7 +77,7 @@ func NewGenerator(file *protogen.File) Generator {
 			methods = append(methods, method)
 		}
 		if len(methods) != 0 {
-			g.services[srv.GoName] = methods
+			g.services = append(g.services, serviceParams{name: srv.GoName, methods: methods})
 		}
 	}
 	return g
@@ -72,22 +94,6 @@ func getFilename(file *protogen.File) string {
 	fileName = strings.NewReplacer(".", "", "-", "", "_", "").Replace(fileName)
 
 	return strings.ToUpper(fileName[:1]) + fileName[1:]
-}
-
-type methodParams struct {
-	fields         map[string]field
-	inputMsgName   protogen.GoIdent
-	outputMsgName  protogen.GoIdent
-	name           string
-	httpMethodName string
-	uri            string
-}
-
-type field struct {
-	goName    string
-	protoName string
-	enumName  string
-	kind      protoreflect.Kind
 }
 
 // getGolangTypeName we have to substitute some of the type names for go compiler

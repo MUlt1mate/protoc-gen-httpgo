@@ -11,35 +11,6 @@ import (
 	fasthttp "github.com/valyala/fasthttp"
 )
 
-var _ SecondServiceName2HTTPGoService = &SecondServiceName2HTTPGoClient{}
-
-type SecondServiceName2HTTPGoClient struct {
-	cl   *fasthttp.Client
-	host string
-}
-
-func GetSecondServiceName2HTTPGoClient(_ context.Context, cl *fasthttp.Client, host string) (*SecondServiceName2HTTPGoClient, error) {
-	return &SecondServiceName2HTTPGoClient{
-		cl:   cl,
-		host: host,
-	}, nil
-}
-
-func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
-	body, _ := json.Marshal(request)
-	req := &fasthttp.Request{}
-	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports"))
-	req.Header.SetMethod("POST")
-	reqResp := &fasthttp.Response{}
-	if err = p.cl.Do(req, reqResp); err != nil {
-		return nil, err
-	}
-	resp = &somepackage.SomeCustomMsg2{}
-	err = json.Unmarshal(reqResp.Body(), resp)
-	return resp, err
-}
-
 var _ ServiceName2HTTPGoService = &ServiceName2HTTPGoClient{}
 
 type ServiceName2HTTPGoClient struct {
@@ -55,6 +26,35 @@ func GetServiceName2HTTPGoClient(_ context.Context, cl *fasthttp.Client, host st
 }
 
 func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
+	body, _ := json.Marshal(request)
+	req := &fasthttp.Request{}
+	req.SetBody(body)
+	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports"))
+	req.Header.SetMethod("POST")
+	reqResp := &fasthttp.Response{}
+	if err = p.cl.Do(req, reqResp); err != nil {
+		return nil, err
+	}
+	resp = &somepackage.SomeCustomMsg2{}
+	err = json.Unmarshal(reqResp.Body(), resp)
+	return resp, err
+}
+
+var _ SecondServiceName2HTTPGoService = &SecondServiceName2HTTPGoClient{}
+
+type SecondServiceName2HTTPGoClient struct {
+	cl   *fasthttp.Client
+	host string
+}
+
+func GetSecondServiceName2HTTPGoClient(_ context.Context, cl *fasthttp.Client, host string) (*SecondServiceName2HTTPGoClient, error) {
+	return &SecondServiceName2HTTPGoClient{
+		cl:   cl,
+		host: host,
+	}, nil
+}
+
+func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
 	body, _ := json.Marshal(request)
 	req := &fasthttp.Request{}
 	req.SetBody(body)
