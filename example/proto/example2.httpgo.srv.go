@@ -45,8 +45,8 @@ func RegisterServiceName2HTTPGoServer(
 
 func buildExample2ServiceName2ImportsSomeCustomMsg1(ctx *fasthttp.RequestCtx) (arg *somepackage.SomeCustomMsg1, err error) {
 	arg = &somepackage.SomeCustomMsg1{}
-	json.Unmarshal(ctx.PostBody(), arg)
-	return arg, nil
+	err = json.Unmarshal(ctx.PostBody(), arg)
+	return arg, err
 }
 
 type SecondServiceName2HTTPGoService interface {
@@ -82,8 +82,8 @@ func RegisterSecondServiceName2HTTPGoServer(
 
 func buildExample2SecondServiceName2ImportsSomeCustomMsg1(ctx *fasthttp.RequestCtx) (arg *somepackage.SomeCustomMsg1, err error) {
 	arg = &somepackage.SomeCustomMsg1{}
-	json.Unmarshal(ctx.PostBody(), arg)
-	return arg, nil
+	err = json.Unmarshal(ctx.PostBody(), arg)
+	return arg, err
 }
 
 func responseHandlerExample2(ctx *fasthttp.RequestCtx, resp interface{}, respErr error) {
