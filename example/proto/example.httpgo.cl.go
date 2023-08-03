@@ -8,6 +8,7 @@ import (
 	json "encoding/json"
 	fmt "fmt"
 	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	easyjson "github.com/mailru/easyjson"
 	fasthttp "github.com/valyala/fasthttp"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -28,7 +29,15 @@ func GetServiceNameHTTPGoClient(_ context.Context, cl *fasthttp.Client, host str
 }
 
 func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *InputMsgName) (resp *OutputMsgName, err error) {
-	body, _ := json.Marshal(request)
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return
+	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%s/%d", request.StringArgument, request.Int64Argument))
@@ -38,12 +47,28 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *InputMsg
 		return nil, err
 	}
 	resp = &OutputMsgName{}
-	err = json.Unmarshal(reqResp.Body(), resp)
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(reqResp.Body(), respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(reqResp.Body(), resp); err != nil {
+			return nil, err
+		}
+	}
 	return resp, err
 }
 
 func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *AllTypesMsg) (resp *AllTypesMsg, err error) {
-	body, _ := json.Marshal(request)
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return
+	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%t/%s/%d/%d/%d/%d/%d/%d/%d/%d/%.0f/%d/%d/%.0f/%s/%s", request.BoolValue, request.EnumValue, request.Int32Value, request.Sint32Value, request.Uint32Value, request.Int64Value, request.Sint64Value, request.Uint64Value, request.Sfixed32Value, request.Fixed32Value, request.FloatValue, request.Sfixed64Value, request.Fixed64Value, request.DoubleValue, request.StringValue, request.BytesValue))
@@ -53,12 +78,28 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *All
 		return nil, err
 	}
 	resp = &AllTypesMsg{}
-	err = json.Unmarshal(reqResp.Body(), resp)
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(reqResp.Body(), respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(reqResp.Body(), resp); err != nil {
+			return nil, err
+		}
+	}
 	return resp, err
 }
 
 func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anypb.Any) (resp *emptypb.Empty, err error) {
-	body, _ := json.Marshal(request)
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return
+	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/commonTypes"))
@@ -68,12 +109,28 @@ func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anyp
 		return nil, err
 	}
 	resp = &emptypb.Empty{}
-	err = json.Unmarshal(reqResp.Body(), resp)
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(reqResp.Body(), respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(reqResp.Body(), resp); err != nil {
+			return nil, err
+		}
+	}
 	return resp, err
 }
 
 func (p *ServiceNameHTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
-	body, _ := json.Marshal(request)
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return
+	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports"))
@@ -83,12 +140,28 @@ func (p *ServiceNameHTTPGoClient) Imports(ctx context.Context, request *somepack
 		return nil, err
 	}
 	resp = &somepackage.SomeCustomMsg2{}
-	err = json.Unmarshal(reqResp.Body(), resp)
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(reqResp.Body(), respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(reqResp.Body(), resp); err != nil {
+			return nil, err
+		}
+	}
 	return resp, err
 }
 
 func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, request *InputMsgName) (resp *OutputMsgName, err error) {
-	body, _ := json.Marshal(request)
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return
+	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%s", request.StringArgument))
@@ -98,6 +171,14 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 		return nil, err
 	}
 	resp = &OutputMsgName{}
-	err = json.Unmarshal(reqResp.Body(), resp)
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(reqResp.Body(), respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(reqResp.Body(), resp); err != nil {
+			return nil, err
+		}
+	}
 	return resp, err
 }

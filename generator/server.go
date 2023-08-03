@@ -98,7 +98,7 @@ func (g *Generator) getBuildMethodInputName(serviceName string, method methodPar
 func (g *Generator) genBuildRequestMethod(gf *protogen.GeneratedFile, serviceName string, method methodParams) error {
 	gf.P("func build", g.getBuildMethodInputName(serviceName, method), "(ctx *", fasthttpPackage.Ident("RequestCtx"), ") (arg *", method.inputMsgName, ", err error) {")
 	gf.P("	arg = &", method.inputMsgName, "{}")
-	gf.P("	", jsonPackage.Ident("Unmarshal"), "(ctx.PostBody(), arg)")
+	g.genUnmarshalRequestStruct(gf)
 
 	var err error
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
@@ -109,7 +109,7 @@ func (g *Generator) genBuildRequestMethod(gf *protogen.GeneratedFile, serviceNam
 		}
 	}
 
-	gf.P("	return arg, nil")
+	gf.P("	return arg, err")
 	gf.P("}")
 	gf.P()
 	return nil
@@ -195,7 +195,7 @@ func (g *Generator) genResponseHandler(gf *protogen.GeneratedFile) {
 	gf.P("		ctx.SetStatusCode(", fasthttpPackage.Ident("StatusInternalServerError"), ")")
 	gf.P("	}")
 	gf.P()
-	gf.P("	var data, _ = ", jsonPackage.Ident("Marshal"), "(resp)")
+	g.genMarshalResponseStruct(gf)
 	gf.P("	_, _ = ctx.Write(data)")
 	gf.P("}")
 	gf.P()
@@ -230,4 +230,37 @@ func (g *Generator) genChainMiddlewares(gf *protogen.GeneratedFile) {
 	gf.P("		middlewares[curr+1](ctx, getChainMiddlewareHandler", g.filename, "(middlewares, curr+1, finalHandler))")
 	gf.P("	}")
 	gf.P("}")
+}
+
+// genMarshalResponseStruct generates marshalling from struct to []byte for response
+func (g *Generator) genMarshalResponseStruct(gf *protogen.GeneratedFile) {
+	switch *g.cfg.Marshaller {
+	case marshallerEasyJSON:
+		gf.P("	var data []byte")
+		gf.P("	if _, ok := resp.(", easyjsonPackage.Ident("Marshaler"), "); ok {")
+		gf.P("		data, _ = ", easyjsonPackage.Ident("Marshal"), "(resp.(", easyjsonPackage.Ident("Marshaler))"))
+		gf.P("	} else {")
+		gf.P("		data, _ = ", jsonPackage.Ident("Marshal"), "(resp)")
+		gf.P("	}")
+	default:
+		gf.P("	var data, _ = ", jsonPackage.Ident("Marshal"), "(resp)")
+	}
+}
+
+// genUnmarshalRequestStruct generates unmarshalling from []byte to struct for request
+func (g *Generator) genUnmarshalRequestStruct(gf *protogen.GeneratedFile) {
+	switch *g.cfg.Marshaller {
+	case marshallerEasyJSON:
+		gf.P("	if argEJ, ok := interface{}(arg).(", easyjsonPackage.Ident("Unmarshaler"), "); ok {")
+		gf.P("		if err = ", easyjsonPackage.Ident("Unmarshal"), "(ctx.PostBody(), argEJ); err != nil {")
+		gf.P("			return nil, err")
+		gf.P("		}")
+		gf.P("	} else {")
+		gf.P("		if err = ", jsonPackage.Ident("Unmarshal"), "(ctx.PostBody(), arg); err != nil {")
+		gf.P("			return nil, err")
+		gf.P("		}")
+		gf.P("	}")
+	default:
+		gf.P("	err = ", jsonPackage.Ident("Unmarshal"), "(ctx.PostBody(), arg)")
+	}
 }

@@ -61,7 +61,7 @@ func (g *Generator) genClientMethod(
 		return err
 	}
 	gf.P("func (p * ", srvName, "HTTPGoClient) ", method.name, "(ctx ", contextPackage.Ident("Context"), ", request *", method.inputMsgName, ") (resp *", method.outputMsgName, ", err error) {")
-	gf.P("	body, _ := ", jsonPackage.Ident("Marshal"), "(request)")
+	g.genMarshalRequestStruct(gf)
 	gf.P("	req := &fasthttp.Request{}")
 	gf.P("	req.SetBody(body)")
 	gf.P("	req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"\""+paramsURI+"))")
@@ -71,7 +71,7 @@ func (g *Generator) genClientMethod(
 	gf.P("		return nil, err")
 	gf.P("	}")
 	gf.P("	resp = &", method.outputMsgName, "{}")
-	gf.P("	err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), resp)")
+	g.genUnmarshalResponseStruct(gf)
 	gf.P("	return resp, err")
 	gf.P("}")
 	gf.P()
@@ -92,4 +92,40 @@ func (g *Generator) getRequestURIAndParams(method methodParams) (requestURI, par
 		}
 	}
 	return requestURI, paramsURI, nil
+}
+
+// genMarshalRequestStruct generates marshalling from struct to []byte for request
+func (g *Generator) genMarshalRequestStruct(gf *protogen.GeneratedFile) {
+	gf.P("	var body []byte")
+	switch *g.cfg.Marshaller {
+	case marshallerEasyJSON:
+		gf.P("	if rqEJ, ok := interface{}(request).(", easyjsonPackage.Ident("Marshaler"), "); ok {")
+		gf.P("		body, err = ", easyjsonPackage.Ident("Marshal"), "(rqEJ)")
+		gf.P("	} else {")
+		gf.P("		body, err = ", jsonPackage.Ident("Marshal"), "(request)")
+		gf.P("	}")
+	default:
+		gf.P("	body, err = ", jsonPackage.Ident("Marshal"), "(request)")
+	}
+	gf.P("	if err != nil {")
+	gf.P("		return")
+	gf.P("	}")
+}
+
+// genUnmarshalResponseStruct generates unmarshalling from []byte to struct for response
+func (g *Generator) genUnmarshalResponseStruct(gf *protogen.GeneratedFile) {
+	switch *g.cfg.Marshaller {
+	case marshallerEasyJSON:
+		gf.P("	if respEJ, ok := interface{}(resp).(", easyjsonPackage.Ident("Unmarshaler"), "); ok {")
+		gf.P("		if err = ", easyjsonPackage.Ident("Unmarshal"), "(reqResp.Body(), respEJ); err != nil {")
+		gf.P("			return nil, err")
+		gf.P("		}")
+		gf.P("	} else {")
+		gf.P("		if err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), resp); err != nil {")
+		gf.P("			return nil, err")
+		gf.P("		}")
+		gf.P("	}")
+	default:
+		gf.P("	err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), resp)")
+	}
 }

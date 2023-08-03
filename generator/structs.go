@@ -12,9 +12,14 @@ import (
 	"google.golang.org/protobuf/types/descriptorpb"
 )
 
+const (
+	marshallerEasyJSON = "easyjson"
+)
+
 type (
 	Generator struct {
 		filename string
+		cfg      Config
 		services []serviceParams
 	}
 
@@ -38,11 +43,15 @@ type (
 		enumName  string
 		kind      protoreflect.Kind
 	}
+	Config struct {
+		Marshaller *string
+	}
 )
 
-func NewGenerator(file *protogen.File) Generator {
+func NewGenerator(file *protogen.File, cfg Config) Generator {
 	g := Generator{
 		filename: getFilename(file),
+		cfg:      cfg,
 	}
 	for _, srv := range file.Services {
 		var methods []methodParams

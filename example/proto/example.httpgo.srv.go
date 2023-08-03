@@ -10,6 +10,7 @@ import (
 	fmt "fmt"
 	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 	router "github.com/fasthttp/router"
+	easyjson "github.com/mailru/easyjson"
 	fasthttp "github.com/valyala/fasthttp"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -123,7 +124,15 @@ func RegisterServiceNameHTTPGoServer(
 
 func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
 	arg = &InputMsgName{}
-	json.Unmarshal(ctx.PostBody(), arg)
+	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
+			return nil, err
+		}
+	}
 	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
 	if !ok {
 		return nil, errors.New("incorrect type for parameter StringArgument")
@@ -139,12 +148,20 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 		return nil, fmt.Errorf("conversion failed for parameter Int64Argument: %w", err)
 	}
 
-	return arg, nil
+	return arg, err
 }
 
 func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (arg *AllTypesMsg, err error) {
 	arg = &AllTypesMsg{}
-	json.Unmarshal(ctx.PostBody(), arg)
+	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
+			return nil, err
+		}
+	}
 	BoolValueStr, ok := ctx.UserValue("BoolValue").(string)
 	if !ok {
 		return nil, errors.New("incorrect type for parameter BoolValue")
@@ -300,31 +317,55 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 	}
 	arg.BytesValue = []byte(BytesValueStr)
 
-	return arg, nil
+	return arg, err
 }
 
 func buildExampleServiceNameCommonTypesAny(ctx *fasthttp.RequestCtx) (arg *anypb.Any, err error) {
 	arg = &anypb.Any{}
-	json.Unmarshal(ctx.PostBody(), arg)
-	return arg, nil
+	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
+			return nil, err
+		}
+	}
+	return arg, err
 }
 
 func buildExampleServiceNameImportsSomeCustomMsg1(ctx *fasthttp.RequestCtx) (arg *somepackage.SomeCustomMsg1, err error) {
 	arg = &somepackage.SomeCustomMsg1{}
-	json.Unmarshal(ctx.PostBody(), arg)
-	return arg, nil
+	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
+			return nil, err
+		}
+	}
+	return arg, err
 }
 
 func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
 	arg = &InputMsgName{}
-	json.Unmarshal(ctx.PostBody(), arg)
+	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
+			return nil, err
+		}
+	}
 	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
 	if !ok {
 		return nil, errors.New("incorrect type for parameter StringArgument")
 	}
 	arg.StringArgument = StringArgumentStr
 
-	return arg, nil
+	return arg, err
 }
 
 func responseHandlerExample(ctx *fasthttp.RequestCtx, resp interface{}, respErr error) {
@@ -337,7 +378,12 @@ func responseHandlerExample(ctx *fasthttp.RequestCtx, resp interface{}, respErr 
 		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
 	}
 
-	var data, _ = json.Marshal(resp)
+	var data []byte
+	if _, ok := resp.(easyjson.Marshaler); ok {
+		data, _ = easyjson.Marshal(resp.(easyjson.Marshaler))
+	} else {
+		data, _ = json.Marshal(resp)
+	}
 	_, _ = ctx.Write(data)
 }
 

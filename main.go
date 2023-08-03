@@ -1,18 +1,28 @@
 package main
 
 import (
+	"flag"
+
 	"google.golang.org/protobuf/compiler/protogen"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/generator"
 )
 
+var flags flag.FlagSet
+
 func main() {
-	protogen.Options{}.Run(func(gen *protogen.Plugin) (err error) {
+	cfg := generator.Config{
+		Marshaller: flags.String("marshaller", "", "custom structs marshaller"),
+	}
+	opts := protogen.Options{
+		ParamFunc: flags.Set,
+	}
+	opts.Run(func(gen *protogen.Plugin) (err error) {
 		for _, f := range gen.Files {
 			if !f.Generate {
 				continue
 			}
-			g := generator.NewGenerator(f)
+			g := generator.NewGenerator(f, cfg)
 			if err = g.GenerateServers(gen, f); err != nil {
 				return err
 			}

@@ -26,7 +26,11 @@ func GetServiceName2HTTPGoClient(_ context.Context, cl *fasthttp.Client, host st
 }
 
 func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
-	body, _ := json.Marshal(request)
+	var body []byte
+	body, err = json.Marshal(request)
+	if err != nil {
+		return
+	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports"))
@@ -55,7 +59,11 @@ func GetSecondServiceName2HTTPGoClient(_ context.Context, cl *fasthttp.Client, h
 }
 
 func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
-	body, _ := json.Marshal(request)
+	var body []byte
+	body, err = json.Marshal(request)
+	if err != nil {
+		return
+	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports"))
