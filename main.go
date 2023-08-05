@@ -13,6 +13,7 @@ var flags flag.FlagSet
 func main() {
 	cfg := generator.Config{
 		Marshaller: flags.String("marshaller", "", "custom structs marshaller"),
+		Only:       flags.String("only", "", "generate only server or client"),
 	}
 	opts := protogen.Options{
 		ParamFunc: flags.Set,
@@ -23,10 +24,11 @@ func main() {
 				continue
 			}
 			g := generator.NewGenerator(f, cfg)
-			if err = g.GenerateServers(gen, f); err != nil {
+			gf := gen.NewGeneratedFile(f.GeneratedFilenamePrefix+".httpgo.go", f.GoImportPath)
+			if err = g.GenerateServers(gf, f); err != nil {
 				return err
 			}
-			if err = g.GenerateClients(gen, f); err != nil {
+			if err = g.GenerateClients(gf); err != nil {
 				return err
 			}
 		}

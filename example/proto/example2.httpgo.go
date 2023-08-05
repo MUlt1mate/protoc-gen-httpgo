@@ -11,6 +11,13 @@ import (
 	fasthttp "github.com/valyala/fasthttp"
 )
 
+type ServiceName2HTTPGoService interface {
+	Imports(context.Context, *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error)
+}
+type SecondServiceName2HTTPGoService interface {
+	Imports(context.Context, *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error)
+}
+
 var _ ServiceName2HTTPGoService = &ServiceName2HTTPGoClient{}
 
 type ServiceName2HTTPGoClient struct {
