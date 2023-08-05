@@ -14,6 +14,8 @@ import (
 
 const (
 	marshallerEasyJSON = "easyjson"
+	onlyServer         = "server"
+	onlyClient         = "client"
 )
 
 type (
@@ -45,6 +47,7 @@ type (
 	}
 	Config struct {
 		Marshaller *string
+		Only       *string
 	}
 )
 
