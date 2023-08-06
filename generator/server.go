@@ -29,7 +29,7 @@ func (g *Generator) GenerateServers(gf *protogen.GeneratedFile, file *protogen.F
 	}
 
 	g.genResponseHandler(gf)
-	g.genChainMiddlewares(gf)
+	g.genChainServerMiddlewares(gf)
 	return nil
 }
 
@@ -53,7 +53,7 @@ func (g *Generator) genServiceServer(gf *protogen.GeneratedFile, service service
 	gf.P("	h ", service.name, "HTTPGoService,")
 	gf.P("	middlewares []func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")),")
 	gf.P(") error {")
-	gf.P("	var middleware = chainMiddlewares", g.filename, "(middlewares)")
+	gf.P("	var middleware = chainServerMiddlewares", g.filename, "(middlewares)")
 	for _, method := range service.methods {
 		g.genMethodDeclaration(gf, service.name, method)
 	}
@@ -206,9 +206,9 @@ func (g *Generator) genResponseHandler(gf *protogen.GeneratedFile) {
 	gf.P()
 }
 
-// genChainMiddlewares generates middleware chain functions
-func (g *Generator) genChainMiddlewares(gf *protogen.GeneratedFile) {
-	gf.P("func chainMiddlewares", g.filename, "(")
+// genChainServerMiddlewares generates server middleware chain functions
+func (g *Generator) genChainServerMiddlewares(gf *protogen.GeneratedFile) {
+	gf.P("func chainServerMiddlewares", g.filename, "(")
 	gf.P("	middlewares []func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")),")
 	gf.P(") func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")) {")
 	gf.P("	switch len(middlewares) {")
@@ -218,12 +218,12 @@ func (g *Generator) genChainMiddlewares(gf *protogen.GeneratedFile) {
 	gf.P("		return middlewares[0]")
 	gf.P("	default:")
 	gf.P("		return func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")) {")
-	gf.P("			middlewares[0](ctx, getChainMiddlewareHandler", g.filename, "(middlewares, 0, handler))")
+	gf.P("			middlewares[0](ctx, getChainServerMiddlewareHandler", g.filename, "(middlewares, 0, handler))")
 	gf.P("		}")
 	gf.P("	}")
 	gf.P("}")
 	gf.P()
-	gf.P("func getChainMiddlewareHandler", g.filename, "(")
+	gf.P("func getChainServerMiddlewareHandler", g.filename, "(")
 	gf.P("	middlewares []func(ctx *", fasthttpPackage.Ident("RequestCtx"), ", handler func(ctx *", fasthttpPackage.Ident("RequestCtx"), ")),")
 	gf.P("	curr int,")
 	gf.P("	finalHandler func(ctx *", fasthttpPackage.Ident("RequestCtx"), "),")
@@ -232,7 +232,7 @@ func (g *Generator) genChainMiddlewares(gf *protogen.GeneratedFile) {
 	gf.P("		return finalHandler")
 	gf.P("	}")
 	gf.P("	return func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") {")
-	gf.P("		middlewares[curr+1](ctx, getChainMiddlewareHandler", g.filename, "(middlewares, curr+1, finalHandler))")
+	gf.P("		middlewares[curr+1](ctx, getChainServerMiddlewareHandler", g.filename, "(middlewares, curr+1, finalHandler))")
 	gf.P("	}")
 	gf.P("}")
 }
