@@ -23,12 +23,15 @@ func main() {
 			if !f.Generate {
 				continue
 			}
-			g := generator.NewGenerator(f, cfg)
-			gf := gen.NewGeneratedFile(f.GeneratedFilenamePrefix+".httpgo.go", f.GoImportPath)
-			if err = g.GenerateServers(gf, f); err != nil {
+			g := generator.NewGenerator(
+				f,
+				cfg,
+				gen.NewGeneratedFile(f.GeneratedFilenamePrefix+".httpgo.go", f.GoImportPath),
+			)
+			if err = g.GenerateServers(f); err != nil {
 				return err
 			}
-			if err = g.GenerateClients(gf); err != nil {
+			if err = g.GenerateClients(); err != nil {
 				return err
 			}
 		}

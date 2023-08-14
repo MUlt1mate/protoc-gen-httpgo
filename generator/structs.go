@@ -20,9 +20,14 @@ const (
 
 type (
 	Generator struct {
-		filename string
-		cfg      Config
-		services []serviceParams
+		gf           *protogen.GeneratedFile
+		cfg          Config
+		filename     string
+		clientInput  string
+		clientOutput string
+		serverInput  string
+		serverOutput string
+		services     []serviceParams
 	}
 
 	serviceParams struct {
@@ -51,11 +56,23 @@ type (
 	}
 )
 
-func NewGenerator(file *protogen.File, cfg Config) Generator {
+func NewGenerator(
+	file *protogen.File,
+	cfg Config,
+	gf *protogen.GeneratedFile,
+) Generator {
 	g := Generator{
 		filename: getFilename(file),
 		cfg:      cfg,
+		gf:       gf,
 	}
+	g.initTemplates(gf)
+	g.fillServices(file)
+	return g
+}
+
+// fillServices scans services and methods from file for further generation
+func (g *Generator) fillServices(file *protogen.File) {
 	for _, srv := range file.Services {
 		var methods []methodParams
 		for _, protoMethod := range srv.Methods {
@@ -92,7 +109,15 @@ func NewGenerator(file *protogen.File, cfg Config) Generator {
 			g.services = append(g.services, serviceParams{name: srv.GoName, methods: methods})
 		}
 	}
-	return g
+}
+
+// initTemplates fill predefined templates
+// we have to convert to strings here, because we can't pass other types like slices to protogen.P()
+func (g *Generator) initTemplates(gf *protogen.GeneratedFile) {
+	g.serverInput = "ctx *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("RequestCtx"))
+	g.serverOutput = "resp interface{}, err error"
+	g.clientInput = "req *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Request"))
+	g.clientOutput = "resp *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Response")) + ", err error"
 }
 
 // getFilename returns capitalized filename for generated method naming

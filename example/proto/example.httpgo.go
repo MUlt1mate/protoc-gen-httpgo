@@ -14,7 +14,6 @@ import (
 	fasthttp "github.com/valyala/fasthttp"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	log "log"
 	strconv "strconv"
 	strings "strings"
 )
@@ -31,18 +30,16 @@ func RegisterServiceNameHTTPGoServer(
 	ctx context.Context,
 	r *router.Router,
 	h ServiceNameHTTPGoService,
-	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)),
+	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error)) (resp interface{}, err error),
 ) error {
 	var middleware = chainServerMiddlewaresExample(middlewares)
 	r.POST("/v1/test/{stringArgument}/{int64Argument}", func(ctx *fasthttp.RequestCtx) {
-		handler := func(ctx *fasthttp.RequestCtx) {
+		handler := func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
 			input, err := buildExampleServiceNameRPCNameInputMsgName(ctx)
 			if err != nil {
-				responseHandlerExample(ctx, nil, err)
-				return
+				return nil, err
 			}
-			response, err := h.RPCName(ctx, input)
-			responseHandlerExample(ctx, response, err)
+			return h.RPCName(ctx, input)
 		}
 		if middleware == nil {
 			handler(ctx)
@@ -52,14 +49,12 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}", func(ctx *fasthttp.RequestCtx) {
-		handler := func(ctx *fasthttp.RequestCtx) {
+		handler := func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
 			input, err := buildExampleServiceNameAllTypesTestAllTypesMsg(ctx)
 			if err != nil {
-				responseHandlerExample(ctx, nil, err)
-				return
+				return nil, err
 			}
-			response, err := h.AllTypesTest(ctx, input)
-			responseHandlerExample(ctx, response, err)
+			return h.AllTypesTest(ctx, input)
 		}
 		if middleware == nil {
 			handler(ctx)
@@ -69,14 +64,12 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/test/commonTypes", func(ctx *fasthttp.RequestCtx) {
-		handler := func(ctx *fasthttp.RequestCtx) {
+		handler := func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
 			input, err := buildExampleServiceNameCommonTypesAny(ctx)
 			if err != nil {
-				responseHandlerExample(ctx, nil, err)
-				return
+				return nil, err
 			}
-			response, err := h.CommonTypes(ctx, input)
-			responseHandlerExample(ctx, response, err)
+			return h.CommonTypes(ctx, input)
 		}
 		if middleware == nil {
 			handler(ctx)
@@ -86,14 +79,12 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/test/imports", func(ctx *fasthttp.RequestCtx) {
-		handler := func(ctx *fasthttp.RequestCtx) {
+		handler := func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
 			input, err := buildExampleServiceNameImportsSomeCustomMsg1(ctx)
 			if err != nil {
-				responseHandlerExample(ctx, nil, err)
-				return
+				return nil, err
 			}
-			response, err := h.Imports(ctx, input)
-			responseHandlerExample(ctx, response, err)
+			return h.Imports(ctx, input)
 		}
 		if middleware == nil {
 			handler(ctx)
@@ -103,14 +94,12 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/test/{stringArgument}", func(ctx *fasthttp.RequestCtx) {
-		handler := func(ctx *fasthttp.RequestCtx) {
+		handler := func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
 			input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(ctx)
 			if err != nil {
-				responseHandlerExample(ctx, nil, err)
-				return
+				return nil, err
 			}
-			response, err := h.SameInputAndOutput(ctx, input)
-			responseHandlerExample(ctx, response, err)
+			return h.SameInputAndOutput(ctx, input)
 		}
 		if middleware == nil {
 			handler(ctx)
@@ -368,50 +357,31 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 	return arg, err
 }
 
-func responseHandlerExample(ctx *fasthttp.RequestCtx, resp interface{}, respErr error) {
-	ctx.SetContentType("application/json")
-
-	if respErr == nil {
-		ctx.SetStatusCode(fasthttp.StatusOK)
-	} else {
-		log.Println(respErr)
-		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
-	}
-
-	var data []byte
-	if _, ok := resp.(easyjson.Marshaler); ok {
-		data, _ = easyjson.Marshal(resp.(easyjson.Marshaler))
-	} else {
-		data, _ = json.Marshal(resp)
-	}
-	_, _ = ctx.Write(data)
-}
-
 func chainServerMiddlewaresExample(
-	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)),
-) func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)) {
+	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error)) (resp interface{}, err error),
+) func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error)) (resp interface{}, err error) {
 	switch len(middlewares) {
 	case 0:
 		return nil
 	case 1:
 		return middlewares[0]
 	default:
-		return func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)) {
-			middlewares[0](ctx, getChainServerMiddlewareHandlerExample(middlewares, 0, handler))
+		return func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error)) (resp interface{}, err error) {
+			return middlewares[0](ctx, getChainServerMiddlewareHandlerExample(middlewares, 0, handler))
 		}
 	}
 }
 
 func getChainServerMiddlewareHandlerExample(
-	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx)),
+	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error)) (resp interface{}, err error),
 	curr int,
-	finalHandler func(ctx *fasthttp.RequestCtx),
-) func(ctx *fasthttp.RequestCtx) {
+	finalHandler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error),
+) func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
 	if curr == len(middlewares)-1 {
 		return finalHandler
 	}
-	return func(ctx *fasthttp.RequestCtx) {
-		middlewares[curr+1](ctx, getChainServerMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
+	return func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
+		return middlewares[curr+1](ctx, getChainServerMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
 	}
 }
 
