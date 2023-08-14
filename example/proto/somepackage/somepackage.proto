@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package example;
+package somepackage;
 option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage;somepackage";
 
 message someCustomMsg1 {
