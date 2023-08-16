@@ -6,7 +6,7 @@ option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/example/proto;proto"
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/any.proto";
-import "somepackage.proto";
+import "somepackage/somepackage.proto";
 
 service ServiceName {
   rpc RPCName (InputMsgName) returns (OutputMsgName) {
@@ -24,7 +24,7 @@ service ServiceName {
       post: "/v1/test/commonTypes"
     };
   }
-  rpc Imports (someCustomMsg1) returns (someCustomMsg2) {
+  rpc Imports (somepackage.someCustomMsg1) returns (somepackage.someCustomMsg2) {
     option (google.api.http) = {
       post: "/v1/test/imports"
     };
