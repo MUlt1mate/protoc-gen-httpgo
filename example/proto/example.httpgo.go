@@ -416,7 +416,7 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *InputMsg
 		body, err = json.Marshal(request)
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
@@ -458,7 +458,7 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *All
 		body, err = json.Marshal(request)
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
@@ -500,7 +500,7 @@ func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anyp
 		body, err = json.Marshal(request)
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
@@ -542,7 +542,7 @@ func (p *ServiceNameHTTPGoClient) Imports(ctx context.Context, request *somepack
 		body, err = json.Marshal(request)
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
@@ -584,7 +584,7 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 		body, err = json.Marshal(request)
 	}
 	if err != nil {
-		return
+		return nil, err
 	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)

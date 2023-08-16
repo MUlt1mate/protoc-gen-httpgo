@@ -22,6 +22,7 @@ gen:				## generate example
 test:    			## run tests
 	@printf "\033[35mRunning tests...\033[0m\n"
 	@go test -v ./...
+	@(cd ./example/ && go test -v ./...)
 
 lint:        		## lint code
 	@printf "\033[34mLinting code...\033[0m %s\n"

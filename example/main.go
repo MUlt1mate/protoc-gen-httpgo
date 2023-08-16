@@ -7,12 +7,13 @@ import (
 	"github.com/valyala/fasthttp"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/middleware"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto"
 )
 
 var (
-	serverMiddlewares = implementation.ServerMiddlewares
-	clientMiddlewares = implementation.ClientMiddlewares
+	serverMiddlewares = middleware.ServerMiddlewares
+	clientMiddlewares = middleware.ClientMiddlewares
 )
 
 func main() {
