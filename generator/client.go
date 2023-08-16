@@ -125,7 +125,7 @@ func (g *Generator) genMarshalRequestStruct() {
 		g.gf.P("	body, err = ", jsonPackage.Ident("Marshal"), "(request)")
 	}
 	g.gf.P("	if err != nil {")
-	g.gf.P("		return")
+	g.gf.P("		return nil, err")
 	g.gf.P("	}")
 }
 

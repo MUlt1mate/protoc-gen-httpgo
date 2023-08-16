@@ -45,7 +45,7 @@ func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepac
 	var body []byte
 	body, err = json.Marshal(request)
 	if err != nil {
-		return
+		return nil, err
 	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
@@ -98,7 +98,7 @@ func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *s
 	var body []byte
 	body, err = json.Marshal(request)
 	if err != nil {
-		return
+		return nil, err
 	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
