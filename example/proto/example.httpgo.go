@@ -462,7 +462,7 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *All
 	}
 	req := &fasthttp.Request{}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%t/%s/%d/%d/%d/%d/%d/%d/%d/%d/%.0f/%d/%d/%.0f/%s/%s", request.BoolValue, request.EnumValue, request.Int32Value, request.Sint32Value, request.Uint32Value, request.Int64Value, request.Sint64Value, request.Uint64Value, request.Sfixed32Value, request.Fixed32Value, request.FloatValue, request.Sfixed64Value, request.Fixed64Value, request.DoubleValue, request.StringValue, request.BytesValue))
+	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%t/%s/%d/%d/%d/%d/%d/%d/%d/%d/%f/%d/%d/%f/%s/%s", request.BoolValue, request.EnumValue, request.Int32Value, request.Sint32Value, request.Uint32Value, request.Int64Value, request.Sint64Value, request.Uint64Value, request.Sfixed32Value, request.Fixed32Value, request.FloatValue, request.Sfixed64Value, request.Fixed64Value, request.DoubleValue, request.StringValue, request.BytesValue))
 	req.Header.SetMethod("POST")
 	reqResp := &fasthttp.Response{}
 	var handler = func(req *fasthttp.Request) (resp *fasthttp.Response, err error) {

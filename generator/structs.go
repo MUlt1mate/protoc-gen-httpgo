@@ -167,7 +167,7 @@ func (f field) getVariablePlaceholder() (string, error) {
 	case
 		protoreflect.FloatKind,
 		protoreflect.DoubleKind:
-		return "%.0f", nil
+		return "%f", nil
 	case protoreflect.BoolKind:
 		return "%t", nil
 	default:

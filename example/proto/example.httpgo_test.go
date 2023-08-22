@@ -5,18 +5,24 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"sync"
 	"testing"
 
+	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/middleware"
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 )
 
-type testCase struct {
+type testCaseClient struct {
 	name         string
 	method       string
 	uri          string
@@ -25,6 +31,16 @@ type testCase struct {
 	responseErr  error
 	requestBody  []byte
 	mockResponse responseData
+}
+
+type testCaseServer struct {
+	name           string
+	method         string
+	uri            string
+	responseBody   []byte
+	responseErr    error
+	requestBody    []byte
+	respStatusCode int
 }
 
 type requestData struct {
@@ -38,7 +54,17 @@ type responseData struct {
 	code int
 }
 
-func TestMockHTTPServer(t *testing.T) {
+type readCloser struct {
+	io.Reader
+}
+
+func (readCloser) Close() error { return nil }
+
+func getReadCloser(r io.Reader) io.ReadCloser {
+	return readCloser{r}
+}
+
+func TestHTTPGoClient(t *testing.T) {
 	var (
 		reqCh  = make(chan requestData)
 		respCh = make(chan responseData)
@@ -59,7 +85,7 @@ func TestMockHTTPServer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	tests := []testCase{
+	tests := []testCaseClient{
 		{
 			name:        "RPCName Valid Request 1",
 			method:      http.MethodPost,
@@ -93,11 +119,11 @@ func TestMockHTTPServer(t *testing.T) {
 			}
 		})
 	}
-	tests = []testCase{
+	tests = []testCaseClient{
 		{
 			name:   "AllTypesTest Valid Request 1",
 			method: http.MethodPost,
-			uri:    "/v1/test/true/SECOND/1/2/3/4/5/6/7/8/9/10/11/12/string/bytes",
+			uri:    "/v1/test/true/SECOND/1/2/3/4/5/6/7/8/9.100000/10/11/12.200000/string/bytes",
 			request: &AllTypesMsg{
 				BoolValue:     true,
 				EnumValue:     Options_SECOND,
@@ -109,10 +135,10 @@ func TestMockHTTPServer(t *testing.T) {
 				Uint64Value:   6,
 				Sfixed32Value: 7,
 				Fixed32Value:  8,
-				FloatValue:    9.0,
+				FloatValue:    9.1,
 				Sfixed64Value: 10,
 				Fixed64Value:  11,
-				DoubleValue:   12.0,
+				DoubleValue:   12.2,
 				StringValue:   "string",
 				BytesValue:    []byte("bytes"),
 			},
@@ -127,17 +153,17 @@ func TestMockHTTPServer(t *testing.T) {
 				Uint64Value:   7,
 				Sfixed32Value: 8,
 				Fixed32Value:  9,
-				FloatValue:    10,
+				FloatValue:    10.1,
 				Sfixed64Value: 11,
 				Fixed64Value:  12,
-				DoubleValue:   13,
+				DoubleValue:   13.2,
 				StringValue:   "stringResp",
 				BytesValue:    []byte("bytesResp"),
 			},
 			responseErr: nil,
-			requestBody: []byte(`{"BoolValue":true,"EnumValue":1,"Int32Value":1,"Sint32Value":2,"Uint32Value":3,"Int64Value":4,"Sint64Value":5,"Uint64Value":6,"Sfixed32Value":7,"Fixed32Value":8,"FloatValue":9,"Sfixed64Value":10,"Fixed64Value":11,"DoubleValue":12,"StringValue":"string","BytesValue":"Ynl0ZXM="}`),
+			requestBody: []byte(`{"BoolValue":true,"EnumValue":1,"Int32Value":1,"Sint32Value":2,"Uint32Value":3,"Int64Value":4,"Sint64Value":5,"Uint64Value":6,"Sfixed32Value":7,"Fixed32Value":8,"FloatValue":9.1,"Sfixed64Value":10,"Fixed64Value":11,"DoubleValue":12.2,"StringValue":"string","BytesValue":"Ynl0ZXM="}`),
 			mockResponse: responseData{
-				body: []byte(`{"BoolValue":true,"EnumValue":1,"Int32Value":2,"Sint32Value":3,"Uint32Value":4,"Int64Value":5,"Sint64Value":6,"Uint64Value":7,"Sfixed32Value":8,"Fixed32Value":9,"FloatValue":10,"Sfixed64Value":11,"Fixed64Value":12,"DoubleValue":13,"StringValue":"stringResp","BytesValue":"Ynl0ZXNSZXNw"}`),
+				body: []byte(`{"BoolValue":true,"EnumValue":1,"Int32Value":2,"Sint32Value":3,"Uint32Value":4,"Int64Value":5,"Sint64Value":6,"Uint64Value":7,"Sfixed32Value":8,"Fixed32Value":9,"FloatValue":10.1,"Sfixed64Value":11,"Fixed64Value":12,"DoubleValue":13.2,"StringValue":"stringResp","BytesValue":"Ynl0ZXNSZXNw"}`),
 				code: http.StatusOK,
 			},
 		},
@@ -163,10 +189,129 @@ func TestMockHTTPServer(t *testing.T) {
 	}
 }
 
+type Handler struct {
+}
+
+var _ ServiceNameHTTPGoService = &Handler{}
+
+func (h *Handler) CommonTypes(_ context.Context, _ *anypb.Any) (*emptypb.Empty, error) {
+	panic("implement me")
+}
+
+func (h *Handler) Imports(_ context.Context, _ *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error) {
+	panic("implement me")
+}
+
+func (h *Handler) SameInputAndOutput(_ context.Context, _ *InputMsgName) (*OutputMsgName, error) {
+	panic("implement me")
+}
+
+func (h *Handler) RPCName(_ context.Context, request *InputMsgName) (*OutputMsgName, error) {
+	p := &OutputMsgName{
+		StringValue: request.StringArgument,
+		IntValue:    request.Int64Argument,
+	}
+	return p, nil
+}
+
+func (h *Handler) AllTypesTest(_ context.Context, msg *AllTypesMsg) (*AllTypesMsg, error) {
+	p := &AllTypesMsg{
+		BoolValue:     msg.BoolValue,
+		EnumValue:     msg.EnumValue,
+		Int32Value:    msg.Int32Value,
+		Sint32Value:   msg.Sint32Value,
+		Uint32Value:   msg.Uint32Value,
+		Int64Value:    msg.Int64Value,
+		Sint64Value:   msg.Sint64Value,
+		Uint64Value:   msg.Uint64Value,
+		Sfixed32Value: msg.Sfixed32Value,
+		Fixed32Value:  msg.Fixed32Value,
+		FloatValue:    msg.FloatValue,
+		Sfixed64Value: msg.Sfixed64Value,
+		Fixed64Value:  msg.Fixed64Value,
+		DoubleValue:   msg.DoubleValue,
+		StringValue:   msg.StringValue,
+		BytesValue:    msg.BytesValue,
+	}
+	return p, nil
+}
+
+func TestHTTPGoServer(t *testing.T) {
+	var (
+		err     error
+		ctx                              = context.Background()
+		handler ServiceNameHTTPGoService = &Handler{}
+		r                                = router.New()
+	)
+	if err = RegisterServiceNameHTTPGoServer(ctx, r, handler, middleware.ServerMiddlewares); err != nil {
+		t.Fatal(err)
+	}
+
+	ln, err := net.Listen("tcp4", ":8080")
+	if err != nil {
+		t.Fatal(err)
+	}
+	go func() {
+		_ = fasthttp.Serve(ln, r.Handler)
+	}()
+
+	tests := []testCaseServer{
+		{
+			name:           "RPCName Valid Request 1",
+			method:         http.MethodPost,
+			uri:            "/v1/test/test/1",
+			responseBody:   []byte(`{"stringValue":"test","intValue":1}`),
+			responseErr:    nil,
+			requestBody:    []byte(`{"int64Argument":1,"stringArgument":"test"}`),
+			respStatusCode: http.StatusOK,
+		},
+	}
+	var (
+		resp       *http.Response
+		requestURL *url.URL
+		host       = "http://" + ln.Addr().String()
+		body       []byte
+		client     = http.Client{}
+	)
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if requestURL, err = requestURL.Parse(host + test.uri); err != nil {
+				t.Fatal(err)
+			}
+			req := &http.Request{
+				Method: test.method,
+				URL:    requestURL,
+				Header: http.Header{},
+				Body:   getReadCloser(bytes.NewReader(test.requestBody)),
+			}
+
+			req.Header.Add("Content-Type", "application/json")
+			if resp, err = client.Do(req); err != nil {
+				t.Fatal(err)
+			}
+			if body, err = io.ReadAll(resp.Body); err != nil {
+				t.Fatal(err)
+			}
+			if !errors.Is(test.responseErr, err) {
+				t.Errorf("%s: Expected error method '%v', but got '%v'", test.name, test.responseErr, err)
+			}
+
+			if resp.StatusCode != test.respStatusCode {
+				t.Errorf("%s: Expected status  '%d', but got '%d'", test.name, test.respStatusCode, resp.StatusCode)
+			}
+
+			if bytes.Compare(body, test.responseBody) != 0 {
+				t.Errorf("%s: Expected responseBody body '%s', but got '%s'", test.name, string(test.responseBody), string(body))
+			}
+		})
+	}
+}
+
 func compareResults(
 	t *testing.T,
 	request requestData,
-	test testCase,
+	test testCaseClient,
 	err error,
 ) {
 	if request.uri != test.uri {
