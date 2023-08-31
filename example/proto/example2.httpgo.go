@@ -37,7 +37,7 @@ func GetServiceName2HTTPGoClient(
 		cl:          cl,
 		host:        host,
 		middlewares: middlewares,
-		middleware:  chainClientMiddlewaresExample(middlewares),
+		middleware:  chainClientMiddlewaresExample2(middlewares),
 	}, nil
 }
 
@@ -90,7 +90,7 @@ func GetSecondServiceName2HTTPGoClient(
 		cl:          cl,
 		host:        host,
 		middlewares: middlewares,
-		middleware:  chainClientMiddlewaresExample(middlewares),
+		middleware:  chainClientMiddlewaresExample2(middlewares),
 	}, nil
 }
 

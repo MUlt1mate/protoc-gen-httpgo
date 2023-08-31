@@ -43,7 +43,7 @@ func (g *Generator) genServiceClient(service serviceParams) (err error) {
 	g.gf.P("		cl:          cl,")
 	g.gf.P("		host:        host,")
 	g.gf.P("		middlewares: middlewares,")
-	g.gf.P("		middleware:  chainClientMiddlewaresExample(middlewares),")
+	g.gf.P("		middleware:  chainClientMiddlewares", g.filename, "(middlewares),")
 	g.gf.P("	}, nil")
 	g.gf.P("}")
 	g.gf.P()
