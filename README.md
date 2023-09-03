@@ -101,7 +101,8 @@ func clientExample(ctx context.Context) (err error) {
 #### Middlewares
 
 You can define custom middlewares with specific arguments and return values.  
-Pass a slice of middlewares to the constructor, and they will be invoked in the specified order.
+Pass a slice of middlewares to the constructor, and they will be invoked in the specified order.  
+There are [middleware examples](https://github.com/MUlt1mate/protoc-gen-httpgo/blob/main/example/middleware/middlewares.go) for logs, timeout, headers, etc.   
 
 ```go
 package implementation
