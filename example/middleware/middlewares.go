@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
@@ -21,17 +22,20 @@ var (
 	serviceName = "example"
 
 	errorRequestFailed = errors.New("api request failed")
+	errTimeoutBody     = `{"error":"timeout"}`
 )
 
 var ServerMiddlewares = []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error)) (resp interface{}, err error){
 	LoggerServerMiddleware,
 	ResponseServerMiddleware,
 	HeadersServerMiddleware,
+	TimeoutServerMiddleware,
 }
 var ClientMiddlewares = []func(req *fasthttp.Request, handler func(req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error){
 	LoggerClientMiddleware,
 	HeadersClientMiddleware,
 	ErrorClientMiddleware,
+	TimeoutClientMiddleware,
 }
 
 // LoggerServerMiddleware logs request and response for server
@@ -86,6 +90,19 @@ func HeadersServerMiddleware(
 	return resp, err
 }
 
+// TimeoutServerMiddleware sets timeout for request
+func TimeoutServerMiddleware(
+	ctx *fasthttp.RequestCtx,
+	next func(ctx *fasthttp.RequestCtx) (resp interface{}, err error),
+) (resp interface{}, err error) {
+	h := fasthttp.TimeoutWithCodeHandler(func(ctx *fasthttp.RequestCtx) {
+		resp, err = next(ctx)
+	}, time.Second*5, errTimeoutBody, http.StatusGatewayTimeout)
+	h(ctx)
+
+	return resp, err
+}
+
 // LoggerClientMiddleware logs request and response for client
 func LoggerClientMiddleware(
 	req *fasthttp.Request,
@@ -120,5 +137,15 @@ func ErrorClientMiddleware(
 	if err == nil && resp.StatusCode() > http.StatusBadRequest {
 		return resp, fmt.Errorf("%w, code: %d, body: %b", errorRequestFailed, resp.StatusCode(), resp.Body())
 	}
+	return resp, err
+}
+
+// TimeoutClientMiddleware sets timeout for request
+func TimeoutClientMiddleware(
+	req *fasthttp.Request,
+	next func(req *fasthttp.Request) (resp *fasthttp.Response, err error),
+) (resp *fasthttp.Response, err error) {
+	req.SetTimeout(time.Second * 1)
+	resp, err = next(req)
 	return resp, err
 }
