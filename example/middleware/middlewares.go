@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,7 +32,7 @@ var ServerMiddlewares = []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasth
 	HeadersServerMiddleware,
 	TimeoutServerMiddleware,
 }
-var ClientMiddlewares = []func(req *fasthttp.Request, handler func(req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error){
+var ClientMiddlewares = []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error){
 	LoggerClientMiddleware,
 	HeadersClientMiddleware,
 	ErrorClientMiddleware,
@@ -105,23 +106,25 @@ func TimeoutServerMiddleware(
 
 // LoggerClientMiddleware logs request and response for client
 func LoggerClientMiddleware(
+	ctx context.Context,
 	req *fasthttp.Request,
-	next func(req *fasthttp.Request) (resp *fasthttp.Response, err error),
+	next func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
 ) (resp *fasthttp.Response, err error) {
 	log.Printf("%s: client sending request with path %s", serviceName, string(req.RequestURI()))
-	resp, err = next(req)
+	resp, err = next(ctx, req)
 	log.Printf("%s: client got response with code %d, body %s", serviceName, resp.StatusCode(), string(resp.Body()))
 	return resp, err
 }
 
 // HeadersClientMiddleware checks and sets headers for client
 func HeadersClientMiddleware(
+	ctx context.Context,
 	req *fasthttp.Request,
-	next func(req *fasthttp.Request) (resp *fasthttp.Response, err error),
+	next func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
 ) (resp *fasthttp.Response, err error) {
 	jsonContentType := "application/json"
 	req.Header.SetContentType(jsonContentType)
-	resp, err = next(req)
+	resp, err = next(ctx, req)
 	if err == nil && string(resp.Header.ContentType()) != jsonContentType {
 		err = fmt.Errorf("incorrect response content type %s", string(resp.Header.ContentType()))
 	}
@@ -130,10 +133,11 @@ func HeadersClientMiddleware(
 
 // ErrorClientMiddleware checks http response code for error
 func ErrorClientMiddleware(
+	ctx context.Context,
 	req *fasthttp.Request,
-	next func(req *fasthttp.Request) (resp *fasthttp.Response, err error),
+	next func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
 ) (resp *fasthttp.Response, err error) {
-	resp, err = next(req)
+	resp, err = next(ctx, req)
 	if err == nil && resp.StatusCode() > http.StatusBadRequest {
 		return resp, fmt.Errorf("%w, code: %d, body: %b", errorRequestFailed, resp.StatusCode(), resp.Body())
 	}
@@ -142,10 +146,11 @@ func ErrorClientMiddleware(
 
 // TimeoutClientMiddleware sets timeout for request
 func TimeoutClientMiddleware(
+	ctx context.Context,
 	req *fasthttp.Request,
-	next func(req *fasthttp.Request) (resp *fasthttp.Response, err error),
+	next func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
 ) (resp *fasthttp.Response, err error) {
 	req.SetTimeout(time.Second * 1)
-	resp, err = next(req)
+	resp, err = next(ctx, req)
 	return resp, err
 }

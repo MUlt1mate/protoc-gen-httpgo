@@ -116,7 +116,7 @@ func (g *Generator) fillServices(file *protogen.File) {
 func (g *Generator) initTemplates(gf *protogen.GeneratedFile) {
 	g.serverInput = "ctx *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("RequestCtx"))
 	g.serverOutput = "resp interface{}, err error"
-	g.clientInput = "req *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Request"))
+	g.clientInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Request"))
 	g.clientOutput = "resp *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Response")) + ", err error"
 }
 
