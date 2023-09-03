@@ -390,15 +390,15 @@ var _ ServiceNameHTTPGoService = &ServiceNameHTTPGoClient{}
 type ServiceNameHTTPGoClient struct {
 	cl          *fasthttp.Client
 	host        string
-	middlewares []func(req *fasthttp.Request, handler func(req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error)
-	middleware  func(req *fasthttp.Request, handler func(req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error)
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error)
+	middleware  func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error)
 }
 
 func GetServiceNameHTTPGoClient(
 	_ context.Context,
 	cl *fasthttp.Client,
 	host string,
-	middlewares []func(req *fasthttp.Request, handler func(req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
 ) (*ServiceNameHTTPGoClient, error) {
 	return &ServiceNameHTTPGoClient{
 		cl:          cl,
@@ -423,17 +423,17 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *InputMsg
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%s/%d", request.StringArgument, request.Int64Argument))
 	req.Header.SetMethod("POST")
 	reqResp := &fasthttp.Response{}
-	var handler = func(req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
-		if reqResp, err = handler(req); err != nil {
+		if reqResp, err = handler(ctx, req); err != nil {
 			return nil, err
 		}
 	} else {
-		if reqResp, err = p.middleware(req, handler); err != nil {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
 			return nil, err
 		}
 	}
@@ -465,17 +465,17 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *All
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%t/%s/%d/%d/%d/%d/%d/%d/%d/%d/%f/%d/%d/%f/%s/%s", request.BoolValue, request.EnumValue, request.Int32Value, request.Sint32Value, request.Uint32Value, request.Int64Value, request.Sint64Value, request.Uint64Value, request.Sfixed32Value, request.Fixed32Value, request.FloatValue, request.Sfixed64Value, request.Fixed64Value, request.DoubleValue, request.StringValue, request.BytesValue))
 	req.Header.SetMethod("POST")
 	reqResp := &fasthttp.Response{}
-	var handler = func(req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
-		if reqResp, err = handler(req); err != nil {
+		if reqResp, err = handler(ctx, req); err != nil {
 			return nil, err
 		}
 	} else {
-		if reqResp, err = p.middleware(req, handler); err != nil {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
 			return nil, err
 		}
 	}
@@ -507,17 +507,17 @@ func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anyp
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/commonTypes"))
 	req.Header.SetMethod("POST")
 	reqResp := &fasthttp.Response{}
-	var handler = func(req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
-		if reqResp, err = handler(req); err != nil {
+		if reqResp, err = handler(ctx, req); err != nil {
 			return nil, err
 		}
 	} else {
-		if reqResp, err = p.middleware(req, handler); err != nil {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
 			return nil, err
 		}
 	}
@@ -549,17 +549,17 @@ func (p *ServiceNameHTTPGoClient) Imports(ctx context.Context, request *somepack
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports"))
 	req.Header.SetMethod("POST")
 	reqResp := &fasthttp.Response{}
-	var handler = func(req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
-		if reqResp, err = handler(req); err != nil {
+		if reqResp, err = handler(ctx, req); err != nil {
 			return nil, err
 		}
 	} else {
-		if reqResp, err = p.middleware(req, handler); err != nil {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
 			return nil, err
 		}
 	}
@@ -591,17 +591,17 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%s", request.StringArgument))
 	req.Header.SetMethod("POST")
 	reqResp := &fasthttp.Response{}
-	var handler = func(req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
-		if reqResp, err = handler(req); err != nil {
+		if reqResp, err = handler(ctx, req); err != nil {
 			return nil, err
 		}
 	} else {
-		if reqResp, err = p.middleware(req, handler); err != nil {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
 			return nil, err
 		}
 	}
@@ -619,29 +619,29 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 }
 
 func chainClientMiddlewaresExample(
-	middlewares []func(req *fasthttp.Request, handler func(req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
-) func(req *fasthttp.Request, handler func(req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error) {
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
+) func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error) {
 	switch len(middlewares) {
 	case 0:
 		return nil
 	case 1:
 		return middlewares[0]
 	default:
-		return func(req *fasthttp.Request, handler func(req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error) {
-			return middlewares[0](req, getChainClientMiddlewareHandlerExample(middlewares, 0, handler))
+		return func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error) {
+			return middlewares[0](ctx, req, getChainClientMiddlewareHandlerExample(middlewares, 0, handler))
 		}
 	}
 }
 
 func getChainClientMiddlewareHandlerExample(
-	middlewares []func(req *fasthttp.Request, handler func(req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
 	curr int,
-	finalHandler func(req *fasthttp.Request) (resp *fasthttp.Response, err error),
-) func(req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+	finalHandler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
+) func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 	if curr == len(middlewares)-1 {
 		return finalHandler
 	}
-	return func(req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		return middlewares[curr+1](req, getChainClientMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
+	return func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		return middlewares[curr+1](ctx, req, getChainClientMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
 	}
 }
