@@ -198,8 +198,8 @@ func (h *Handler) CommonTypes(_ context.Context, _ *anypb.Any) (*emptypb.Empty, 
 	panic("implement me")
 }
 
-func (h *Handler) Imports(_ context.Context, _ *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error) {
-	panic("implement me")
+func (h *Handler) Imports(_ context.Context, msg1 *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error) {
+	return &somepackage.SomeCustomMsg2{Val: msg1.Val}, nil
 }
 
 func (h *Handler) SameInputAndOutput(_ context.Context, _ *InputMsgName) (*OutputMsgName, error) {
@@ -263,6 +263,24 @@ func TestHTTPGoServer(t *testing.T) {
 			responseBody:   []byte(`{"stringValue":"test","intValue":1}`),
 			responseErr:    nil,
 			requestBody:    []byte(`{"int64Argument":1,"stringArgument":"test"}`),
+			respStatusCode: http.StatusOK,
+		},
+		{
+			name:           "imports plain",
+			method:         http.MethodPost,
+			uri:            "/v1/test/imports",
+			responseBody:   []byte(`{}`),
+			responseErr:    nil,
+			requestBody:    []byte(`{}`),
+			respStatusCode: http.StatusOK,
+		},
+		{
+			name:           "query parameter",
+			method:         http.MethodPost,
+			uri:            "/v1/test/imports?val=test",
+			responseBody:   []byte(`{"val":"test"}`),
+			responseErr:    nil,
+			requestBody:    []byte(`{}`),
 			respStatusCode: http.StatusOK,
 		},
 	}
