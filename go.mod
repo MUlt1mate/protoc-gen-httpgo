@@ -1,6 +1,6 @@
 module github.com/MUlt1mate/protoc-gen-httpgo
 
-go 1.20
+go 1.21
 
 require (
 	google.golang.org/genproto/googleapis/api v0.0.0-20230717213848-3f92550aa753

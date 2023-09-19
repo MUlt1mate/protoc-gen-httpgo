@@ -1,6 +1,6 @@
 module github.com/MUlt1mate/protoc-gen-httpgo/example
 
-go 1.20
+go 1.21
 
 require (
 	github.com/fasthttp/router v1.4.20

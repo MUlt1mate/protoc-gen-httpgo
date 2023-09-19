@@ -6,10 +6,8 @@ import (
 	context "context"
 	json "encoding/json"
 	fmt "fmt"
-
-	fasthttp "github.com/valyala/fasthttp"
-
 	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	fasthttp "github.com/valyala/fasthttp"
 )
 
 type ServiceName2HTTPGoService interface {
