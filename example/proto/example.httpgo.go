@@ -7,16 +7,14 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	strconv "strconv"
-	strings "strings"
-
+	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 	router "github.com/fasthttp/router"
 	easyjson "github.com/mailru/easyjson"
 	fasthttp "github.com/valyala/fasthttp"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-
-	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	strconv "strconv"
+	strings "strings"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -312,13 +310,14 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 	if !ok {
 		return nil, errors.New("incorrect type for parameter EnumValue")
 	}
-	if OptionsValue, ok := Options_value[strings.ToUpper(EnumValueStr)]; ok {
+	OptionsValue, ok := Options_value[strings.ToUpper(EnumValueStr)]
+	if ok {
 		arg.EnumValue = Options(OptionsValue)
-		return
-	}
-	if intOptionValue, convErr := strconv.ParseInt(EnumValueStr, 10, 32); convErr == nil {
-		if _, ok = Options_name[int32(intOptionValue)]; ok {
-			arg.EnumValue = Options(intOptionValue)
+	} else {
+		if intOptionValue, convErr := strconv.ParseInt(EnumValueStr, 10, 32); convErr == nil {
+			if _, ok = Options_name[int32(intOptionValue)]; ok {
+				arg.EnumValue = Options(intOptionValue)
+			}
 		}
 	}
 
