@@ -42,6 +42,7 @@ type (
 		name           string
 		httpMethodName string
 		uri            string
+		fieldList      []string // slice for constant sorting
 	}
 
 	field struct {
@@ -100,6 +101,7 @@ func (g *Generator) fillServices(file *protogen.File) {
 					f.enumName = protoField.Enum.GoIdent.GoName
 				}
 				fields[f.protoName] = f
+				method.fieldList = append(method.fieldList, f.protoName)
 			}
 
 			method.fields = fields

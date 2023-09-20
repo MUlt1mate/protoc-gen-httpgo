@@ -72,7 +72,7 @@ func (g *Generator) genClientMethod(
 	g.gf.P("	req.SetBody(body)")
 	g.gf.P("	req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"\""+paramsURI+"))")
 	g.gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
-	g.gf.P("	reqResp := &fasthttp.Response{}")
+	g.gf.P("	var reqResp *fasthttp.Response")
 	g.gf.P("	var handler = func(", g.clientInput, ") (", g.clientOutput, ") {")
 	g.gf.P("		resp = &fasthttp.Response{}")
 	g.gf.P("		err = p.cl.Do(req, resp)")

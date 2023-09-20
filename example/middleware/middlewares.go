@@ -13,6 +13,8 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+const serverExecutionTimeout = time.Second * 5
+
 type (
 	respError struct {
 		Error string
@@ -22,8 +24,8 @@ type (
 var (
 	serviceName = "example"
 
-	errorRequestFailed = errors.New("api request failed")
-	errTimeoutBody     = `{"error":"timeout"}`
+	errRequestFailed = errors.New("api request failed")
+	errTimeoutBody   = `{"error":"timeout"}`
 )
 
 var ServerMiddlewares = []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error)) (resp interface{}, err error){
@@ -98,7 +100,7 @@ func TimeoutServerMiddleware(
 ) (resp interface{}, err error) {
 	h := fasthttp.TimeoutWithCodeHandler(func(ctx *fasthttp.RequestCtx) {
 		resp, err = next(ctx)
-	}, time.Second*5, errTimeoutBody, http.StatusGatewayTimeout)
+	}, serverExecutionTimeout, errTimeoutBody, http.StatusGatewayTimeout)
 	h(ctx)
 
 	return resp, err
@@ -139,7 +141,7 @@ func ErrorClientMiddleware(
 ) (resp *fasthttp.Response, err error) {
 	resp, err = next(ctx, req)
 	if err == nil && resp.StatusCode() > http.StatusBadRequest {
-		return resp, fmt.Errorf("%w, code: %d, body: %b", errorRequestFailed, resp.StatusCode(), resp.Body())
+		return resp, fmt.Errorf("%w, code: %d, body: %b", errRequestFailed, resp.StatusCode(), resp.Body())
 	}
 	return resp, err
 }

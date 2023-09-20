@@ -45,17 +45,14 @@ func (h *Handler) AllTypesTest(_ context.Context, msg *proto.AllTypesMsg) (*prot
 	return p, nil
 }
 
-func (h *Handler) CommonTypes(ctx context.Context, a *anypb.Any) (*emptypb.Empty, error) {
-	//TODO implement me
+func (h *Handler) CommonTypes(_ context.Context, _ *anypb.Any) (*emptypb.Empty, error) {
 	panic("implement me")
 }
 
-func (h *Handler) Imports(ctx context.Context, msg1 *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error) {
-	//TODO implement me
+func (h *Handler) Imports(_ context.Context, _ *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error) {
 	panic("implement me")
 }
 
-func (h *Handler) SameInputAndOutput(ctx context.Context, name *proto.InputMsgName) (*proto.OutputMsgName, error) {
-	//TODO implement me
+func (h *Handler) SameInputAndOutput(_ context.Context, _ *proto.InputMsgName) (*proto.OutputMsgName, error) {
 	panic("implement me")
 }
