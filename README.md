@@ -1,5 +1,8 @@
 # protoc-gen-httpgo
 
+![workflow](https://github.com/MUlt1mate/protoc-gen-httpgo/actions/workflows/go.yml/badge.svg)
+![go-report](https://goreportcard.com/badge/github.com/MUlt1mate/protoc-gen-httpgo)
+
 This is a protoc plugin that generates HTTP server and client code from proto files.
 
 ## Features
