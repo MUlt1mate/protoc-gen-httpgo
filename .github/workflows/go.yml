@@ -13,18 +13,18 @@ jobs:
       matrix:
         go-version: [ '1.18', '1.19', '1.20', '1.21' ]
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Set up Go
-      uses: actions/setup-go@v4
-      with:
-        go-version: ${{ matrix.go-version }}
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go-version }}
 
-    - name: Build
-      run: go build -v ./...
+      - name: Build
+        run: go build -v ./...
 
-    - name: Test plugin
-      run: go test -v ./...
+      - name: Test plugin
+        run: go test -v ./...
 
-    - name: Test example
-      run: (cd ./example/ && go test -v ./...)
+      - name: Test example
+        run: (cd ./example/ && go test -v ./...)
