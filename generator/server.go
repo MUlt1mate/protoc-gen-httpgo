@@ -71,6 +71,7 @@ func (g *Generator) genServiceServer(service serviceParams) (err error) {
 
 // genMethodDeclaration generates binding route with handler
 func (g *Generator) genMethodDeclaration(serviceName string, method methodParams) {
+	g.gf.P(method.comment)
 	g.gf.P("	r.", method.httpMethodName, "( \"", method.uri, "\", func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
 	g.gf.P("		handler := func(", g.serverInput, ") (", g.serverOutput, ") {")
 	g.gf.P("			input, err := build", g.getBuildMethodInputName(serviceName, method), "(ctx)")

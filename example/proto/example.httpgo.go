@@ -7,14 +7,16 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	strconv "strconv"
+	strings "strings"
+
 	router "github.com/fasthttp/router"
 	easyjson "github.com/mailru/easyjson"
 	fasthttp "github.com/valyala/fasthttp"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	strconv "strconv"
-	strings "strings"
+
+	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -32,6 +34,7 @@ func RegisterServiceNameHTTPGoServer(
 	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error)) (resp interface{}, err error),
 ) error {
 	var middleware = chainServerMiddlewaresExample(middlewares)
+
 	r.POST("/v1/test/{stringArgument}/{int64Argument}", func(ctx *fasthttp.RequestCtx) {
 		handler := func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
 			input, err := buildExampleServiceNameRPCNameInputMsgName(ctx)
@@ -92,6 +95,7 @@ func RegisterServiceNameHTTPGoServer(
 		_, _ = middleware(ctx, handler)
 	})
 
+	// same types but different query, we need different query builder function
 	r.POST("/v1/test/{stringArgument}", func(ctx *fasthttp.RequestCtx) {
 		handler := func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
 			input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(ctx)
@@ -758,6 +762,7 @@ func (p *ServiceNameHTTPGoClient) Imports(ctx context.Context, request *somepack
 	return resp, err
 }
 
+// SameInputAndOutput same types but different query, we need different query builder function
 func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, request *InputMsgName) (resp *OutputMsgName, err error) {
 	var body []byte
 	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {

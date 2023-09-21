@@ -66,6 +66,13 @@ func (g *Generator) genClientMethod(
 	if requestURI, paramsURI, err = g.getRequestURIAndParams(method); err != nil {
 		return err
 	}
+	if method.comment != "" {
+		comment := method.comment
+		if !strings.HasPrefix(comment, "// "+method.name) {
+			comment = "// " + method.name + strings.TrimLeft(comment, "/")
+		}
+		g.gf.P(comment)
+	}
 	g.gf.P("func (p * ", srvName, "HTTPGoClient) ", method.name, "(ctx ", contextPackage.Ident("Context"), ", request *", method.inputMsgName, ") (resp *", method.outputMsgName, ", err error) {")
 	g.genMarshalRequestStruct()
 	g.gf.P("	req := &fasthttp.Request{}")
