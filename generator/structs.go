@@ -42,6 +42,7 @@ type (
 		name           string
 		httpMethodName string
 		uri            string
+		comment        string
 		fieldList      []string // slice for constant sorting
 	}
 
@@ -105,6 +106,7 @@ func (g *Generator) fillServices(file *protogen.File) {
 			}
 
 			method.fields = fields
+			method.comment = strings.TrimSuffix(protoMethod.Comments.Leading.String(), "\n")
 			methods = append(methods, method)
 		}
 		if len(methods) != 0 {
