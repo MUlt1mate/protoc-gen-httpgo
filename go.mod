@@ -3,8 +3,6 @@ module github.com/MUlt1mate/protoc-gen-httpgo
 go 1.21
 
 require (
-	google.golang.org/genproto/googleapis/api v0.0.0-20230920183334-c177e329c48b
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20240521202816-d264139d666e
+	google.golang.org/protobuf v1.34.1
 )
-
-require google.golang.org/genproto v0.0.0-20230920183334-c177e329c48b // indirect

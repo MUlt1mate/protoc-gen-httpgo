@@ -47,10 +47,11 @@ type (
 	}
 
 	field struct {
-		goName    string
-		protoName string
-		enumName  string
-		kind      protoreflect.Kind
+		goName      string
+		protoName   string
+		enumName    string
+		kind        protoreflect.Kind
+		cardinality protoreflect.Cardinality
 	}
 	Config struct {
 		Marshaller *string
@@ -94,9 +95,10 @@ func (g *Generator) fillServices(file *protogen.File) {
 			var fields = make(map[string]field)
 			for _, protoField := range protoMethod.Input.Fields {
 				f := field{
-					goName:    protoField.GoName,
-					protoName: protoField.Desc.JSONName(),
-					kind:      protoField.Desc.Kind(),
+					goName:      protoField.GoName,
+					protoName:   protoField.Desc.JSONName(),
+					kind:        protoField.Desc.Kind(),
+					cardinality: protoField.Desc.Cardinality(),
 				}
 				if protoField.Desc.Kind() == protoreflect.EnumKind {
 					f.enumName = protoField.Enum.GoIdent.GoName

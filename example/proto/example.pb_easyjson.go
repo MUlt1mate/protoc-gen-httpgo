@@ -306,6 +306,29 @@ func easyjson758af8aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProto3(in *jle
 			} else {
 				out.BytesValue = in.Bytes()
 			}
+		case "SliceStringValue":
+			if in.IsNull() {
+				in.Skip()
+				out.SliceStringValue = nil
+			} else {
+				in.Delim('[')
+				if out.SliceStringValue == nil {
+					if !in.IsDelim(']') {
+						out.SliceStringValue = make([]string, 0, 4)
+					} else {
+						out.SliceStringValue = []string{}
+					}
+				} else {
+					out.SliceStringValue = (out.SliceStringValue)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v2 string
+					v2 = string(in.String())
+					out.SliceStringValue = append(out.SliceStringValue, v2)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -475,6 +498,25 @@ func easyjson758af8aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProto3(out *jw
 			out.RawString(prefix)
 		}
 		out.Base64Bytes(in.BytesValue)
+	}
+	if len(in.SliceStringValue) != 0 {
+		const prefix string = ",\"SliceStringValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v5, v6 := range in.SliceStringValue {
+				if v5 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v6))
+			}
+			out.RawByte(']')
+		}
 	}
 	out.RawByte('}')
 }
