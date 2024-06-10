@@ -43,6 +43,11 @@ service ServiceName {
       post: "/v1/test/stream"
     };
   };
+  rpc optional(InputMsgName) returns (OptionalField){
+    option (google.api.http) = {
+      post: "/v1/test/optional"
+    };
+  };
 }
 
 message InputMsgName {
@@ -78,4 +83,8 @@ enum options {
 message OutputMsgName {
   string stringValue = 1;
   int64 intValue = 2;
+}
+
+message OptionalField {
+  optional string stringValue = 1;
 }

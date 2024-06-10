@@ -7,16 +7,14 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	strconv "strconv"
-	strings "strings"
-
+	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 	router "github.com/fasthttp/router"
 	easyjson "github.com/mailru/easyjson"
 	fasthttp "github.com/valyala/fasthttp"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-
-	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	strconv "strconv"
+	strings "strings"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -25,6 +23,7 @@ type ServiceNameHTTPGoService interface {
 	CommonTypes(context.Context, *anypb.Any) (*emptypb.Empty, error)
 	Imports(context.Context, *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error)
 	SameInputAndOutput(context.Context, *InputMsgName) (*OutputMsgName, error)
+	Optional(context.Context, *InputMsgName) (*OptionalField, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -103,6 +102,21 @@ func RegisterServiceNameHTTPGoServer(
 				return nil, err
 			}
 			return h.SameInputAndOutput(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx)
+			return
+		}
+		_, _ = middleware(ctx, handler)
+	})
+
+	r.POST("/v1/test/optional", func(ctx *fasthttp.RequestCtx) {
+		handler := func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
+			input, err := buildExampleServiceNameOptionalInputMsgName(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return h.Optional(ctx, input)
 		}
 		if middleware == nil {
 			_, _ = handler(ctx)
@@ -543,6 +557,37 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 	return arg, err
 }
 
+func buildExampleServiceNameOptionalInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
+	arg = &InputMsgName{}
+	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
+			return nil, err
+		}
+	}
+	ctx.QueryArgs().VisitAll(func(key, value []byte) {
+		var strKey = string(key)
+		switch strKey {
+		case "int64Argument":
+			Int64ArgumentStr := string(value)
+			arg.Int64Argument, err = strconv.ParseInt(Int64ArgumentStr, 10, 64)
+			if err != nil {
+				err = fmt.Errorf("conversion failed for parameter Int64Argument: %w", err)
+				return
+			}
+		case "stringArgument":
+			arg.StringArgument = string(value)
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+	return arg, err
+}
+
 func chainServerMiddlewaresExample(
 	middlewares []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error)) (resp interface{}, err error),
 ) func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error)) (resp interface{}, err error) {
@@ -793,6 +838,48 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 		}
 	}
 	resp = &OutputMsgName{}
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(reqResp.Body(), respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(reqResp.Body(), resp); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *InputMsgName) (resp *OptionalField, err error) {
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return nil, err
+	}
+	req := &fasthttp.Request{}
+	req.SetBody(body)
+	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/optional"))
+	req.Header.SetMethod("POST")
+	var reqResp *fasthttp.Response
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req, resp)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &OptionalField{}
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(reqResp.Body(), respEJ); err != nil {
 			return nil, err
