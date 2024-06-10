@@ -56,3 +56,7 @@ func (h *Handler) Imports(_ context.Context, _ *somepackage.SomeCustomMsg1) (*so
 func (h *Handler) SameInputAndOutput(_ context.Context, _ *proto.InputMsgName) (*proto.OutputMsgName, error) {
 	panic("implement me")
 }
+
+func (h *Handler) Optional(_ context.Context, _ *proto.InputMsgName) (*proto.OptionalField, error) {
+	panic("implement me")
+}

@@ -237,6 +237,10 @@ func (h *Handler) AllTypesTest(_ context.Context, msg *proto.AllTypesMsg) (*prot
 	return p, nil
 }
 
+func (h *Handler) Optional(_ context.Context, _ *proto.InputMsgName) (*proto.OptionalField, error) {
+	panic("implement me")
+}
+
 func TestHTTPGoServer(t *testing.T) {
 	var (
 		err     error
