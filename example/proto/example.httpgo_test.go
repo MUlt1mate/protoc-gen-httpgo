@@ -15,33 +15,31 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/middleware"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto"
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 )
 
 type testCaseClient struct {
-	name         string
-	method       string
-	uri          string
-	request      interface{}
-	response     interface{}
-	responseErr  error
-	requestBody  []byte
-	mockResponse responseData
+	name                string
+	expectedMethod      string
+	expectedURI         string
+	request             interface{}
+	exptectedResponse   interface{}
+	expectedResponseErr error
+	expectedRequestBody []byte
+	mockResponse        responseData
 }
 
 type testCaseServer struct {
-	name           string
-	method         string
-	uri            string
-	responseBody   []byte
-	responseErr    error
-	requestBody    []byte
-	respStatusCode int
+	name                   string
+	method                 string
+	uri                    string
+	expectedResponseBody   []byte
+	expectedResponseErr    error
+	requestBody            []byte
+	expectedRespStatusCode int
 }
 
 type requestData struct {
@@ -88,13 +86,13 @@ func TestHTTPGoClient(t *testing.T) {
 
 	tests := []testCaseClient{
 		{
-			name:        "RPCName Valid Request 1",
-			method:      http.MethodPost,
-			uri:         "/v1/test/test/1",
-			request:     &proto.InputMsgName{Int64Argument: 1, StringArgument: "test"},
-			response:    &proto.OutputMsgName{StringValue: "StringValue", IntValue: 2},
-			responseErr: nil,
-			requestBody: []byte(`{"int64Argument":1,"stringArgument":"test"}`),
+			name:                "RPCName Valid Request 1",
+			expectedMethod:      http.MethodPost,
+			expectedURI:         "/v1/test/test/1",
+			request:             &proto.InputMsgName{Int64Argument: 1, StringArgument: "test"},
+			exptectedResponse:   &proto.OutputMsgName{StringValue: "StringValue", IntValue: 2},
+			expectedResponseErr: nil,
+			expectedRequestBody: []byte(`{"int64Argument":1,"stringArgument":"test"}`),
 			mockResponse: responseData{
 				body: []byte(`{"intValue":2,"stringValue":"StringValue"}`),
 				code: http.StatusOK,
@@ -114,17 +112,17 @@ func TestHTTPGoClient(t *testing.T) {
 			request := <-reqCh
 			respCh <- test.mockResponse
 			wg.Wait()
-			compareResults(t, request, test, err)
-			if !reflect.DeepEqual(test.response.(*proto.OutputMsgName), resp) {
-				t.Errorf("Expected response method '%v', but got '%v'", test.response, resp)
+			compareClientResults(t, request, test, err)
+			if !reflect.DeepEqual(test.exptectedResponse.(*proto.OutputMsgName), resp) {
+				t.Errorf("Expected response method '%v', but got '%v'", test.exptectedResponse, resp)
 			}
 		})
 	}
 	tests = []testCaseClient{
 		{
-			name:   "AllTypesTest Valid Request 1",
-			method: http.MethodPost,
-			uri:    "/v1/test/true/SECOND/1/2/3/4/5/6/7/8/9.100000/10/11/12.200000/string/bytes",
+			name:           "AllTypesTest Valid Request 1",
+			expectedMethod: http.MethodPost,
+			expectedURI:    "/v1/test/true/SECOND/1/2/3/4/5/6/7/8/9.100000/10/11/12.200000/string/bytes",
 			request: &proto.AllTypesMsg{
 				BoolValue:        true,
 				EnumValue:        proto.Options_SECOND,
@@ -144,7 +142,7 @@ func TestHTTPGoClient(t *testing.T) {
 				BytesValue:       []byte("bytes"),
 				SliceStringValue: []string{"a", "b", "c"},
 			},
-			response: &proto.AllTypesMsg{
+			exptectedResponse: &proto.AllTypesMsg{
 				BoolValue:        true,
 				EnumValue:        proto.Options_SECOND,
 				Int32Value:       2,
@@ -163,8 +161,8 @@ func TestHTTPGoClient(t *testing.T) {
 				BytesValue:       []byte("bytesResp"),
 				SliceStringValue: []string{"a", "b", "c"},
 			},
-			responseErr: nil,
-			requestBody: []byte(`{"BoolValue":true,"EnumValue":1,"Int32Value":1,"Sint32Value":2,"Uint32Value":3,"Int64Value":4,"Sint64Value":5,"Uint64Value":6,"Sfixed32Value":7,"Fixed32Value":8,"FloatValue":9.1,"Sfixed64Value":10,"Fixed64Value":11,"DoubleValue":12.2,"StringValue":"string","BytesValue":"Ynl0ZXM=","SliceStringValue":["a","b","c"]}`),
+			expectedResponseErr: nil,
+			expectedRequestBody: []byte(`{"BoolValue":true,"EnumValue":1,"Int32Value":1,"Sint32Value":2,"Uint32Value":3,"Int64Value":4,"Sint64Value":5,"Uint64Value":6,"Sfixed32Value":7,"Fixed32Value":8,"FloatValue":9.1,"Sfixed64Value":10,"Fixed64Value":11,"DoubleValue":12.2,"StringValue":"string","BytesValue":"Ynl0ZXM=","SliceStringValue":["a","b","c"]}`),
 			mockResponse: responseData{
 				body: []byte(`{"BoolValue":true,"EnumValue":1,"Int32Value":2,"Sint32Value":3,"Uint32Value":4,"Int64Value":5,"Sint64Value":6,"Uint64Value":7,"Sfixed32Value":8,"Fixed32Value":9,"FloatValue":10.1,"Sfixed64Value":11,"Fixed64Value":12,"DoubleValue":13.2,"StringValue":"stringResp","BytesValue":"Ynl0ZXNSZXNw","SliceStringValue":["a","b","c"]}`),
 				code: http.StatusOK,
@@ -184,78 +182,100 @@ func TestHTTPGoClient(t *testing.T) {
 			request := <-reqCh
 			respCh <- test.mockResponse
 			wg.Wait()
-			compareResults(t, request, test, err)
-			if !reflect.DeepEqual(test.response.(*proto.AllTypesMsg), resp) {
-				t.Errorf("Expected response method '%v', but got '%v'", test.response, resp)
+			compareClientResults(t, request, test, err)
+			if !reflect.DeepEqual(test.exptectedResponse.(*proto.AllTypesMsg), resp) {
+				t.Errorf("Expected response method '%v', but got '%v'", test.exptectedResponse, resp)
+			}
+		})
+	}
+	tests = []testCaseClient{
+		{
+			name:           "RepeatedCheck valid",
+			expectedMethod: http.MethodGet,
+			request: &proto.RepeatedCheck{
+				StringValueArg:   []string{"1", "2", "3"},
+				StringValueQuery: []string{"a", "b", "c"},
+			},
+			expectedURI:         "/v1/repeated/1,2,3",
+			expectedRequestBody: []byte(`{"stringValueArg":["1","2","3"],"stringValueQuery":["a","b","c"]}`),
+			mockResponse: responseData{
+				body: []byte(`{"stringValueArg":["1","2","3"],"stringValueQuery":["a","b","c"]}`),
+				code: http.StatusOK,
+			},
+			exptectedResponse: &proto.RepeatedCheck{
+				StringValueArg:   []string{"1", "2", "3"},
+				StringValueQuery: []string{"a", "b", "c"},
+			},
+			expectedResponseErr: nil,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			wg := &sync.WaitGroup{}
+			wg.Add(1)
+			resp := &proto.RepeatedCheck{}
+			go func(wg *sync.WaitGroup) {
+				resp, err = client.CheckRepeated(ctx, test.request.(*proto.RepeatedCheck))
+				wg.Done()
+			}(wg)
+
+			request := <-reqCh
+			respCh <- test.mockResponse
+			wg.Wait()
+			compareClientResults(t, request, test, err)
+			if !reflect.DeepEqual(test.exptectedResponse.(*proto.RepeatedCheck), resp) {
+				t.Errorf("Expected response method '%v', but got '%v'", test.exptectedResponse, resp)
 			}
 		})
 	}
 }
 
-type Handler struct {
-}
-
-var _ proto.ServiceNameHTTPGoService = &Handler{}
-
-func (h *Handler) CommonTypes(_ context.Context, _ *anypb.Any) (*emptypb.Empty, error) {
-	panic("implement me")
-}
-
-func (h *Handler) Imports(_ context.Context, msg1 *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error) {
-	return &somepackage.SomeCustomMsg2{Val: msg1.Val}, nil
-}
-
-func (h *Handler) SameInputAndOutput(_ context.Context, _ *proto.InputMsgName) (*proto.OutputMsgName, error) {
-	panic("implement me")
-}
-
-func (h *Handler) RPCName(_ context.Context, request *proto.InputMsgName) (*proto.OutputMsgName, error) {
-	p := &proto.OutputMsgName{
-		StringValue: request.StringArgument,
-		IntValue:    request.Int64Argument,
+func compareClientResults(
+	t *testing.T,
+	request requestData,
+	test testCaseClient,
+	err error,
+) {
+	if request.uri != test.expectedURI {
+		t.Errorf("%s: Expected request URI '%s', but got '%s'", test.name, test.expectedURI, request.uri)
 	}
-	return p, nil
-}
 
-func (h *Handler) AllTypesTest(_ context.Context, msg *proto.AllTypesMsg) (*proto.AllTypesMsg, error) {
-	p := &proto.AllTypesMsg{
-		BoolValue:        msg.BoolValue,
-		EnumValue:        msg.EnumValue,
-		Int32Value:       msg.Int32Value,
-		Sint32Value:      msg.Sint32Value,
-		Uint32Value:      msg.Uint32Value,
-		Int64Value:       msg.Int64Value,
-		Sint64Value:      msg.Sint64Value,
-		Uint64Value:      msg.Uint64Value,
-		Sfixed32Value:    msg.Sfixed32Value,
-		Fixed32Value:     msg.Fixed32Value,
-		FloatValue:       msg.FloatValue,
-		Sfixed64Value:    msg.Sfixed64Value,
-		Fixed64Value:     msg.Fixed64Value,
-		DoubleValue:      msg.DoubleValue,
-		StringValue:      msg.StringValue,
-		BytesValue:       msg.BytesValue,
-		SliceStringValue: msg.SliceStringValue,
+	if request.method != test.expectedMethod {
+		t.Errorf("%s: Expected request method '%s', but got '%s'", test.name, test.expectedMethod, request.method)
 	}
-	return p, nil
+
+	if !errors.Is(test.expectedResponseErr, err) {
+		t.Errorf("%s: Expected error method '%v', but got '%v'", test.name, test.expectedResponseErr, err)
+	}
+
+	if !bytes.Equal(request.requestBody, test.expectedRequestBody) {
+		t.Errorf("%s: Expected request body '%s', but got '%s'", test.name, string(test.expectedRequestBody), string(request.requestBody))
+	}
 }
 
-func (h *Handler) Optional(_ context.Context, _ *proto.InputMsgName) (*proto.OptionalField, error) {
-	panic("implement me")
-}
-
-func (h *Handler) GetMethod(_ context.Context, req *proto.InputMsgName) (*proto.OutputMsgName, error) {
-	return &proto.OutputMsgName{
-		StringValue: req.StringArgument,
-		IntValue:    req.Int64Argument,
-	}, nil
+func getMockServer(
+	reqCh chan requestData,
+	respCh chan responseData,
+) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		reqCh <- requestData{
+			method:      r.Method,
+			uri:         r.URL.Path,
+			requestBody: body,
+		}
+		res := <-respCh
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(res.code)
+		_, _ = w.Write(res.body)
+	}
 }
 
 func TestHTTPGoServer(t *testing.T) {
 	var (
 		err     error
 		ctx                                    = context.Background()
-		handler proto.ServiceNameHTTPGoService = &Handler{}
+		handler proto.ServiceNameHTTPGoService = &implementation.Handler{}
 		r                                      = router.New()
 	)
 	if err = proto.RegisterServiceNameHTTPGoServer(ctx, r, handler, middleware.ServerMiddlewares); err != nil {
@@ -272,40 +292,49 @@ func TestHTTPGoServer(t *testing.T) {
 
 	tests := []testCaseServer{
 		{
-			name:           "RPCName Valid Request 1",
-			method:         http.MethodPost,
-			uri:            "/v1/test/test/1",
-			responseBody:   []byte(`{"stringValue":"test","intValue":1}`),
-			responseErr:    nil,
-			requestBody:    []byte(`{"int64Argument":1,"stringArgument":"test"}`),
-			respStatusCode: http.StatusOK,
+			name:                   "RPCName Valid Request 1",
+			method:                 http.MethodPost,
+			uri:                    "/v1/test/test/1",
+			expectedResponseBody:   []byte(`{"stringValue":"test","intValue":1}`),
+			expectedResponseErr:    nil,
+			requestBody:            []byte(`{"int64Argument":1,"stringArgument":"test"}`),
+			expectedRespStatusCode: http.StatusOK,
 		},
 		{
-			name:           "imports plain",
-			method:         http.MethodPost,
-			uri:            "/v1/test/imports",
-			responseBody:   []byte(`{}`),
-			responseErr:    nil,
-			requestBody:    []byte(`{}`),
-			respStatusCode: http.StatusOK,
+			name:                   "imports plain",
+			method:                 http.MethodPost,
+			uri:                    "/v1/test/imports",
+			expectedResponseBody:   []byte(`{}`),
+			expectedResponseErr:    nil,
+			requestBody:            []byte(`{}`),
+			expectedRespStatusCode: http.StatusOK,
 		},
 		{
-			name:           "query parameter",
-			method:         http.MethodPost,
-			uri:            "/v1/test/imports?val=test",
-			responseBody:   []byte(`{"val":"test"}`),
-			responseErr:    nil,
-			requestBody:    []byte(`{}`),
-			respStatusCode: http.StatusOK,
+			name:                   "query parameter",
+			method:                 http.MethodPost,
+			uri:                    "/v1/test/imports?val=test",
+			expectedResponseBody:   []byte(`{"val":"test"}`),
+			expectedResponseErr:    nil,
+			requestBody:            []byte(`{}`),
+			expectedRespStatusCode: http.StatusOK,
 		},
 		{
-			name:           "get method",
-			method:         http.MethodGet,
-			uri:            "/v1/test/get?int64Argument=1&stringArgument=stringValue",
-			responseBody:   []byte(`{"stringValue":"stringValue","intValue":1}`),
-			responseErr:    nil,
-			requestBody:    nil,
-			respStatusCode: http.StatusOK,
+			name:                   "get method",
+			method:                 http.MethodGet,
+			uri:                    "/v1/test/get?int64Argument=1&stringArgument=stringValue",
+			expectedResponseBody:   []byte(`{"stringValue":"stringValue","intValue":1}`),
+			expectedResponseErr:    nil,
+			requestBody:            nil,
+			expectedRespStatusCode: http.StatusOK,
+		},
+		{
+			name:                   "repeated",
+			method:                 http.MethodGet,
+			uri:                    "/v1/repeated/1,2,3",
+			expectedResponseBody:   []byte(`{"stringValueArg":["1","2","3"],"stringValueQuery":["a","b","c"]}`),
+			expectedResponseErr:    nil,
+			requestBody:            []byte(`{"stringValueQuery":["a","b","c"]}`),
+			expectedRespStatusCode: http.StatusOK,
 		},
 	}
 	var (
@@ -340,58 +369,17 @@ func TestHTTPGoServer(t *testing.T) {
 			if body, err = io.ReadAll(resp.Body); err != nil {
 				t.Fatal(err)
 			}
-			if !errors.Is(test.responseErr, err) {
-				t.Errorf("%s: Expected error method '%v', but got '%v'", test.name, test.responseErr, err)
+			if !errors.Is(test.expectedResponseErr, err) {
+				t.Errorf("%s: Expected error method '%v', but got '%v'", test.name, test.expectedResponseErr, err)
 			}
 
-			if resp.StatusCode != test.respStatusCode {
-				t.Errorf("%s: Expected status  '%d', but got '%d'", test.name, test.respStatusCode, resp.StatusCode)
+			if resp.StatusCode != test.expectedRespStatusCode {
+				t.Errorf("%s: Expected status  '%d', but got '%d'", test.name, test.expectedRespStatusCode, resp.StatusCode)
 			}
 
-			if !bytes.Equal(body, test.responseBody) {
-				t.Errorf("%s: Expected responseBody body '%s', but got '%s'", test.name, string(test.responseBody), string(body))
+			if !bytes.Equal(body, test.expectedResponseBody) {
+				t.Errorf("%s: Expected responseBody body '%s', but got '%s'", test.name, string(test.expectedResponseBody), string(body))
 			}
 		})
-	}
-}
-
-func compareResults(
-	t *testing.T,
-	request requestData,
-	test testCaseClient,
-	err error,
-) {
-	if request.uri != test.uri {
-		t.Errorf("%s: Expected request URI '%s', but got '%s'", test.name, test.uri, request.uri)
-	}
-
-	if request.method != test.method {
-		t.Errorf("%s: Expected request method '%s', but got '%s'", test.name, test.method, request.method)
-	}
-
-	if !errors.Is(test.responseErr, err) {
-		t.Errorf("%s: Expected error method '%v', but got '%v'", test.name, test.responseErr, err)
-	}
-
-	if !bytes.Equal(request.requestBody, test.requestBody) {
-		t.Errorf("%s: Expected request body '%s', but got '%s'", test.name, string(test.requestBody), string(request.requestBody))
-	}
-}
-
-func getMockServer(
-	reqCh chan requestData,
-	respCh chan responseData,
-) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body, _ := io.ReadAll(r.Body)
-		reqCh <- requestData{
-			method:      r.Method,
-			uri:         r.URL.Path,
-			requestBody: body,
-		}
-		res := <-respCh
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(res.code)
-		_, _ = w.Write(res.body)
 	}
 }

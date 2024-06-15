@@ -177,7 +177,7 @@ func (f field) getVariablePlaceholder() (string, error) {
 	case protoreflect.BoolKind:
 		return "%t", nil
 	default:
-		return "", fmt.Errorf("unsupported type %s for path variable", f.kind.String())
+		return "", fmt.Errorf(`unsupported type %s for path variable: "%s"`, f.kind, f.goName)
 	}
 }
 

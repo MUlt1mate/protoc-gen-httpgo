@@ -7,16 +7,14 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	strconv "strconv"
-	strings "strings"
-
+	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 	router "github.com/fasthttp/router"
 	easyjson "github.com/mailru/easyjson"
 	fasthttp "github.com/valyala/fasthttp"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-
-	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	strconv "strconv"
+	strings "strings"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -27,6 +25,7 @@ type ServiceNameHTTPGoService interface {
 	SameInputAndOutput(context.Context, *InputMsgName) (*OutputMsgName, error)
 	Optional(context.Context, *InputMsgName) (*OptionalField, error)
 	GetMethod(context.Context, *InputMsgName) (*OutputMsgName, error)
+	CheckRepeated(context.Context, *RepeatedCheck) (*RepeatedCheck, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -143,6 +142,21 @@ func RegisterServiceNameHTTPGoServer(
 		_, _ = middleware(ctx, handler)
 	})
 
+	r.GET("/v1/repeated/{stringValueArg}", func(ctx *fasthttp.RequestCtx) {
+		handler := func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
+			input, err := buildExampleServiceNameCheckRepeatedRepeatedCheck(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return h.CheckRepeated(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx)
+			return
+		}
+		_, _ = middleware(ctx, handler)
+	})
+
 	return nil
 }
 
@@ -171,11 +185,11 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 			}
 		case "stringArgument":
 			arg.StringArgument = string(value)
+		default:
+			err = fmt.Errorf("unknown query parameter %s", strKey)
+			return
 		}
 	})
-	if err != nil {
-		return nil, err
-	}
 	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
 	if !ok {
 		return nil, errors.New("incorrect type for parameter StringArgument")
@@ -328,14 +342,20 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 			arg.StringValue = string(value)
 		case "BytesValue":
 			arg.BytesValue = value
+		case "MessageValue":
+			err = fmt.Errorf("unsupported type message for query argument MessageValue")
+			return
 		case "SliceStringValue":
 			SliceStringValue := string(value)
 			arg.SliceStringValue = strings.Split(SliceStringValue, ",")
+		case "SliceInt32Value":
+			err = fmt.Errorf("unsupported type repeated int32 for query argument SliceInt32Value")
+			return
+		default:
+			err = fmt.Errorf("unknown query parameter %s", strKey)
+			return
 		}
 	})
-	if err != nil {
-		return nil, err
-	}
 	BoolValueStr, ok := ctx.UserValue("BoolValue").(string)
 	if !ok {
 		return nil, errors.New("incorrect type for parameter BoolValue")
@@ -515,11 +535,11 @@ func buildExampleServiceNameCommonTypesAny(ctx *fasthttp.RequestCtx) (arg *anypb
 			arg.TypeUrl = string(value)
 		case "value":
 			arg.Value = value
+		default:
+			err = fmt.Errorf("unknown query parameter %s", strKey)
+			return
 		}
 	})
-	if err != nil {
-		return nil, err
-	}
 	return arg, err
 }
 
@@ -541,11 +561,11 @@ func buildExampleServiceNameImportsSomeCustomMsg1(ctx *fasthttp.RequestCtx) (arg
 		switch strKey {
 		case "val":
 			arg.Val = string(value)
+		default:
+			err = fmt.Errorf("unknown query parameter %s", strKey)
+			return
 		}
 	})
-	if err != nil {
-		return nil, err
-	}
 	return arg, err
 }
 
@@ -574,11 +594,11 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 			}
 		case "stringArgument":
 			arg.StringArgument = string(value)
+		default:
+			err = fmt.Errorf("unknown query parameter %s", strKey)
+			return
 		}
 	})
-	if err != nil {
-		return nil, err
-	}
 	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
 	if !ok {
 		return nil, errors.New("incorrect type for parameter StringArgument")
@@ -613,11 +633,11 @@ func buildExampleServiceNameOptionalInputMsgName(ctx *fasthttp.RequestCtx) (arg 
 			}
 		case "stringArgument":
 			arg.StringArgument = string(value)
+		default:
+			err = fmt.Errorf("unknown query parameter %s", strKey)
+			return
 		}
 	})
-	if err != nil {
-		return nil, err
-	}
 	return arg, err
 }
 
@@ -646,11 +666,46 @@ func buildExampleServiceNameGetMethodInputMsgName(ctx *fasthttp.RequestCtx) (arg
 			}
 		case "stringArgument":
 			arg.StringArgument = string(value)
+		default:
+			err = fmt.Errorf("unknown query parameter %s", strKey)
+			return
 		}
 	})
-	if err != nil {
-		return nil, err
+	return arg, err
+}
+
+func buildExampleServiceNameCheckRepeatedRepeatedCheck(ctx *fasthttp.RequestCtx) (arg *RepeatedCheck, err error) {
+	arg = &RepeatedCheck{}
+	if body := ctx.PostBody(); len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
+		}
 	}
+	ctx.QueryArgs().VisitAll(func(key, value []byte) {
+		var strKey = string(key)
+		switch strKey {
+		case "stringValueArg":
+			StringValueArg := string(value)
+			arg.StringValueArg = strings.Split(StringValueArg, ",")
+		case "stringValueQuery":
+			StringValueQuery := string(value)
+			arg.StringValueQuery = strings.Split(StringValueQuery, ",")
+		default:
+			err = fmt.Errorf("unknown query parameter %s", strKey)
+			return
+		}
+	})
+	StringValueArgStr, ok := ctx.UserValue("stringValueArg").(string)
+	if !ok {
+		return nil, errors.New("incorrect type for parameter StringValueArg")
+	}
+	arg.StringValueArg = strings.Split(StringValueArgStr, ",")
 	return arg, err
 }
 
@@ -988,6 +1043,49 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *InputM
 		}
 	}
 	resp = &OutputMsgName{}
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(reqResp.Body(), respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(reqResp.Body(), resp); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) CheckRepeated(ctx context.Context, request *RepeatedCheck) (resp *RepeatedCheck, err error) {
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return nil, err
+	}
+	req := &fasthttp.Request{}
+	req.SetBody(body)
+	StringValueArgRequest := strings.Join(request.StringValueArg, ",")
+	req.SetRequestURI(p.host + fmt.Sprintf("/v1/repeated/%s", StringValueArgRequest))
+	req.Header.SetMethod("GET")
+	var reqResp *fasthttp.Response
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req, resp)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &RepeatedCheck{}
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(reqResp.Body(), respEJ); err != nil {
 			return nil, err

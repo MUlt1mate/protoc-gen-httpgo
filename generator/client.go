@@ -1,8 +1,11 @@
 package generator
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
+
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 var uriParametersRegexp = regexp.MustCompile(`(?mU){(.*)}`)
@@ -60,12 +63,6 @@ func (g *Generator) genClientMethod(
 	srvName string,
 	method methodParams,
 ) (err error) {
-	var (
-		requestURI, paramsURI string
-	)
-	if requestURI, paramsURI, err = g.getRequestURIAndParams(method); err != nil {
-		return err
-	}
 	if method.comment != "" {
 		comment := method.comment
 		if !strings.HasPrefix(comment, "// "+method.name) {
@@ -77,7 +74,15 @@ func (g *Generator) genClientMethod(
 	g.genMarshalRequestStruct()
 	g.gf.P("	req := &fasthttp.Request{}")
 	g.gf.P("	req.SetBody(body)")
-	g.gf.P("	req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"\""+paramsURI+"))")
+	var (
+		requestURI string
+		params     []string
+	)
+	if requestURI, params, err = g.getRequestURIAndParams(method); err != nil {
+		return err
+	}
+	paramsURI := strings.Join(params, ", ")
+	g.gf.P("	req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"\","+paramsURI+"))")
 	g.gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
 	g.gf.P("	var reqResp *fasthttp.Response")
 	g.gf.P("	var handler = func(", g.clientInput, ") (", g.clientOutput, ") {")
@@ -103,19 +108,30 @@ func (g *Generator) genClientMethod(
 }
 
 // getRequestURIAndParams returns the request URI and parameters for the HTTP client method
-func (g *Generator) getRequestURIAndParams(method methodParams) (requestURI, paramsURI string, err error) {
+func (g *Generator) getRequestURIAndParams(method methodParams) (requestURI string, params []string, err error) {
 	requestURI = method.uri
 	var placeholder string
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
 		if f, ok := method.fields[match[1]]; ok {
 			if placeholder, err = f.getVariablePlaceholder(); err != nil {
-				return "", "", err
+				return "", nil, err
 			}
 			requestURI = strings.ReplaceAll(requestURI, match[0], placeholder)
-			paramsURI += ", request." + f.goName
+			parameterName := "request." + f.goName
+			if f.cardinality == protoreflect.Repeated {
+				switch f.kind {
+				case protoreflect.StringKind:
+					g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(request.", f.goName, ",\",\")")
+					parameterName = f.goName + "Request"
+				default:
+					err = fmt.Errorf(`unsupported type %s for path variable: "%s"`, f.kind, f.goName)
+					return "", nil, err
+				}
+			}
+			params = append(params, parameterName)
 		}
 	}
-	return requestURI, paramsURI, nil
+	return requestURI, params, nil
 }
 
 // genMarshalRequestStruct generates marshalling from struct to []byte for request

@@ -47,24 +47,34 @@ func (h *Handler) AllTypesTest(_ context.Context, msg *proto.AllTypesMsg) (*prot
 }
 
 func (h *Handler) CommonTypes(_ context.Context, _ *anypb.Any) (*emptypb.Empty, error) {
-	panic("implement me")
+	return &emptypb.Empty{}, nil
 }
 
-func (h *Handler) Imports(_ context.Context, _ *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error) {
-	panic("implement me")
+func (h *Handler) Imports(_ context.Context, req *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error) {
+	return &somepackage.SomeCustomMsg2{Val: req.Val}, nil
 }
 
-func (h *Handler) SameInputAndOutput(_ context.Context, _ *proto.InputMsgName) (*proto.OutputMsgName, error) {
-	panic("implement me")
+func (h *Handler) SameInputAndOutput(_ context.Context, req *proto.InputMsgName) (*proto.OutputMsgName, error) {
+	return &proto.OutputMsgName{
+		StringValue: req.StringArgument,
+		IntValue:    req.Int64Argument,
+	}, nil
 }
 
-func (h *Handler) Optional(_ context.Context, _ *proto.InputMsgName) (*proto.OptionalField, error) {
-	panic("implement me")
+func (h *Handler) Optional(_ context.Context, req *proto.InputMsgName) (*proto.OptionalField, error) {
+	return &proto.OptionalField{StringValue: &req.StringArgument}, nil
 }
 
 func (h *Handler) GetMethod(_ context.Context, req *proto.InputMsgName) (*proto.OutputMsgName, error) {
 	return &proto.OutputMsgName{
 		StringValue: req.StringArgument,
 		IntValue:    req.Int64Argument,
+	}, nil
+}
+
+func (h *Handler) CheckRepeated(_ context.Context, req *proto.RepeatedCheck) (*proto.RepeatedCheck, error) {
+	return &proto.RepeatedCheck{
+		StringValueArg:   req.StringValueArg,
+		StringValueQuery: req.StringValueQuery,
 	}, nil
 }

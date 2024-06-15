@@ -53,6 +53,11 @@ service ServiceName {
       get: "/v1/test/get"
     };
   };
+  rpc CheckRepeated(RepeatedCheck) returns (RepeatedCheck){
+    option (google.api.http) = {
+      get: "/v1/repeated/{stringValueArg}"
+    };
+  };
 }
 
 message InputMsgName {
@@ -77,8 +82,9 @@ message AllTypesMsg {
   double DoubleValue = 14;
   string StringValue = 15;
   bytes BytesValue = 16;
-  //  InputMsgName MessageValue = 17; // not supported
+  InputMsgName MessageValue = 17; // not supported as URI argument
   repeated string SliceStringValue = 18;
+  repeated int32 SliceInt32Value = 19;
 }
 
 enum options {
@@ -93,4 +99,9 @@ message OutputMsgName {
 
 message OptionalField {
   optional string stringValue = 1;
+}
+
+message RepeatedCheck {
+  repeated string stringValueArg = 1;
+  repeated string stringValueQuery = 2;
 }

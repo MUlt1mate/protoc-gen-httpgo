@@ -110,11 +110,11 @@ func (g *Generator) genBuildRequestMethod(serviceName string, method methodParam
 			return err
 		}
 	}
+	g.gf.P("	default:")
+	g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"unknown query parameter %s\", strKey)")
+	g.gf.P("		return")
 	g.gf.P("	}")
 	g.gf.P("})")
-	g.gf.P("if err != nil {")
-	g.gf.P("	return nil, err")
-	g.gf.P("}")
 
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
 		if f, ok := method.fields[match[1]]; ok {
@@ -138,6 +138,9 @@ func (g *Generator) genBuildRequestArgument(
 	g.gf.P("	if !ok {")
 	g.gf.P("		return nil, ", errorsPackage.Ident("New"), "(\"incorrect type for parameter ", f.goName, "\")")
 	g.gf.P("	}")
+	if f.cardinality == protoreflect.Repeated {
+		return g.genRepeatedArgCheck(f)
+	}
 	switch f.kind {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind:
 		g.gf.P("	", f.goName, ", convErr := ", strconvPackage.Ident("ParseInt"), "(", f.goName, "Str, 10, 32)")
@@ -320,7 +323,8 @@ func (g *Generator) genQueryCheck(f field) (err error) {
 		g.gf.P("		}")
 		g.gf.P("	}")
 	default:
-		return fmt.Errorf("unsupported type %s for path variable", f.kind.String())
+		g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"unsupported type "+f.kind.String()+" for query argument "+f.goName+"\")")
+		g.gf.P("	return")
 	}
 	return nil
 }
@@ -328,9 +332,26 @@ func (g *Generator) genQueryCheck(f field) (err error) {
 func (g *Generator) genRepeatedQueryCheck(
 	f field,
 ) error {
-	if f.kind == protoreflect.StringKind {
+	switch f.kind {
+	case protoreflect.StringKind:
 		g.gf.P("	", f.goName, " := string(value)")
 		g.gf.P("	arg."+f.goName+" = ", stringsPackage.Ident("Split"), "(", f.goName, ",\",\")")
+	default:
+		g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"unsupported type repeated "+f.kind.String()+" for query argument "+f.goName+"\")")
+		g.gf.P("	return")
+	}
+	return nil
+}
+
+func (g *Generator) genRepeatedArgCheck(
+	f field,
+) error {
+	switch f.kind {
+	case protoreflect.StringKind:
+		g.gf.P("	arg."+f.goName+" = ", stringsPackage.Ident("Split"), "(", f.goName, "Str,\",\")")
+	default:
+		g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"unsupported type repeated "+f.kind.String()+" for path argument "+f.goName+"\")")
+		g.gf.P("	return")
 	}
 	return nil
 }
