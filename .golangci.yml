@@ -25,7 +25,6 @@ linters-settings:
 
   govet:
     enable-all: true
-    check-shadowing: true
     settings:
       shadow:
         strict: true
@@ -51,7 +50,6 @@ linters:
     - durationcheck # checks for two durations multiplied together
     - errname # checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error
     - errorlint # finds code that will cause problems with the error wrapping scheme introduced in Go 1.13
-    - execinquery # checks query string in Query function which reads your Go src files and warning it finds
     - exportloopref # checks for pointers to enclosing loop variables
     - forbidigo # forbids identifiers
     - funlen # tool for detection of long functions
@@ -62,7 +60,6 @@ linters:
     - gocritic # provides diagnostics that check for bugs, performance and style issues
     - gocyclo # computes and checks the cyclomatic complexity of functions
     - goimports # in addition to fixing imports, goimports also formats your code in the same style as gofmt
-    - gomnd # detects magic numbers
     - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod
     - gomodguard # allow and block lists linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations
     - goprintffuncname # checks that printf-like functions are named with f at the end
@@ -94,3 +91,10 @@ linters:
     - wastedassign # finds wasted assignment statements
     - whitespace # detects leading and trailing whitespace
     - prealloc # [premature optimization, but can be used in some cases] finds slice declarations that could potentially be preallocated
+
+issues:
+  exclude-rules:
+    - path: generator/server.go # lots of false positives
+      text: "make it a constant"
+      linters:
+        - goconst

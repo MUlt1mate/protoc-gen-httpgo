@@ -231,24 +231,29 @@ func (g *Generator) genChainServerMiddlewares() {
 
 // genUnmarshalRequestStruct generates unmarshalling from []byte to struct for request
 func (g *Generator) genUnmarshalRequestStruct() {
+	g.gf.P("	if body := ctx.PostBody(); len(body) > 0 { ")
 	switch *g.cfg.Marshaller {
 	case marshallerEasyJSON:
-		g.gf.P("	if argEJ, ok := interface{}(arg).(", easyjsonPackage.Ident("Unmarshaler"), "); ok {")
-		g.gf.P("		if err = ", easyjsonPackage.Ident("Unmarshal"), "(ctx.PostBody(), argEJ); err != nil {")
-		g.gf.P("			return nil, err")
+		g.gf.P("		if argEJ, ok := interface{}(arg).(", easyjsonPackage.Ident("Unmarshaler"), "); ok {")
+		g.gf.P("			if err = ", easyjsonPackage.Ident("Unmarshal"), "(body, argEJ); err != nil {")
+		g.gf.P("				return nil, err")
+		g.gf.P("			}")
+		g.gf.P("		} else {")
+		g.gf.P("			if err = ", jsonPackage.Ident("Unmarshal"), "(body, arg); err != nil {")
+		g.gf.P("				return nil, err")
+		g.gf.P("			}")
 		g.gf.P("		}")
-		g.gf.P("	} else {")
-		g.gf.P("		if err = ", jsonPackage.Ident("Unmarshal"), "(ctx.PostBody(), arg); err != nil {")
-		g.gf.P("			return nil, err")
-		g.gf.P("		}")
-		g.gf.P("	}")
 	default:
-		g.gf.P("	err = ", jsonPackage.Ident("Unmarshal"), "(ctx.PostBody(), arg)")
+		g.gf.P("		err = ", jsonPackage.Ident("Unmarshal"), "(body, arg)")
 	}
+	g.gf.P("	}")
 }
 
 func (g *Generator) genQueryCheck(f field) (err error) {
 	g.gf.P("	case \"" + f.protoName + "\":")
+	if f.cardinality == protoreflect.Repeated {
+		return g.genRepeatedQueryCheck(f)
+	}
 	switch f.kind {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind:
 		g.gf.P("	"+f.goName, "Str := string(value)")
@@ -316,6 +321,16 @@ func (g *Generator) genQueryCheck(f field) (err error) {
 		g.gf.P("	}")
 	default:
 		return fmt.Errorf("unsupported type %s for path variable", f.kind.String())
+	}
+	return nil
+}
+
+func (g *Generator) genRepeatedQueryCheck(
+	f field,
+) error {
+	if f.kind == protoreflect.StringKind {
+		g.gf.P("	", f.goName, " := string(value)")
+		g.gf.P("	arg."+f.goName+" = ", stringsPackage.Ident("Split"), "(", f.goName, ",\",\")")
 	}
 	return nil
 }

@@ -25,22 +25,23 @@ func (h *Handler) RPCName(_ context.Context, request *proto.InputMsgName) (*prot
 
 func (h *Handler) AllTypesTest(_ context.Context, msg *proto.AllTypesMsg) (*proto.AllTypesMsg, error) {
 	p := &proto.AllTypesMsg{
-		BoolValue:     msg.BoolValue,
-		EnumValue:     msg.EnumValue,
-		Int32Value:    msg.Int32Value,
-		Sint32Value:   msg.Sint32Value,
-		Uint32Value:   msg.Uint32Value,
-		Int64Value:    msg.Int64Value,
-		Sint64Value:   msg.Sint64Value,
-		Uint64Value:   msg.Uint64Value,
-		Sfixed32Value: msg.Sfixed32Value,
-		Fixed32Value:  msg.Fixed32Value,
-		FloatValue:    msg.FloatValue,
-		Sfixed64Value: msg.Sfixed64Value,
-		Fixed64Value:  msg.Fixed64Value,
-		DoubleValue:   msg.DoubleValue,
-		StringValue:   msg.StringValue,
-		BytesValue:    msg.BytesValue,
+		BoolValue:        msg.BoolValue,
+		EnumValue:        msg.EnumValue,
+		Int32Value:       msg.Int32Value,
+		Sint32Value:      msg.Sint32Value,
+		Uint32Value:      msg.Uint32Value,
+		Int64Value:       msg.Int64Value,
+		Sint64Value:      msg.Sint64Value,
+		Uint64Value:      msg.Uint64Value,
+		Sfixed32Value:    msg.Sfixed32Value,
+		Fixed32Value:     msg.Fixed32Value,
+		FloatValue:       msg.FloatValue,
+		Sfixed64Value:    msg.Sfixed64Value,
+		Fixed64Value:     msg.Fixed64Value,
+		DoubleValue:      msg.DoubleValue,
+		StringValue:      msg.StringValue,
+		BytesValue:       msg.BytesValue,
+		SliceStringValue: msg.SliceStringValue,
 	}
 	return p, nil
 }
@@ -59,4 +60,11 @@ func (h *Handler) SameInputAndOutput(_ context.Context, _ *proto.InputMsgName) (
 
 func (h *Handler) Optional(_ context.Context, _ *proto.InputMsgName) (*proto.OptionalField, error) {
 	panic("implement me")
+}
+
+func (h *Handler) GetMethod(_ context.Context, req *proto.InputMsgName) (*proto.OutputMsgName, error) {
+	return &proto.OutputMsgName{
+		StringValue: req.StringArgument,
+		IntValue:    req.Int64Argument,
+	}, nil
 }

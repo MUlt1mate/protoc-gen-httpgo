@@ -48,6 +48,11 @@ service ServiceName {
       post: "/v1/test/optional"
     };
   };
+  rpc GetMethod(InputMsgName) returns (OutputMsgName){
+    option (google.api.http) = {
+      get: "/v1/test/get"
+    };
+  };
 }
 
 message InputMsgName {
@@ -73,6 +78,7 @@ message AllTypesMsg {
   string StringValue = 15;
   bytes BytesValue = 16;
   //  InputMsgName MessageValue = 17; // not supported
+  repeated string SliceStringValue = 18;
 }
 
 enum options {

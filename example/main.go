@@ -45,5 +45,10 @@ func clientExample(ctx context.Context) (err error) {
 	}
 	// sending our request
 	_, _ = client.RPCName(context.Background(), &proto.InputMsgName{Int64Argument: 999, StringArgument: "rand"})
+	_, _ = client.AllTypesTest(context.Background(), &proto.AllTypesMsg{
+		SliceStringValue: []string{"a", "b"},
+		BytesValue:       []byte("hello world"),
+		StringValue:      "hello world",
+	})
 	return nil
 }

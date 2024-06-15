@@ -7,14 +7,16 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	strconv "strconv"
+	strings "strings"
+
 	router "github.com/fasthttp/router"
 	easyjson "github.com/mailru/easyjson"
 	fasthttp "github.com/valyala/fasthttp"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	strconv "strconv"
-	strings "strings"
+
+	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -24,6 +26,7 @@ type ServiceNameHTTPGoService interface {
 	Imports(context.Context, *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error)
 	SameInputAndOutput(context.Context, *InputMsgName) (*OutputMsgName, error)
 	Optional(context.Context, *InputMsgName) (*OptionalField, error)
+	GetMethod(context.Context, *InputMsgName) (*OutputMsgName, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -125,18 +128,35 @@ func RegisterServiceNameHTTPGoServer(
 		_, _ = middleware(ctx, handler)
 	})
 
+	r.GET("/v1/test/get", func(ctx *fasthttp.RequestCtx) {
+		handler := func(ctx *fasthttp.RequestCtx) (resp interface{}, err error) {
+			input, err := buildExampleServiceNameGetMethodInputMsgName(ctx)
+			if err != nil {
+				return nil, err
+			}
+			return h.GetMethod(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx)
+			return
+		}
+		_, _ = middleware(ctx, handler)
+	})
+
 	return nil
 }
 
 func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
 	arg = &InputMsgName{}
-	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
-			return nil, err
+	if body := ctx.PostBody(); len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(key, value []byte) {
@@ -176,13 +196,15 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 
 func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (arg *AllTypesMsg, err error) {
 	arg = &AllTypesMsg{}
-	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
-			return nil, err
+	if body := ctx.PostBody(); len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(key, value []byte) {
@@ -306,6 +328,9 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 			arg.StringValue = string(value)
 		case "BytesValue":
 			arg.BytesValue = value
+		case "SliceStringValue":
+			SliceStringValue := string(value)
+			arg.SliceStringValue = strings.Split(SliceStringValue, ",")
 		}
 	})
 	if err != nil {
@@ -472,13 +497,15 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 
 func buildExampleServiceNameCommonTypesAny(ctx *fasthttp.RequestCtx) (arg *anypb.Any, err error) {
 	arg = &anypb.Any{}
-	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
-			return nil, err
+	if body := ctx.PostBody(); len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(key, value []byte) {
@@ -498,13 +525,15 @@ func buildExampleServiceNameCommonTypesAny(ctx *fasthttp.RequestCtx) (arg *anypb
 
 func buildExampleServiceNameImportsSomeCustomMsg1(ctx *fasthttp.RequestCtx) (arg *somepackage.SomeCustomMsg1, err error) {
 	arg = &somepackage.SomeCustomMsg1{}
-	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
-			return nil, err
+	if body := ctx.PostBody(); len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(key, value []byte) {
@@ -522,13 +551,15 @@ func buildExampleServiceNameImportsSomeCustomMsg1(ctx *fasthttp.RequestCtx) (arg
 
 func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
 	arg = &InputMsgName{}
-	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
-			return nil, err
+	if body := ctx.PostBody(); len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(key, value []byte) {
@@ -559,13 +590,48 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 
 func buildExampleServiceNameOptionalInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
 	arg = &InputMsgName{}
-	if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(ctx.PostBody(), argEJ); err != nil {
-			return nil, err
+	if body := ctx.PostBody(); len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
 		}
-	} else {
-		if err = json.Unmarshal(ctx.PostBody(), arg); err != nil {
-			return nil, err
+	}
+	ctx.QueryArgs().VisitAll(func(key, value []byte) {
+		var strKey = string(key)
+		switch strKey {
+		case "int64Argument":
+			Int64ArgumentStr := string(value)
+			arg.Int64Argument, err = strconv.ParseInt(Int64ArgumentStr, 10, 64)
+			if err != nil {
+				err = fmt.Errorf("conversion failed for parameter Int64Argument: %w", err)
+				return
+			}
+		case "stringArgument":
+			arg.StringArgument = string(value)
+		}
+	})
+	if err != nil {
+		return nil, err
+	}
+	return arg, err
+}
+
+func buildExampleServiceNameGetMethodInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
+	arg = &InputMsgName{}
+	if body := ctx.PostBody(); len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(key, value []byte) {
@@ -880,6 +946,48 @@ func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *InputMs
 		}
 	}
 	resp = &OptionalField{}
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(reqResp.Body(), respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(reqResp.Body(), resp); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *InputMsgName) (resp *OutputMsgName, err error) {
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return nil, err
+	}
+	req := &fasthttp.Request{}
+	req.SetBody(body)
+	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/get"))
+	req.Header.SetMethod("GET")
+	var reqResp *fasthttp.Response
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req, resp)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &OutputMsgName{}
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(reqResp.Body(), respEJ); err != nil {
 			return nil, err
