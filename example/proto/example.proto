@@ -53,9 +53,29 @@ service ServiceName {
       get: "/v1/test/get"
     };
   };
-  rpc CheckRepeated(RepeatedCheck) returns (RepeatedCheck){
+  rpc CheckRepeatedPath(RepeatedCheck) returns (RepeatedCheck){
     option (google.api.http) = {
-      get: "/v1/repeated/{stringValueArg}"
+      get: "/v1/repeated/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}/{StringValueQuery}"
+    };
+  };
+  rpc CheckRepeatedQuery(RepeatedCheck) returns (RepeatedCheck){
+    option (google.api.http) = {
+      get: "/v1/repeated/{StringValue}"
+    };
+  };
+  rpc CheckRepeatedPost(RepeatedCheck) returns (RepeatedCheck){
+    option (google.api.http) = {
+      post: "/v1/repeated/{StringValue}"
+    };
+  };
+  rpc EmptyGet(Empty) returns (Empty){
+    option (google.api.http) = {
+      get: "/v1/emptyGet"
+    };
+  };
+  rpc EmptyPost(Empty) returns (Empty){
+    option (google.api.http) = {
+      post: "/v1/emptyPost"
     };
   };
 }
@@ -102,6 +122,23 @@ message OptionalField {
 }
 
 message RepeatedCheck {
-  repeated string stringValueArg = 1;
-  repeated string stringValueQuery = 2;
+  repeated bool BoolValue = 1;
+  repeated options EnumValue = 2;
+  repeated int32 Int32Value = 3;
+  repeated sint32 Sint32Value = 4;
+  repeated uint32 Uint32Value = 5;
+  repeated int64 Int64Value = 6;
+  repeated sint64 Sint64Value = 7;
+  repeated uint64 Uint64Value = 8;
+  repeated sfixed32 Sfixed32Value = 9;
+  repeated fixed32 Fixed32Value = 10;
+  repeated float FloatValue = 11;
+  repeated sfixed64 Sfixed64Value = 12;
+  repeated fixed64 Fixed64Value = 13;
+  repeated double DoubleValue = 14;
+  repeated string StringValue = 15;
+  repeated bytes BytesValue = 16; // this field represented as [][]byte and doesn't work properly as a path argument
+  repeated string StringValueQuery = 17;
 }
+
+message Empty {}

@@ -97,4 +97,4 @@ issues:
       text: "SA9005:" # complains about empty structs
     - linters:
         - revive
-      text: "unused-parameter: parameter 'ctx'" # not in use at the moment
+      text: "unused-parameter: " # generated named parameters

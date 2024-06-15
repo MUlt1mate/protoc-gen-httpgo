@@ -72,9 +72,76 @@ func (h *Handler) GetMethod(_ context.Context, req *proto.InputMsgName) (*proto.
 	}, nil
 }
 
-func (h *Handler) CheckRepeated(_ context.Context, req *proto.RepeatedCheck) (*proto.RepeatedCheck, error) {
+func (h *Handler) CheckRepeatedPath(_ context.Context, req *proto.RepeatedCheck) (*proto.RepeatedCheck, error) {
 	return &proto.RepeatedCheck{
-		StringValueArg:   req.StringValueArg,
+		BoolValue:        req.BoolValue,
+		EnumValue:        req.EnumValue,
+		Int32Value:       req.Int32Value,
+		Sint32Value:      req.Sint32Value,
+		Uint32Value:      req.Uint32Value,
+		Int64Value:       req.Int64Value,
+		Sint64Value:      req.Sint64Value,
+		Uint64Value:      req.Uint64Value,
+		Sfixed32Value:    req.Sfixed32Value,
+		Fixed32Value:     req.Fixed32Value,
+		FloatValue:       req.FloatValue,
+		Sfixed64Value:    req.Sfixed64Value,
+		Fixed64Value:     req.Fixed64Value,
+		DoubleValue:      req.DoubleValue,
+		StringValue:      req.StringValue,
+		BytesValue:       req.BytesValue,
 		StringValueQuery: req.StringValueQuery,
 	}, nil
+}
+
+func (h *Handler) CheckRepeatedQuery(_ context.Context, req *proto.RepeatedCheck) (*proto.RepeatedCheck, error) {
+	return &proto.RepeatedCheck{
+		BoolValue:        req.BoolValue,
+		EnumValue:        req.EnumValue,
+		Int32Value:       req.Int32Value,
+		Sint32Value:      req.Sint32Value,
+		Uint32Value:      req.Uint32Value,
+		Int64Value:       req.Int64Value,
+		Sint64Value:      req.Sint64Value,
+		Uint64Value:      req.Uint64Value,
+		Sfixed32Value:    req.Sfixed32Value,
+		Fixed32Value:     req.Fixed32Value,
+		FloatValue:       req.FloatValue,
+		Sfixed64Value:    req.Sfixed64Value,
+		Fixed64Value:     req.Fixed64Value,
+		DoubleValue:      req.DoubleValue,
+		StringValue:      req.StringValue,
+		BytesValue:       req.BytesValue,
+		StringValueQuery: req.StringValueQuery,
+	}, nil
+}
+
+func (h *Handler) CheckRepeatedPost(_ context.Context, req *proto.RepeatedCheck) (*proto.RepeatedCheck, error) {
+	return &proto.RepeatedCheck{
+		BoolValue:        req.BoolValue,
+		EnumValue:        req.EnumValue,
+		Int32Value:       req.Int32Value,
+		Sint32Value:      req.Sint32Value,
+		Uint32Value:      req.Uint32Value,
+		Int64Value:       req.Int64Value,
+		Sint64Value:      req.Sint64Value,
+		Uint64Value:      req.Uint64Value,
+		Sfixed32Value:    req.Sfixed32Value,
+		Fixed32Value:     req.Fixed32Value,
+		FloatValue:       req.FloatValue,
+		Sfixed64Value:    req.Sfixed64Value,
+		Fixed64Value:     req.Fixed64Value,
+		DoubleValue:      req.DoubleValue,
+		StringValue:      req.StringValue,
+		BytesValue:       req.BytesValue,
+		StringValueQuery: req.StringValueQuery,
+	}, nil
+}
+
+func (h *Handler) EmptyGet(_ context.Context, _ *proto.Empty) (*proto.Empty, error) {
+	return &proto.Empty{}, nil
+}
+
+func (h *Handler) EmptyPost(_ context.Context, _ *proto.Empty) (*proto.Empty, error) {
+	return &proto.Empty{}, nil
 }

@@ -13,9 +13,10 @@ import (
 )
 
 const (
-	marshallerEasyJSON = "easyjson"
-	onlyServer         = "server"
-	onlyClient         = "client"
+	marshallerEasyJSON       = "easyjson"
+	onlyServer               = "server"
+	onlyClient               = "client"
+	pathRepeatedArgDelimiter = ","
 )
 
 type (
@@ -223,4 +224,9 @@ func getRuleMethodAndURI(protoMethod *protogen.Method) (methodParams, error) {
 		return m, fmt.Errorf("unknown method type %T", httpRule.GetPattern())
 	}
 	return m, nil
+}
+
+// HasBody checks if method may have a body
+func (m methodParams) HasBody() bool {
+	return m.httpMethodName != "GET"
 }
