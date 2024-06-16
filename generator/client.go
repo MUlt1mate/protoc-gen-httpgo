@@ -1,8 +1,11 @@
 package generator
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
+
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 var uriParametersRegexp = regexp.MustCompile(`(?mU){(.*)}`)
@@ -60,12 +63,6 @@ func (g *Generator) genClientMethod(
 	srvName string,
 	method methodParams,
 ) (err error) {
-	var (
-		requestURI, paramsURI string
-	)
-	if requestURI, paramsURI, err = g.getRequestURIAndParams(method); err != nil {
-		return err
-	}
 	if method.comment != "" {
 		comment := method.comment
 		if !strings.HasPrefix(comment, "// "+method.name) {
@@ -74,10 +71,26 @@ func (g *Generator) genClientMethod(
 		g.gf.P(comment)
 	}
 	g.gf.P("func (p * ", srvName, "HTTPGoClient) ", method.name, "(ctx ", contextPackage.Ident("Context"), ", request *", method.inputMsgName, ") (resp *", method.outputMsgName, ", err error) {")
-	g.genMarshalRequestStruct()
 	g.gf.P("	req := &fasthttp.Request{}")
-	g.gf.P("	req.SetBody(body)")
-	g.gf.P("	req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"\""+paramsURI+"))")
+	g.gf.P("	var queryArgs string")
+	if method.HasBody() {
+		g.genMarshalRequestStruct()
+	} else {
+		if err = g.genQueryRequestParameters(method); err != nil {
+			return err
+		}
+	}
+	var (
+		requestURI, paramsURI string
+		params                []string
+	)
+	if requestURI, params, err = g.getRequestURIAndParams(method); err != nil {
+		return err
+	}
+	if len(params) > 0 {
+		paramsURI = "," + strings.Join(params, ", ")
+	}
+	g.gf.P("	req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"%s\""+paramsURI+",queryArgs))")
 	g.gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
 	g.gf.P("	var reqResp *fasthttp.Response")
 	g.gf.P("	var handler = func(", g.clientInput, ") (", g.clientOutput, ") {")
@@ -103,19 +116,90 @@ func (g *Generator) genClientMethod(
 }
 
 // getRequestURIAndParams returns the request URI and parameters for the HTTP client method
-func (g *Generator) getRequestURIAndParams(method methodParams) (requestURI, paramsURI string, err error) {
+func (g *Generator) getRequestURIAndParams(method methodParams) (requestURI string, params []string, err error) {
 	requestURI = method.uri
 	var placeholder string
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
 		if f, ok := method.fields[match[1]]; ok {
 			if placeholder, err = f.getVariablePlaceholder(); err != nil {
-				return "", "", err
+				return "", nil, err
+			}
+			parameterName := "request." + f.goName
+			if f.cardinality == protoreflect.Repeated {
+				parameterName = f.goName + "Request"
+				placeholder = "%s"
+				if err = g.genClientRepeatedFieldRequestValues(f); err != nil {
+					return "", nil, err
+				}
 			}
 			requestURI = strings.ReplaceAll(requestURI, match[0], placeholder)
-			paramsURI += ", request." + f.goName
+			params = append(params, parameterName)
 		}
 	}
-	return requestURI, paramsURI, nil
+	return requestURI, params, nil
+}
+
+func (g *Generator) genClientRepeatedFieldRequestValues(f field) (err error) {
+	switch f.kind {
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind:
+		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
+		g.gf.P("for i, v := range request.", f.goName, " {")
+		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatInt"), "(int64(v), 10)")
+		g.gf.P("}")
+		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
+		g.gf.P("for i, v := range request.", f.goName, " {")
+		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatInt"), "(v, 10)")
+		g.gf.P("}")
+		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
+		g.gf.P("for i, v := range request.", f.goName, " {")
+		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatUint"), "(v, 10)")
+		g.gf.P("}")
+		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
+	case protoreflect.FloatKind:
+		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
+		g.gf.P("for i, v := range request.", f.goName, " {")
+		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatFloat"), "(float64(v), 'f', -1, 64)")
+		g.gf.P("}")
+		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
+	case protoreflect.DoubleKind:
+		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
+		g.gf.P("for i, v := range request.", f.goName, " {")
+		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatFloat"), "(v, 'f', -1, 64)")
+		g.gf.P("}")
+		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
+	case protoreflect.StringKind:
+		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(request.", f.goName, ", \""+pathRepeatedArgDelimiter+"\")")
+	case protoreflect.BytesKind:
+		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
+		g.gf.P("for i, v := range request.", f.goName, " {")
+		g.gf.P(f.goName, "Strs[i] = string(v)")
+		g.gf.P("}")
+		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
+	case protoreflect.BoolKind:
+		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
+		g.gf.P("for i, v := range request.", f.goName, " {")
+		g.gf.P("if v {")
+		g.gf.P(f.goName, "Strs[i] = \"true\"")
+		g.gf.P("} else {")
+		g.gf.P(f.goName, "Strs[i] = \"false\"")
+		g.gf.P("}")
+		g.gf.P("}")
+		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
+	case protoreflect.EnumKind:
+		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
+		g.gf.P("for i, v := range request.", f.goName, " {")
+		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatInt"), "(int64(v), 10)") // Assuming Enum is represented as int
+		g.gf.P("}")
+		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
+	default:
+		err = fmt.Errorf(`unsupported type %s for path variable: "%s"`, f.kind, f.goName)
+		return err
+	}
+	return nil
 }
 
 // genMarshalRequestStruct generates marshalling from struct to []byte for request
@@ -134,6 +218,67 @@ func (g *Generator) genMarshalRequestStruct() {
 	g.gf.P("	if err != nil {")
 	g.gf.P("		return nil, err")
 	g.gf.P("	}")
+	g.gf.P("	req.SetBody(body)")
+}
+
+// genQueryRequestParameters
+//
+//nolint:prealloc // false positive
+func (g *Generator) genQueryRequestParameters(method methodParams) (err error) {
+	pathParams := make(map[string]struct{})
+	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
+		pathParams[match[1]] = struct{}{}
+	}
+	if len(pathParams) == len(method.fieldList) {
+		return nil
+	}
+	var (
+		parameters, values []string
+		placeholder        string
+	)
+	for _, f := range method.fieldList {
+		if _, ok := pathParams[f]; ok {
+			continue
+		}
+		methodField := method.fields[f]
+		if methodField.cardinality == protoreflect.Repeated {
+			continue
+		}
+		if placeholder, err = methodField.getVariablePlaceholder(); err != nil {
+			return err
+		}
+		parameters = append(parameters, methodField.goName+"="+placeholder)
+		values = append(values, "request."+methodField.goName)
+	}
+	g.gf.P("var parameters = []string{")
+	for _, q := range parameters {
+		g.gf.P("\"", q, "\",")
+	}
+	g.gf.P("}")
+	g.gf.P("var values = []interface{}{")
+	for _, q := range values {
+		g.gf.P(q, ",")
+	}
+	g.gf.P("}")
+	for _, f := range method.fieldList {
+		if _, ok := pathParams[f]; ok {
+			continue
+		}
+		methodField := method.fields[f]
+		if methodField.cardinality != protoreflect.Repeated {
+			continue
+		}
+		if placeholder, err = methodField.getVariablePlaceholder(); err != nil {
+			return err
+		}
+		uriName := methodField.goName + "[]"
+		g.gf.P("for _,v:= range request.", methodField.goName, " {")
+		g.gf.P("	parameters = append(parameters, \"", uriName, "=", placeholder, "\")")
+		g.gf.P("	values = append(values, v)")
+		g.gf.P("}")
+	}
+	g.gf.P("queryArgs=", fmtPackage.Ident("Sprintf"), "(\"?\"+", stringsPackage.Ident("Join"), "(parameters, \"&\"),values...)")
+	return nil
 }
 
 // genUnmarshalResponseStruct generates unmarshalling from []byte to struct for response

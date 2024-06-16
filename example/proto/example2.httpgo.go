@@ -41,14 +41,15 @@ func GetServiceName2HTTPGoClient(
 }
 
 func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
+	req := &fasthttp.Request{}
+	var queryArgs string
 	var body []byte
 	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
-	req := &fasthttp.Request{}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports"))
+	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports%s", queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
@@ -94,14 +95,15 @@ func GetSecondServiceName2HTTPGoClient(
 }
 
 func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
+	req := &fasthttp.Request{}
+	var queryArgs string
 	var body []byte
 	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
-	req := &fasthttp.Request{}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports"))
+	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports%s", queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
