@@ -4,7 +4,6 @@ import (
 	"flag"
 
 	"google.golang.org/protobuf/compiler/protogen"
-	"google.golang.org/protobuf/types/pluginpb"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/generator"
 )
@@ -20,23 +19,6 @@ func main() {
 		ParamFunc: flags.Set,
 	}
 	opts.Run(func(gen *protogen.Plugin) (err error) {
-		gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
-		for _, f := range gen.Files {
-			if !f.Generate {
-				continue
-			}
-			g := generator.NewGenerator(
-				f,
-				cfg,
-				gen.NewGeneratedFile(f.GeneratedFilenamePrefix+".httpgo.go", f.GoImportPath),
-			)
-			if err = g.GenerateServers(f); err != nil {
-				return err
-			}
-			if err = g.GenerateClients(); err != nil {
-				return err
-			}
-		}
-		return nil
+		return generator.Run(gen, cfg)
 	})
 }

@@ -2,6 +2,7 @@
 
 PWD := $(shell pwd)
 GOPATH := $(shell go env GOPATH)
+.PHONY: debug
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-16s\033[0m %s\n", $$1, $$2}'
@@ -37,3 +38,9 @@ format:				## format code
 run: 			## run example code
 	@printf "\033[37mRunning example methods...\033[0m\n"
 	@(cd ./example/ && go run .)
+
+debug: ## go install github.com/lyft/protoc-gen-star/protoc-gen-debug@latest
+	@protoc -I=. -I=./example/vendor -I=/usr/local/include -I=./example/proto \
+       --plugin=protoc-gen-debug=/home/mult1mate/go/bin/protoc-gen-debug \
+       --debug_out="./debug:." \
+       ./example/proto/*.proto

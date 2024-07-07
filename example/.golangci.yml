@@ -98,3 +98,9 @@ issues:
     - linters:
         - revive
       text: "unused-parameter: " # generated named parameters
+    - linters:
+        - revive
+      text: "var-naming:" # build in param names
+    - linters:
+        - stylecheck
+      text: "ST1003:" # build in param names

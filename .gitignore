@@ -2,3 +2,4 @@
 /vendor/
 /example/vendor/
 /protoc-gen-httpgo
+/debug/code_generator_request.pb.bin

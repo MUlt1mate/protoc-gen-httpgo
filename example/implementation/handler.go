@@ -61,8 +61,8 @@ func (h *Handler) SameInputAndOutput(_ context.Context, req *proto.InputMsgName)
 	}, nil
 }
 
-func (h *Handler) Optional(_ context.Context, req *proto.InputMsgName) (*proto.OptionalField, error) {
-	return &proto.OptionalField{StringValue: &req.StringArgument}, nil
+func (h *Handler) Optional(_ context.Context, req *proto.OptionalField) (*proto.OptionalField, error) {
+	return &proto.OptionalField{StringValue: req.StringValue}, nil
 }
 
 func (h *Handler) GetMethod(_ context.Context, req *proto.InputMsgName) (*proto.OutputMsgName, error) {
