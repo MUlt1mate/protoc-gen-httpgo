@@ -889,7 +889,147 @@ func easyjson758af8aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProto2(in *jle
 			continue
 		}
 		switch key {
-		case "stringValue":
+		case "BoolValue":
+			if in.IsNull() {
+				in.Skip()
+				out.BoolValue = nil
+			} else {
+				if out.BoolValue == nil {
+					out.BoolValue = new(bool)
+				}
+				*out.BoolValue = bool(in.Bool())
+			}
+		case "EnumValue":
+			if in.IsNull() {
+				in.Skip()
+				out.EnumValue = nil
+			} else {
+				if out.EnumValue == nil {
+					out.EnumValue = new(Options)
+				}
+				*out.EnumValue = Options(in.Int32())
+			}
+		case "Int32Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Int32Value = nil
+			} else {
+				if out.Int32Value == nil {
+					out.Int32Value = new(int32)
+				}
+				*out.Int32Value = int32(in.Int32())
+			}
+		case "Sint32Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Sint32Value = nil
+			} else {
+				if out.Sint32Value == nil {
+					out.Sint32Value = new(int32)
+				}
+				*out.Sint32Value = int32(in.Int32())
+			}
+		case "Uint32Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Uint32Value = nil
+			} else {
+				if out.Uint32Value == nil {
+					out.Uint32Value = new(uint32)
+				}
+				*out.Uint32Value = uint32(in.Uint32())
+			}
+		case "Int64Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Int64Value = nil
+			} else {
+				if out.Int64Value == nil {
+					out.Int64Value = new(int64)
+				}
+				*out.Int64Value = int64(in.Int64())
+			}
+		case "Sint64Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Sint64Value = nil
+			} else {
+				if out.Sint64Value == nil {
+					out.Sint64Value = new(int64)
+				}
+				*out.Sint64Value = int64(in.Int64())
+			}
+		case "Uint64Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Uint64Value = nil
+			} else {
+				if out.Uint64Value == nil {
+					out.Uint64Value = new(uint64)
+				}
+				*out.Uint64Value = uint64(in.Uint64())
+			}
+		case "Sfixed32Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Sfixed32Value = nil
+			} else {
+				if out.Sfixed32Value == nil {
+					out.Sfixed32Value = new(int32)
+				}
+				*out.Sfixed32Value = int32(in.Int32())
+			}
+		case "Fixed32Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Fixed32Value = nil
+			} else {
+				if out.Fixed32Value == nil {
+					out.Fixed32Value = new(uint32)
+				}
+				*out.Fixed32Value = uint32(in.Uint32())
+			}
+		case "FloatValue":
+			if in.IsNull() {
+				in.Skip()
+				out.FloatValue = nil
+			} else {
+				if out.FloatValue == nil {
+					out.FloatValue = new(float32)
+				}
+				*out.FloatValue = float32(in.Float32())
+			}
+		case "Sfixed64Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Sfixed64Value = nil
+			} else {
+				if out.Sfixed64Value == nil {
+					out.Sfixed64Value = new(int64)
+				}
+				*out.Sfixed64Value = int64(in.Int64())
+			}
+		case "Fixed64Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Fixed64Value = nil
+			} else {
+				if out.Fixed64Value == nil {
+					out.Fixed64Value = new(uint64)
+				}
+				*out.Fixed64Value = uint64(in.Uint64())
+			}
+		case "DoubleValue":
+			if in.IsNull() {
+				in.Skip()
+				out.DoubleValue = nil
+			} else {
+				if out.DoubleValue == nil {
+					out.DoubleValue = new(float64)
+				}
+				*out.DoubleValue = float64(in.Float64())
+			}
+		case "StringValue":
 			if in.IsNull() {
 				in.Skip()
 				out.StringValue = nil
@@ -898,6 +1038,23 @@ func easyjson758af8aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProto2(in *jle
 					out.StringValue = new(string)
 				}
 				*out.StringValue = string(in.String())
+			}
+		case "BytesValue":
+			if in.IsNull() {
+				in.Skip()
+				out.BytesValue = nil
+			} else {
+				out.BytesValue = in.Bytes()
+			}
+		case "MessageValue":
+			if in.IsNull() {
+				in.Skip()
+				out.MessageValue = nil
+			} else {
+				if out.MessageValue == nil {
+					out.MessageValue = new(InputMsgName)
+				}
+				(*out.MessageValue).UnmarshalEasyJSON(in)
 			}
 		default:
 			in.SkipRecursive()
@@ -913,11 +1070,171 @@ func easyjson758af8aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProto2(out *jw
 	out.RawByte('{')
 	first := true
 	_ = first
-	if in.StringValue != nil {
-		const prefix string = ",\"stringValue\":"
+	if in.BoolValue != nil {
+		const prefix string = ",\"BoolValue\":"
 		first = false
 		out.RawString(prefix[1:])
+		out.Bool(bool(*in.BoolValue))
+	}
+	if in.EnumValue != nil {
+		const prefix string = ",\"EnumValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int32(int32(*in.EnumValue))
+	}
+	if in.Int32Value != nil {
+		const prefix string = ",\"Int32Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int32(int32(*in.Int32Value))
+	}
+	if in.Sint32Value != nil {
+		const prefix string = ",\"Sint32Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int32(int32(*in.Sint32Value))
+	}
+	if in.Uint32Value != nil {
+		const prefix string = ",\"Uint32Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Uint32(uint32(*in.Uint32Value))
+	}
+	if in.Int64Value != nil {
+		const prefix string = ",\"Int64Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(*in.Int64Value))
+	}
+	if in.Sint64Value != nil {
+		const prefix string = ",\"Sint64Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(*in.Sint64Value))
+	}
+	if in.Uint64Value != nil {
+		const prefix string = ",\"Uint64Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Uint64(uint64(*in.Uint64Value))
+	}
+	if in.Sfixed32Value != nil {
+		const prefix string = ",\"Sfixed32Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int32(int32(*in.Sfixed32Value))
+	}
+	if in.Fixed32Value != nil {
+		const prefix string = ",\"Fixed32Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Uint32(uint32(*in.Fixed32Value))
+	}
+	if in.FloatValue != nil {
+		const prefix string = ",\"FloatValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Float32(float32(*in.FloatValue))
+	}
+	if in.Sfixed64Value != nil {
+		const prefix string = ",\"Sfixed64Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(*in.Sfixed64Value))
+	}
+	if in.Fixed64Value != nil {
+		const prefix string = ",\"Fixed64Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Uint64(uint64(*in.Fixed64Value))
+	}
+	if in.DoubleValue != nil {
+		const prefix string = ",\"DoubleValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Float64(float64(*in.DoubleValue))
+	}
+	if in.StringValue != nil {
+		const prefix string = ",\"StringValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
 		out.String(string(*in.StringValue))
+	}
+	if len(in.BytesValue) != 0 {
+		const prefix string = ",\"BytesValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Base64Bytes(in.BytesValue)
+	}
+	if in.MessageValue != nil {
+		const prefix string = ",\"MessageValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		(*in.MessageValue).MarshalEasyJSON(out)
 	}
 	out.RawByte('}')
 }
@@ -1165,9 +1482,9 @@ func easyjson758af8aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProto5(in *jle
 					out.SliceStringValue = (out.SliceStringValue)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v56 string
-					v56 = string(in.String())
-					out.SliceStringValue = append(out.SliceStringValue, v56)
+					var v59 string
+					v59 = string(in.String())
+					out.SliceStringValue = append(out.SliceStringValue, v59)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1188,9 +1505,9 @@ func easyjson758af8aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProto5(in *jle
 					out.SliceInt32Value = (out.SliceInt32Value)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v57 int32
-					v57 = int32(in.Int32())
-					out.SliceInt32Value = append(out.SliceInt32Value, v57)
+					var v60 int32
+					v60 = int32(in.Int32())
+					out.SliceInt32Value = append(out.SliceInt32Value, v60)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1385,11 +1702,11 @@ func easyjson758af8aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProto5(out *jw
 		}
 		{
 			out.RawByte('[')
-			for v60, v61 := range in.SliceStringValue {
-				if v60 > 0 {
+			for v63, v64 := range in.SliceStringValue {
+				if v63 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v61))
+				out.String(string(v64))
 			}
 			out.RawByte(']')
 		}
@@ -1404,11 +1721,11 @@ func easyjson758af8aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProto5(out *jw
 		}
 		{
 			out.RawByte('[')
-			for v62, v63 := range in.SliceInt32Value {
-				if v62 > 0 {
+			for v65, v66 := range in.SliceInt32Value {
+				if v65 > 0 {
 					out.RawByte(',')
 				}
-				out.Int32(int32(v63))
+				out.Int32(int32(v66))
 			}
 			out.RawByte(']')
 		}

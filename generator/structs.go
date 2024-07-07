@@ -10,6 +10,7 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/pluginpb"
 )
 
 const (
@@ -53,6 +54,7 @@ type (
 		enumName    string
 		kind        protoreflect.Kind
 		cardinality protoreflect.Cardinality
+		optional    bool
 	}
 	Config struct {
 		Marshaller *string
@@ -73,6 +75,27 @@ func NewGenerator(
 	g.initTemplates(gf)
 	g.fillServices(file)
 	return g
+}
+
+func Run(gen *protogen.Plugin, cfg Config) (err error) {
+	gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
+	for _, f := range gen.Files {
+		if !f.Generate {
+			continue
+		}
+		g := NewGenerator(
+			f,
+			cfg,
+			gen.NewGeneratedFile(f.GeneratedFilenamePrefix+".httpgo.go", f.GoImportPath),
+		)
+		if err = g.GenerateServers(f); err != nil {
+			return err
+		}
+		if err = g.GenerateClients(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // fillServices scans services and methods from file for further generation
@@ -100,6 +123,7 @@ func (g *Generator) fillServices(file *protogen.File) {
 					protoName:   protoField.Desc.JSONName(),
 					kind:        protoField.Desc.Kind(),
 					cardinality: protoField.Desc.Cardinality(),
+					optional:    protoField.Desc.HasOptionalKeyword(),
 				}
 				if protoField.Desc.Kind() == protoreflect.EnumKind {
 					f.enumName = protoField.Enum.GoIdent.GoName
