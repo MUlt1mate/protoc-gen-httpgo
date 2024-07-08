@@ -35,11 +35,10 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	marshaller := "easyjson"
-	only := ""
 	cfg := generator.Config{
-		Marshaller: &marshaller,
-		Only:       &only,
+		Marshaller: ptr("easyjson"),
+		Only:       ptr(""),
+		AutoURI:    ptr(false),
 	}
 	if err = generator.Run(gen, cfg); err != nil {
 		return err
@@ -53,4 +52,9 @@ func run() error {
 		return err
 	}
 	return nil
+}
+
+// ptr is a helper that returns a pointer to v.
+func ptr[T any](v T) *T {
+	return &v
 }

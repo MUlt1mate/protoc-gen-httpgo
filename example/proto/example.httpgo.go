@@ -1205,7 +1205,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 	DoubleValueStrs := strings.Split(DoubleValueStr, ",")
 	for _, str := range DoubleValueStrs {
 		DoubleValueVal, convErr := strconv.ParseFloat(str, 64)
-		if err != nil {
+		if convErr != nil {
 			err = fmt.Errorf("conversion failed for parameter DoubleValue: %w", convErr)
 			return nil, err
 		}

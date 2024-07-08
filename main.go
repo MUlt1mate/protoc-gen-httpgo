@@ -14,6 +14,7 @@ func main() {
 	cfg := generator.Config{
 		Marshaller: flags.String("marshaller", "", "custom structs marshaller"),
 		Only:       flags.String("only", "", "generate only server or client"),
+		AutoURI:    flags.Bool("autoURI", false, "create method URI if annotation is missing"),
 	}
 	opts := protogen.Options{
 		ParamFunc: flags.Set,
