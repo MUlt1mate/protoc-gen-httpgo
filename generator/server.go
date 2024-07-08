@@ -238,9 +238,9 @@ func (g *Generator) genRepeatedPathArgCheck(f field) error {
 		g.gf.P(f.goName, "Strs := ", stringsPackage.Ident("Split"), "(", f.goName, "Str, \""+pathRepeatedArgDelimiter+"\")")
 		g.gf.P("for _, str := range ", f.goName, "Strs {")
 		g.gf.P(f.goName, "Val, convErr := ", strconvPackage.Ident("ParseFloat"), "(str, 64)")
-		g.gf.P("if err != nil {")
-		g.gf.P("err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.goName, ": %w\", convErr)")
-		g.gf.P("return nil, err")
+		g.gf.P("if convErr != nil {")
+		g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.goName, ": %w\", convErr)")
+		g.gf.P("	return nil, err")
 		g.gf.P("}")
 		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", ", f.goName, "Val)")
 		g.gf.P("}")
@@ -337,7 +337,9 @@ func (g *Generator) genUnmarshalRequestStruct() {
 		g.gf.P("			}")
 		g.gf.P("		}")
 	default:
-		g.gf.P("		err = ", jsonPackage.Ident("Unmarshal"), "(body, arg)")
+		g.gf.P("		if err = ", jsonPackage.Ident("Unmarshal"), "(body, arg); err != nil {")
+		g.gf.P("			return nil, err")
+		g.gf.P("		}")
 	}
 	g.gf.P("	}")
 }

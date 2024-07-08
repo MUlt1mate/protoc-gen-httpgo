@@ -59,6 +59,7 @@ type (
 	Config struct {
 		Marshaller *string
 		Only       *string
+		AutoURI    *bool
 	}
 )
 
@@ -107,7 +108,7 @@ func (g *Generator) fillServices(file *protogen.File) {
 			if protoMethod.Desc.IsStreamingClient() || protoMethod.Desc.IsStreamingServer() {
 				continue
 			}
-			method, err := getRuleMethodAndURI(protoMethod)
+			method, err := g.getRuleMethodAndURI(protoMethod, srv.GoName)
 			if err != nil {
 				// if there is an error, we can't use the method. skip it for now
 				continue
@@ -206,7 +207,7 @@ func (f field) getVariablePlaceholder() (string, error) {
 	}
 }
 
-func getRuleMethodAndURI(protoMethod *protogen.Method) (methodParams, error) {
+func (g *Generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceName string) (methodParams, error) {
 	m := methodParams{}
 	options, ok := protoMethod.Desc.Options().(*descriptorpb.MethodOptions)
 	if !ok {
@@ -214,8 +215,15 @@ func getRuleMethodAndURI(protoMethod *protogen.Method) (methodParams, error) {
 	}
 
 	httpRule, ok := proto.GetExtension(options, annotations.E_Http).(*annotations.HttpRule)
-	if !ok {
+	if !ok && !*g.cfg.AutoURI {
 		return m, errors.New("empty rule")
+	}
+
+	if *g.cfg.AutoURI {
+		return methodParams{
+			httpMethodName: "POST",
+			uri:            serviceName + "/" + protoMethod.GoName,
+		}, nil
 	}
 
 	switch httpRule.GetPattern().(type) {
