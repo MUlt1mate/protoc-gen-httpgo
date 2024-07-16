@@ -19,6 +19,9 @@ type (
 	respError struct {
 		Error string
 	}
+	validator interface {
+		Validate() error
+	}
 )
 
 var (
@@ -28,11 +31,12 @@ var (
 	errTimeoutBody   = `{"error":"timeout"}`
 )
 
-var ServerMiddlewares = []func(ctx *fasthttp.RequestCtx, handler func(ctx *fasthttp.RequestCtx) (resp interface{}, err error)) (resp interface{}, err error){
+var ServerMiddlewares = []func(ctx *fasthttp.RequestCtx, arg interface{}, handler func(ctx *fasthttp.RequestCtx, arg interface{}) (resp interface{}, err error)) (resp interface{}, err error){
 	LoggerServerMiddleware,
 	ResponseServerMiddleware,
 	HeadersServerMiddleware,
 	TimeoutServerMiddleware,
+	ValidationMiddleware,
 }
 var ClientMiddlewares = []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error){
 	LoggerClientMiddleware,
@@ -43,22 +47,22 @@ var ClientMiddlewares = []func(ctx context.Context, req *fasthttp.Request, handl
 
 // LoggerServerMiddleware logs request and response for server
 func LoggerServerMiddleware(
-	ctx *fasthttp.RequestCtx,
-	next func(ctx *fasthttp.RequestCtx) (resp interface{}, err error),
+	ctx *fasthttp.RequestCtx, arg interface{},
+	next func(ctx *fasthttp.RequestCtx, arg interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
-	log.Println(serviceName, "server request", string(ctx.PostBody()))
-	resp, err = next(ctx)
+	log.Println(serviceName, "server request", arg)
+	resp, err = next(ctx, arg)
 	log.Println(serviceName, "server response", resp)
 	return resp, err
 }
 
 // ResponseServerMiddleware format response for server
 func ResponseServerMiddleware(
-	ctx *fasthttp.RequestCtx,
-	next func(ctx *fasthttp.RequestCtx) (resp interface{}, err error),
+	ctx *fasthttp.RequestCtx, arg interface{},
+	next func(ctx *fasthttp.RequestCtx, arg interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
 	var responseBody []byte
-	resp, err = next(ctx)
+	resp, err = next(ctx, arg)
 	if err != nil {
 		resp = respError{Error: err.Error()}
 	}
@@ -73,8 +77,8 @@ func ResponseServerMiddleware(
 
 // HeadersServerMiddleware checks and sets headers for server
 func HeadersServerMiddleware(
-	ctx *fasthttp.RequestCtx,
-	next func(ctx *fasthttp.RequestCtx) (resp interface{}, err error),
+	ctx *fasthttp.RequestCtx, arg interface{},
+	next func(ctx *fasthttp.RequestCtx, arg interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
 	jsonContentType := "application/json"
 	contentType := string(ctx.Request.Header.ContentType())
@@ -83,7 +87,7 @@ func HeadersServerMiddleware(
 		return nil, errors.New("incorrect content type")
 	}
 	ctx.SetContentType(jsonContentType)
-	resp, err = next(ctx)
+	resp, err = next(ctx, arg)
 	if err == nil {
 		ctx.SetStatusCode(fasthttp.StatusOK)
 	} else {
@@ -95,15 +99,30 @@ func HeadersServerMiddleware(
 
 // TimeoutServerMiddleware sets timeout for request
 func TimeoutServerMiddleware(
-	ctx *fasthttp.RequestCtx,
-	next func(ctx *fasthttp.RequestCtx) (resp interface{}, err error),
+	ctx *fasthttp.RequestCtx, arg interface{},
+	next func(ctx *fasthttp.RequestCtx, arg interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
 	h := fasthttp.TimeoutWithCodeHandler(func(ctx *fasthttp.RequestCtx) {
-		resp, err = next(ctx)
+		resp, err = next(ctx, arg)
 	}, serverExecutionTimeout, errTimeoutBody, http.StatusGatewayTimeout)
 	h(ctx)
 
 	return resp, err
+}
+
+// ValidationMiddleware validates request
+func ValidationMiddleware(
+	ctx *fasthttp.RequestCtx, arg interface{},
+	next func(ctx *fasthttp.RequestCtx, arg interface{}) (resp interface{}, err error),
+) (resp interface{}, err error) {
+	if validatorArg, ok := arg.(validator); ok {
+		if err = validatorArg.Validate(); err != nil {
+			ctx.SetStatusCode(fasthttp.StatusBadRequest)
+			_, _ = ctx.WriteString(err.Error())
+			return nil, err
+		}
+	}
+	return next(ctx, arg)
 }
 
 // LoggerClientMiddleware logs request and response for client
@@ -114,7 +133,12 @@ func LoggerClientMiddleware(
 ) (resp *fasthttp.Response, err error) {
 	log.Printf("%s: client sending request with path %s", serviceName, string(req.RequestURI()))
 	resp, err = next(ctx, req)
-	log.Printf("%s: client got response with code %d, body %s", serviceName, resp.StatusCode(), string(resp.Body()))
+	if resp != nil {
+		log.Printf("%s: client got response with code %d, body %s", serviceName, resp.StatusCode(), string(resp.Body()))
+	}
+	if err != nil {
+		log.Printf("%s: client got response with error %s", serviceName, err.Error())
+	}
 	return resp, err
 }
 

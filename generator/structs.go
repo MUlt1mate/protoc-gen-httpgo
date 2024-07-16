@@ -146,7 +146,7 @@ func (g *Generator) fillServices(file *protogen.File) {
 // initTemplates fill predefined templates
 // we have to convert to strings here, because we can't pass other types like slices to protogen.P()
 func (g *Generator) initTemplates(gf *protogen.GeneratedFile) {
-	g.serverInput = "ctx *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("RequestCtx"))
+	g.serverInput = "ctx *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("RequestCtx")) + ", req interface{}"
 	g.serverOutput = "resp interface{}, err error"
 	g.clientInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Request"))
 	g.clientOutput = "resp *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Response")) + ", err error"
