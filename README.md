@@ -8,6 +8,7 @@ This is a protoc plugin that generates HTTP server and client code from proto fi
 ## Features
 
 - Generation of both server and client code
+  - At the moment works with [fasthttp](https://github.com/valyala/fasthttp)
 - Provides multiple options for Marshaling/Unmarshaling:
     - Uses the native `encoding/json` by default
     - Optional usage of [easyjson](https://github.com/mailru/easyjson) for performance
@@ -25,12 +26,13 @@ protoc -I=. --httpgo_out=. --httpgo_opt=paths=source_relative example/proto/exam
 
 #### Parameters
 
-| Name       | Values                  | Description                                                                                                                                  |
-|------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| paths      | source_relative, import | Inherited from protogen, see [docs](https://protobuf.dev/reference/go/go-generated/#invocation) for more details                             |
-| marshaller | easyjson                | Specifies the data marshaling/unmarshaling package. Uses `encoding/json` by default. Can be set to easyjson with fallback to `encoding/json` |
-| only       | server, client          | Use to generate either the server or client code exclusively                                                                                 |
-| autoURI    | false, true             | Create method URI if annotation is missing.                                                                                                  |
+| Name            | Values                  | Description                                                                                                                                  |
+|-----------------|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| paths           | source_relative, import | Inherited from protogen, see [docs](https://protobuf.dev/reference/go/go-generated/#invocation) for more details                             |
+| marshaller      | easyjson                | Specifies the data marshaling/unmarshaling package. Uses `encoding/json` by default. Can be set to easyjson with fallback to `encoding/json` |
+| only            | server, client          | Use to generate either the server or client code exclusively                                                                                 |
+| autoURI         | false, true             | Create method URI if annotation is missing.                                                                                                  |
+| bodylessMethods | GET;DELETE              | List of semicolon separated http methods that should not have a body.                                                                        |
 
 Example of parameters usage:
 
@@ -117,7 +119,7 @@ import (
   "github.com/valyala/fasthttp"
 )
 
-var ServerMiddlewares = []func(ctx *fasthttp.RequestCtx, next func(ctx *fasthttp.RequestCtx)){
+var ServerMiddlewares = []func(ctx *fasthttp.RequestCtx, arg interface{}, next func(ctx *fasthttp.RequestCtx)){
   LoggerServerMiddleware,
 }
 var ClientMiddlewares = []func(req *fasthttp.Request, handler func(req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error){
@@ -125,21 +127,21 @@ var ClientMiddlewares = []func(req *fasthttp.Request, handler func(req *fasthttp
 }
 
 func LoggerServerMiddleware(
-        ctx *fasthttp.RequestCtx,
+        ctx *fasthttp.RequestCtx, arg interface{},
         next func(ctx *fasthttp.RequestCtx),
 ) {
-  log.Println(serviceName, "server request", string(ctx.PostBody()))
+  log.Println("server request", arg)
   next(ctx)
-  log.Println(serviceName, "server response", string(ctx.Response.Body()))
+  log.Println("server response", string(ctx.Response.Body()))
 }
 
 func LoggerClientMiddleware(
         req *fasthttp.Request,
         next func(req *fasthttp.Request) (resp *fasthttp.Response, err error),
 ) (resp *fasthttp.Response, err error) {
-  log.Println(serviceName, "client request", string(req.RequestURI()))
+  log.Println("client request", string(req.RequestURI()))
   resp, err = next(req)
-  log.Println(serviceName, "client response", string(resp.Body()))
+  log.Println("client response", string(resp.Body()))
   return resp, err
 }
 
@@ -149,4 +151,5 @@ See [example](https://github.com/MUlt1mate/protoc-gen-httpgo/tree/main/example) 
 
 ## TODO
 
-- Implement comprehensive test cases
+- Improve test cases
+- Implement more web servers

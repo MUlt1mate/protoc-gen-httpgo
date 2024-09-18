@@ -46,6 +46,7 @@ type (
 		uri            string
 		comment        string
 		fieldList      []string // slice for constant sorting
+		hasBody        bool
 	}
 
 	field struct {
@@ -57,9 +58,11 @@ type (
 		optional    bool
 	}
 	Config struct {
-		Marshaller *string
-		Only       *string
-		AutoURI    *bool
+		Marshaller         *string
+		Only               *string
+		AutoURI            *bool
+		BodylessMethodsStr *string
+		bodylessMethods    map[string]struct{}
 	}
 )
 
@@ -68,6 +71,17 @@ func NewGenerator(
 	cfg Config,
 	gf *protogen.GeneratedFile,
 ) Generator {
+	var bodylessMethods = make(map[string]struct{})
+	if cfg.BodylessMethodsStr == nil || *cfg.BodylessMethodsStr == "" {
+		bodylessMethods = map[string]struct{}{"GET": {}, "DELETE": {}}
+	} else {
+		list := strings.Split(*cfg.BodylessMethodsStr, ";")
+		for _, l := range list {
+			bodylessMethods[strings.TrimSpace(l)] = struct{}{}
+		}
+	}
+	cfg.bodylessMethods = bodylessMethods
+
 	g := Generator{
 		filename: getFilename(file),
 		cfg:      cfg,
@@ -223,6 +237,7 @@ func (g *Generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceNam
 		return methodParams{
 			httpMethodName: "POST",
 			uri:            serviceName + "/" + protoMethod.GoName,
+			hasBody:        true,
 		}, nil
 	}
 
@@ -255,10 +270,17 @@ func (g *Generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceNam
 	default:
 		return m, fmt.Errorf("unknown method type %T", httpRule.GetPattern())
 	}
+	m.hasBody = g.cfg.MethodShouldHasBody(m.httpMethodName)
 	return m, nil
 }
 
 // HasBody checks if method may have a body
 func (m methodParams) HasBody() bool {
-	return m.httpMethodName != "GET"
+	return m.hasBody
+}
+
+// MethodShouldHasBody checks if method may have a body
+func (c Config) MethodShouldHasBody(method string) bool {
+	_, ok := c.bodylessMethods[method]
+	return !ok
 }
