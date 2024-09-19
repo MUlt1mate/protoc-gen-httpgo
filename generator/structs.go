@@ -50,8 +50,8 @@ type (
 	}
 
 	field struct {
-		goName      string
-		protoName   string
+		goName      string // name in go generated files
+		protoName   string // name in proto file and http requests
 		enumName    string
 		kind        protoreflect.Kind
 		cardinality protoreflect.Cardinality

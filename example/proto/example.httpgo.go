@@ -268,7 +268,7 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 			Int64ArgumentStr := string(value)
 			Int64ArgumentValue, convErr := strconv.ParseInt(Int64ArgumentStr, 10, 64)
 			if convErr != nil {
-				err = fmt.Errorf("conversion failed for parameter Int64Argument: %w", convErr)
+				err = fmt.Errorf("conversion failed for parameter int64Argument: %w", convErr)
 				return
 			}
 			arg.Int64Argument = Int64ArgumentValue
@@ -282,17 +282,17 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 	})
 	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
 	if !ok {
-		return nil, errors.New("incorrect type for parameter StringArgument")
+		return nil, errors.New("incorrect type for parameter stringArgument")
 	}
 	arg.StringArgument = StringArgumentStr
 
 	Int64ArgumentStr, ok := ctx.UserValue("int64Argument").(string)
 	if !ok {
-		return nil, errors.New("incorrect type for parameter Int64Argument")
+		return nil, errors.New("incorrect type for parameter int64Argument")
 	}
 	arg.Int64Argument, err = strconv.ParseInt(Int64ArgumentStr, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Int64Argument: %w", err)
+		return nil, fmt.Errorf("conversion failed for parameter int64Argument: %w", err)
 	}
 
 	return arg, err
@@ -703,7 +703,7 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 			Int64ArgumentStr := string(value)
 			Int64ArgumentValue, convErr := strconv.ParseInt(Int64ArgumentStr, 10, 64)
 			if convErr != nil {
-				err = fmt.Errorf("conversion failed for parameter Int64Argument: %w", convErr)
+				err = fmt.Errorf("conversion failed for parameter int64Argument: %w", convErr)
 				return
 			}
 			arg.Int64Argument = Int64ArgumentValue
@@ -717,7 +717,7 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 	})
 	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
 	if !ok {
-		return nil, errors.New("incorrect type for parameter StringArgument")
+		return nil, errors.New("incorrect type for parameter stringArgument")
 	}
 	arg.StringArgument = StringArgumentStr
 
@@ -895,7 +895,7 @@ func buildExampleServiceNameGetMethodInputMsgName(ctx *fasthttp.RequestCtx) (arg
 			Int64ArgumentStr := string(value)
 			Int64ArgumentValue, convErr := strconv.ParseInt(Int64ArgumentStr, 10, 64)
 			if convErr != nil {
-				err = fmt.Errorf("conversion failed for parameter Int64Argument: %w", convErr)
+				err = fmt.Errorf("conversion failed for parameter int64Argument: %w", convErr)
 				return
 			}
 			arg.Int64Argument = Int64ArgumentValue
@@ -1905,8 +1905,8 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *InputM
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var parameters = []string{
-		"Int64Argument=%d",
-		"StringArgument=%s",
+		"int64Argument=%d",
+		"stringArgument=%s",
 	}
 	var values = []interface{}{
 		request.Int64Argument,
