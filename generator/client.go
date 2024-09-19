@@ -247,7 +247,7 @@ func (g *Generator) genQueryRequestParameters(method methodParams) (err error) {
 		if placeholder, err = methodField.getVariablePlaceholder(); err != nil {
 			return err
 		}
-		parameters = append(parameters, methodField.goName+"="+placeholder)
+		parameters = append(parameters, methodField.protoName+"="+placeholder)
 		values = append(values, "request."+methodField.goName)
 	}
 	g.gf.P("var parameters = []string{")
@@ -271,7 +271,7 @@ func (g *Generator) genQueryRequestParameters(method methodParams) (err error) {
 		if placeholder, err = methodField.getVariablePlaceholder(); err != nil {
 			return err
 		}
-		uriName := methodField.goName + "[]"
+		uriName := methodField.protoName + "[]"
 		g.gf.P("for _,v:= range request.", methodField.goName, " {")
 		g.gf.P("	parameters = append(parameters, \"", uriName, "=", placeholder, "\")")
 		g.gf.P("	values = append(values, v)")
