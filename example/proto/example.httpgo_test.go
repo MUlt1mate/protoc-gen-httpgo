@@ -15,6 +15,7 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
+	pb "google.golang.org/protobuf/proto"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/middleware"
@@ -249,7 +250,7 @@ func TestHTTPGoClient(t *testing.T) {
 			respCh <- test.mockResponse
 			wg.Wait()
 			compareClientResults(t, request, test, err)
-			if !reflect.DeepEqual(test.expectedResponse, resp) {
+			if !pb.Equal(test.expectedResponse.(pb.Message), resp.(pb.Message)) {
 				t.Errorf("Expected response '%v', \nbut got '%v'", test.expectedResponse, resp)
 			}
 		})

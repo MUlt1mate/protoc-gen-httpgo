@@ -9,4 +9,5 @@ package main
 
 import (
 	_ "github.com/mailru/easyjson/gen"
+	_ "google.golang.org/protobuf/encoding/protojson"
 )

@@ -16,5 +16,4 @@ require (
 	github.com/klauspost/compress v1.17.8 // indirect
 	github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	google.golang.org/genproto v0.0.0-20240521202816-d264139d666e // indirect
 )

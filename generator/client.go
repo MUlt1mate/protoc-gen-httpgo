@@ -199,6 +199,7 @@ func (g *Generator) genClientRepeatedFieldRequestValues(f field) (err error) {
 		err = fmt.Errorf(`unsupported type %s for path variable: "%s"`, f.kind, f.goName)
 		return err
 	}
+
 	return nil
 }
 
@@ -212,6 +213,8 @@ func (g *Generator) genMarshalRequestStruct() {
 		g.gf.P("	} else {")
 		g.gf.P("		body, err = ", jsonPackage.Ident("Marshal"), "(request)")
 		g.gf.P("	}")
+	case marshallerProtoJSON:
+		g.gf.P("	body, err = ", protojsonPackage.Ident("Marshal"), "(request)")
 	default:
 		g.gf.P("	body, err = ", jsonPackage.Ident("Marshal"), "(request)")
 	}
@@ -294,6 +297,8 @@ func (g *Generator) genUnmarshalResponseStruct() {
 		g.gf.P("			return nil, err")
 		g.gf.P("		}")
 		g.gf.P("	}")
+	case marshallerProtoJSON:
+		g.gf.P("	err = ", protojsonPackage.Ident("Unmarshal"), "(reqResp.Body(), resp)")
 	default:
 		g.gf.P("	err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), resp)")
 	}
