@@ -338,6 +338,10 @@ func (g *Generator) genUnmarshalRequestStruct() {
 		g.gf.P("				return nil, err")
 		g.gf.P("			}")
 		g.gf.P("		}")
+	case marshallerProtoJSON:
+		g.gf.P("		if err = ", protojsonPackage.Ident("Unmarshal"), "(body, arg); err != nil {")
+		g.gf.P("			return nil, err")
+		g.gf.P("		}")
 	default:
 		g.gf.P("		if err = ", jsonPackage.Ident("Unmarshal"), "(body, arg); err != nil {")
 		g.gf.P("			return nil, err")

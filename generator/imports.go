@@ -10,7 +10,8 @@ var (
 	strconvPackage = protogen.GoImportPath("strconv")
 	stringsPackage = protogen.GoImportPath("strings")
 
-	fasthttpPackage = protogen.GoImportPath("github.com/valyala/fasthttp")
-	routerPackage   = protogen.GoImportPath("github.com/fasthttp/router")
-	easyjsonPackage = protogen.GoImportPath("github.com/mailru/easyjson")
+	fasthttpPackage  = protogen.GoImportPath("github.com/valyala/fasthttp")
+	routerPackage    = protogen.GoImportPath("github.com/fasthttp/router")
+	easyjsonPackage  = protogen.GoImportPath("github.com/mailru/easyjson")
+	protojsonPackage = protogen.GoImportPath("google.golang.org/protobuf/encoding/protojson")
 )

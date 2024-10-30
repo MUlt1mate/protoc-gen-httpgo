@@ -15,6 +15,7 @@ import (
 
 const (
 	marshallerEasyJSON       = "easyjson"
+	marshallerProtoJSON      = "protojson"
 	onlyServer               = "server"
 	onlyClient               = "client"
 	pathRepeatedArgDelimiter = ","
