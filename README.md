@@ -26,6 +26,27 @@ This is a protoc plugin that generates HTTP server and client code from proto fi
  go install github.com/MUlt1mate/protoc-gen-httpgo@latest
  ```
 
+### Definition
+
+Use proto with RPC to define methods
+
+```protobuf
+import "google/api/annotations.proto";
+
+service TestService {
+  rpc TestMethod (TestMessage) returns (TestMessage) {
+    option (google.api.http) = {
+      get: "/v1/test/{field1}"
+    };
+  }
+}
+
+message TestMessage {
+  string field1 = 1;
+  string field2 = 2;
+}
+```
+
 ### Generation
 
 ```bash  
@@ -72,10 +93,10 @@ import (
 
 func serverExample(ctx context.Context) (err error) {
 	var (
-		handler proto.ServiceNameHTTPGoService = &implementation.Handler{}
+		handler proto.TestServiceHTTPGoService = &implementation.Handler{}
 		r                                      = router.New()
 	)
-	if err = proto.RegisterServiceNameHTTPGoServer(ctx, r, handler, serverMiddlewares); err != nil {
+	if err = proto.RegisterTestServiceHTTPGoServer(ctx, r, handler, serverMiddlewares); err != nil {
 		return err
 	}
 	go func() { _ = fasthttp.ListenAndServe(":8080", r.Handler) }()
@@ -98,15 +119,15 @@ import (
 
 func clientExample(ctx context.Context) (err error) {
 	var (
-		client     *proto.ServiceNameHTTPGoClient
+		client     *proto.TestServiceHTTPGoClient
 		httpClient = &fasthttp.Client{}
 		host       = "http://localhost:8080"
 	)
-	if client, err = proto.GetServiceNameHTTPGoClient(ctx, httpClient, host, clientMiddlewares); err != nil {
+	if client, err = proto.GetTestServiceHTTPGoClient(ctx, httpClient, host, clientMiddlewares); err != nil {
 		return err
 	}
 	// sending our request
-	_, _ = client.RPCName(context.Background(), &proto.InputMsgName{Int64Argument: 999, StringArgument: "rand"})
+	_, _ = client.TestMethod(context.Background(), &proto.TestMessage{Field1: "value", Field2: "rand"})
 	return nil
 }
 
@@ -158,6 +179,37 @@ func LoggerClientMiddleware(
 ```
 
 See [example](https://github.com/MUlt1mate/protoc-gen-httpgo/tree/main/example) for more details.
+
+#### Conventions
+
+Golang protobuf generator can produce fields with different case:
+
+```protobuf
+message InputMsgName {
+  int64 value = 1;
+}
+```
+
+```go
+package main
+
+import "google.golang.org/protobuf/runtime/protoimpl"
+
+type InputMsgName struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Value int64 `protobuf:"varint,1,opt,name=value,proto3" json:"value,omitempty"`
+}
+
+```
+
+We defined **v**alue and got **V**alue. This works just fine, but keep in mind that server will only check for arguments
+with proto names.
+
+* /v1/test?value=1 - correct
+* /v1/test?Value=1 - incorrect
 
 ## TODO
 

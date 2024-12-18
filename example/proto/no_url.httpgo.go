@@ -29,6 +29,8 @@ func RegisterNoURLHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "NoURL")
+		ctx.SetUserValue("proto_method", "MethodWithoutURLAnnotation")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.MethodWithoutURLAnnotation(ctx, input)
 		}
