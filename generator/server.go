@@ -79,6 +79,8 @@ func (g *Generator) genMethodDeclaration(serviceName string, method methodParams
 	g.gf.P("			_, _ = ctx.WriteString(err.Error())")
 	g.gf.P("			return")
 	g.gf.P("		}")
+	g.gf.P("		ctx.SetUserValue(\"proto_service\", \"" + serviceName + "\")")
+	g.gf.P("		ctx.SetUserValue(\"proto_method\", \"" + method.name + "\")")
 	g.gf.P("		handler := func(", g.serverInput, ") (", g.serverOutput, ") {")
 	g.gf.P("			return h.", method.name, "(ctx, input)")
 	g.gf.P("		}")

@@ -47,6 +47,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "RPCName")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.RPCName(ctx, input)
 		}
@@ -64,6 +66,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "AllTypesTest")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.AllTypesTest(ctx, input)
 		}
@@ -81,6 +85,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "CommonTypes")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.CommonTypes(ctx, input)
 		}
@@ -98,6 +104,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "Imports")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.Imports(ctx, input)
 		}
@@ -116,6 +124,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "SameInputAndOutput")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.SameInputAndOutput(ctx, input)
 		}
@@ -133,6 +143,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "Optional")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.Optional(ctx, input)
 		}
@@ -150,6 +162,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "GetMethod")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.GetMethod(ctx, input)
 		}
@@ -167,6 +181,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "CheckRepeatedPath")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.CheckRepeatedPath(ctx, input)
 		}
@@ -184,6 +200,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "CheckRepeatedQuery")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.CheckRepeatedQuery(ctx, input)
 		}
@@ -201,6 +219,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "CheckRepeatedPost")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.CheckRepeatedPost(ctx, input)
 		}
@@ -218,6 +238,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "EmptyGet")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.EmptyGet(ctx, input)
 		}
@@ -235,6 +257,8 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = ctx.WriteString(err.Error())
 			return
 		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "EmptyPost")
 		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
 			return h.EmptyPost(ctx, input)
 		}
