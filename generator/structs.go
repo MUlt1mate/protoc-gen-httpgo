@@ -64,6 +64,7 @@ type (
 		AutoURI            *bool
 		BodylessMethodsStr *string
 		bodylessMethods    map[string]struct{}
+		ContextStruct      *string
 	}
 )
 
@@ -161,7 +162,14 @@ func (g *Generator) fillServices(file *protogen.File) {
 // initTemplates fill predefined templates
 // we have to convert to strings here, because we can't pass other types like slices to protogen.P()
 func (g *Generator) initTemplates(gf *protogen.GeneratedFile) {
-	g.serverInput = "ctx *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("RequestCtx")) + ", req interface{}"
+
+	if g.cfg.ContextStruct != nil && *g.cfg.ContextStruct == "native" {
+		g.serverInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req interface{}"
+	} else {
+		// this is default behavior for backward compatibility
+		g.serverInput = "ctx *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("RequestCtx")) + ", req interface{}"
+	}
+
 	g.serverOutput = "resp interface{}, err error"
 	g.clientInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Request"))
 	g.clientOutput = "resp *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Response")) + ", err error"
