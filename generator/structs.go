@@ -162,7 +162,6 @@ func (g *Generator) fillServices(file *protogen.File) {
 // initTemplates fill predefined templates
 // we have to convert to strings here, because we can't pass other types like slices to protogen.P()
 func (g *Generator) initTemplates(gf *protogen.GeneratedFile) {
-
 	if g.cfg.ContextStruct != nil && *g.cfg.ContextStruct == "native" {
 		g.serverInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req interface{}"
 	} else {

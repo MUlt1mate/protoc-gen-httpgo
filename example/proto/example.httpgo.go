@@ -36,7 +36,7 @@ func RegisterServiceNameHTTPGoServer(
 	_ context.Context,
 	r *router.Router,
 	h ServiceNameHTTPGoService,
-	middlewares []func(ctx *fasthttp.RequestCtx, req interface{}, handler func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
+	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
 ) error {
 	var middleware = chainServerMiddlewaresExample(middlewares)
 
@@ -49,7 +49,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "RPCName")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.RPCName(ctx, input)
 		}
 		if middleware == nil {
@@ -68,7 +68,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "AllTypesTest")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.AllTypesTest(ctx, input)
 		}
 		if middleware == nil {
@@ -87,7 +87,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "CommonTypes")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.CommonTypes(ctx, input)
 		}
 		if middleware == nil {
@@ -106,7 +106,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "Imports")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.Imports(ctx, input)
 		}
 		if middleware == nil {
@@ -126,7 +126,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "SameInputAndOutput")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.SameInputAndOutput(ctx, input)
 		}
 		if middleware == nil {
@@ -145,7 +145,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "Optional")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.Optional(ctx, input)
 		}
 		if middleware == nil {
@@ -164,7 +164,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "GetMethod")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.GetMethod(ctx, input)
 		}
 		if middleware == nil {
@@ -183,7 +183,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "CheckRepeatedPath")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.CheckRepeatedPath(ctx, input)
 		}
 		if middleware == nil {
@@ -202,7 +202,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "CheckRepeatedQuery")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.CheckRepeatedQuery(ctx, input)
 		}
 		if middleware == nil {
@@ -221,7 +221,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "CheckRepeatedPost")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.CheckRepeatedPost(ctx, input)
 		}
 		if middleware == nil {
@@ -240,7 +240,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "EmptyGet")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.EmptyGet(ctx, input)
 		}
 		if middleware == nil {
@@ -259,7 +259,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "EmptyPost")
-		handler := func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.EmptyPost(ctx, input)
 		}
 		if middleware == nil {
@@ -1616,29 +1616,29 @@ func buildExampleServiceNameEmptyPostEmpty(ctx *fasthttp.RequestCtx) (arg *Empty
 }
 
 func chainServerMiddlewaresExample(
-	middlewares []func(ctx *fasthttp.RequestCtx, req interface{}, handler func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
-) func(ctx *fasthttp.RequestCtx, req interface{}, handler func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
+	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
+) func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
 	switch len(middlewares) {
 	case 0:
 		return nil
 	case 1:
 		return middlewares[0]
 	default:
-		return func(ctx *fasthttp.RequestCtx, req interface{}, handler func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
+		return func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
 			return middlewares[0](ctx, req, getChainServerMiddlewareHandlerExample(middlewares, 0, handler))
 		}
 	}
 }
 
 func getChainServerMiddlewareHandlerExample(
-	middlewares []func(ctx *fasthttp.RequestCtx, req interface{}, handler func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
+	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
 	curr int,
-	finalHandler func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error),
-) func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+	finalHandler func(ctx context.Context, req interface{}) (resp interface{}, err error),
+) func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 	if curr == len(middlewares)-1 {
 		return finalHandler
 	}
-	return func(ctx *fasthttp.RequestCtx, req interface{}) (resp interface{}, err error) {
+	return func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 		return middlewares[curr+1](ctx, req, getChainServerMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
 	}
 }
