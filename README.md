@@ -50,7 +50,7 @@ message TestMessage {
 ### Generation
 
 ```bash  
-protoc -I=. --httpgo_out=. --httpgo_opt=paths=source_relative example/proto/example.proto
+protoc -I=. --httpgo_out=. --httpgo_opt=paths=source_relative,context=native example/proto/example.proto
 ```  
 
 #### Parameters
@@ -62,11 +62,12 @@ protoc -I=. --httpgo_out=. --httpgo_opt=paths=source_relative example/proto/exam
 | only            | server, client          | Use to generate either the server or client code exclusively                                                     |
 | autoURI         | false, true             | Create method URI if annotation is missing.                                                                      |
 | bodylessMethods | GET;DELETE              | List of semicolon separated http methods that should not have a body.                                            |
+| context         | native, fasthttp        | Type of ctx struct in server middlewares. fasthttp is default for backward compatibility. native is recommended  |
 
 Example of parameters usage:
 
 ```bash
-protoc -I=. --httpgo_out=.  --httpgo_opt=paths=source_relative,marshaller=easyjson,only=server,autoURI=true example/proto/example.proto
+protoc -I=. --httpgo_out=.  --httpgo_opt=paths=source_relative,marshaller=easyjson,only=server,autoURI=true,context=native example/proto/example.proto
 ```
 
 The plugin will create an example.httpgo.go file with the following:
@@ -145,33 +146,36 @@ for logs, timeout, headers, etc.
 package implementation
 
 import (
+	"context"
 	"log"
 
 	"github.com/valyala/fasthttp"
 )
 
-var ServerMiddlewares = []func(ctx *fasthttp.RequestCtx, arg interface{}, next func(ctx *fasthttp.RequestCtx)){
+var ServerMiddlewares = []func(ctx context.Context, arg interface{}, handler func(ctx context.Context, arg interface{}) (resp interface{}, err error)) (resp interface{}, err error){
 	LoggerServerMiddleware,
 }
-var ClientMiddlewares = []func(req *fasthttp.Request, handler func(req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error){
+var ClientMiddlewares = []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error){
 	LoggerClientMiddleware,
 }
 
 func LoggerServerMiddleware(
-	ctx *fasthttp.RequestCtx, arg interface{},
-	next func(ctx *fasthttp.RequestCtx),
-) {
+	ctx context.Context, arg interface{},
+	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
+) (resp interface{}, err error) {
 	log.Println("server request", arg)
-	next(ctx)
-	log.Println("server response", string(ctx.Response.Body()))
+	resp, err = next(ctx, arg)
+	log.Println("server response", resp)
+	return resp, err
 }
 
 func LoggerClientMiddleware(
+	ctx context.Context,
 	req *fasthttp.Request,
-	next func(req *fasthttp.Request) (resp *fasthttp.Response, err error),
+	next func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
 ) (resp *fasthttp.Response, err error) {
 	log.Println("client request", string(req.RequestURI()))
-	resp, err = next(req)
+	resp, err = next(ctx, req)
 	log.Println("client response", string(resp.Body()))
 	return resp, err
 }
