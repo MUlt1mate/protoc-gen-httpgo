@@ -250,6 +250,7 @@ func TestHTTPGoClient(t *testing.T) {
 			respCh <- test.mockResponse
 			wg.Wait()
 			compareClientResults(t, request, test, err)
+			//nolint:errcheck
 			if !pb.Equal(test.expectedResponse.(pb.Message), resp.(pb.Message)) {
 				t.Errorf("Expected response '%v', \nbut got '%v'", test.expectedResponse, resp)
 			}
