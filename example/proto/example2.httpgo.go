@@ -52,6 +52,8 @@ func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepac
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports%s", queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName2")
+	ctx = context.WithValue(ctx, "proto_method", "Imports")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -106,6 +108,8 @@ func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *s
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports%s", queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "SecondServiceName2")
+	ctx = context.WithValue(ctx, "proto_method", "Imports")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
