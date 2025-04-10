@@ -7,14 +7,16 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	strconv "strconv"
+	strings "strings"
+
 	router "github.com/fasthttp/router"
 	easyjson "github.com/mailru/easyjson"
 	fasthttp "github.com/valyala/fasthttp"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	strconv "strconv"
-	strings "strings"
+
+	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -1682,6 +1684,8 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *InputMsg
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%s/%d%s", request.StringArgument, request.Int64Argument, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "RPCName")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -1725,6 +1729,8 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *All
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%t/%s/%d/%d/%d/%d/%d/%d/%d/%d/%f/%d/%d/%f/%s/%s%s", request.BoolValue, request.EnumValue, request.Int32Value, request.Sint32Value, request.Uint32Value, request.Int64Value, request.Sint64Value, request.Uint64Value, request.Sfixed32Value, request.Fixed32Value, request.FloatValue, request.Sfixed64Value, request.Fixed64Value, request.DoubleValue, request.StringValue, request.BytesValue, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "AllTypesTest")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -1768,6 +1774,8 @@ func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anyp
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/commonTypes%s", queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "CommonTypes")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -1811,6 +1819,8 @@ func (p *ServiceNameHTTPGoClient) Imports(ctx context.Context, request *somepack
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports%s", queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "Imports")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -1855,6 +1865,8 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%s%s", request.StringArgument, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "SameInputAndOutput")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -1898,6 +1910,8 @@ func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *Optiona
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/optional%s", queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "Optional")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -1940,6 +1954,8 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *InputM
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/get%s", queryArgs))
 	req.Header.SetMethod("GET")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "GetMethod")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -2054,6 +2070,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/repeated/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s%s", BoolValueRequest, EnumValueRequest, Int32ValueRequest, Sint32ValueRequest, Uint32ValueRequest, Int64ValueRequest, Sint64ValueRequest, Uint64ValueRequest, Sfixed32ValueRequest, Fixed32ValueRequest, FloatValueRequest, Sfixed64ValueRequest, Fixed64ValueRequest, DoubleValueRequest, StringValueRequest, BytesValueRequest, StringValueQueryRequest, queryArgs))
 	req.Header.SetMethod("GET")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPath")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -2155,6 +2173,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, reques
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/repeated/%s%s", StringValueRequest, queryArgs))
 	req.Header.SetMethod("GET")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedQuery")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -2199,6 +2219,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/repeated/%s%s", StringValueRequest, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPost")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -2232,6 +2254,8 @@ func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *Empty) 
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/emptyGet%s", queryArgs))
 	req.Header.SetMethod("GET")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "EmptyGet")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
@@ -2275,6 +2299,8 @@ func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *Empty)
 	req.SetRequestURI(p.host + fmt.Sprintf("/v1/emptyPost%s", queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "EmptyPost")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)

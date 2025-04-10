@@ -125,6 +125,8 @@ func (p *NoURLHTTPGoClient) MethodWithoutURLAnnotation(ctx context.Context, requ
 	req.SetRequestURI(p.host + fmt.Sprintf("NoURL/MethodWithoutURLAnnotation%s", queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "NoURL")
+	ctx = context.WithValue(ctx, "proto_method", "MethodWithoutURLAnnotation")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
