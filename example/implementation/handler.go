@@ -145,3 +145,7 @@ func (h *Handler) EmptyGet(_ context.Context, _ *proto.Empty) (*proto.Empty, err
 func (h *Handler) EmptyPost(_ context.Context, _ *proto.Empty) (*proto.Empty, error) {
 	return &proto.Empty{}, nil
 }
+
+func (h *Handler) TopLevelArray(ctx context.Context, empty *proto.Empty) (*proto.Array, error) {
+	return &proto.Array{Items: []*proto.ArrayItem{{Value: "a"}, {Value: "b"}}}, nil
+}

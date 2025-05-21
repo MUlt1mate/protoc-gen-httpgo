@@ -39,14 +39,16 @@ type (
 	}
 
 	methodParams struct {
-		fields         map[string]field
+		inputFields    map[string]field
+		outputFields   map[string]field
 		inputMsgName   protogen.GoIdent
 		outputMsgName  protogen.GoIdent
 		name           string
 		httpMethodName string
 		uri            string
 		comment        string
-		fieldList      []string // slice for constant sorting
+		responseBody   string
+		inputFieldList []string // slice for constant sorting
 		hasBody        bool
 	}
 
@@ -130,33 +132,51 @@ func (g *Generator) fillServices(file *protogen.File) {
 				continue
 			}
 
-			method.name = protoMethod.GoName
-			method.inputMsgName = protoMethod.Input.GoIdent
-			method.outputMsgName = protoMethod.Output.GoIdent
-			var fields = make(map[string]field)
-			for _, protoField := range protoMethod.Input.Fields {
-				f := field{
-					goName:      protoField.GoName,
-					protoName:   protoField.Desc.JSONName(),
-					kind:        protoField.Desc.Kind(),
-					cardinality: protoField.Desc.Cardinality(),
-					optional:    protoField.Desc.HasOptionalKeyword(),
-				}
-				if protoField.Desc.Kind() == protoreflect.EnumKind {
-					f.enumName = protoField.Enum.GoIdent.GoName
-				}
-				fields[f.protoName] = f
-				method.fieldList = append(method.fieldList, f.protoName)
-			}
-
-			method.fields = fields
-			method.comment = strings.TrimSuffix(protoMethod.Comments.Leading.String(), "\n")
+			fillMethod(&method, protoMethod)
 			methods = append(methods, method)
 		}
 		if len(methods) != 0 {
 			g.services = append(g.services, serviceParams{name: srv.GoName, methods: methods})
 		}
 	}
+}
+
+func fillMethod(method *methodParams, protoMethod *protogen.Method) {
+	method.name = protoMethod.GoName
+	method.inputMsgName = protoMethod.Input.GoIdent
+	method.outputMsgName = protoMethod.Output.GoIdent
+	var fields = make(map[string]field)
+	for _, protoField := range protoMethod.Input.Fields {
+		f := field{
+			goName:      protoField.GoName,
+			protoName:   protoField.Desc.JSONName(),
+			kind:        protoField.Desc.Kind(),
+			cardinality: protoField.Desc.Cardinality(),
+			optional:    protoField.Desc.HasOptionalKeyword(),
+		}
+		if protoField.Desc.Kind() == protoreflect.EnumKind {
+			f.enumName = protoField.Enum.GoIdent.GoName
+		}
+		fields[f.protoName] = f
+		method.inputFieldList = append(method.inputFieldList, f.protoName)
+	}
+	method.inputFields = fields
+	fields = make(map[string]field)
+	for _, protoField := range protoMethod.Output.Fields {
+		f := field{
+			goName:      protoField.GoName,
+			protoName:   protoField.Desc.JSONName(),
+			kind:        protoField.Desc.Kind(),
+			cardinality: protoField.Desc.Cardinality(),
+			optional:    protoField.Desc.HasOptionalKeyword(),
+		}
+		if protoField.Desc.Kind() == protoreflect.EnumKind {
+			f.enumName = protoField.Enum.GoIdent.GoName
+		}
+		fields[f.protoName] = f
+	}
+	method.outputFields = fields
+	method.comment = strings.TrimSuffix(protoMethod.Comments.Leading.String(), "\n")
 }
 
 // initTemplates fill predefined templates
@@ -279,6 +299,7 @@ func (g *Generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceNam
 		return m, fmt.Errorf("unknown method type %T", httpRule.GetPattern())
 	}
 	m.hasBody = g.cfg.MethodShouldHasBody(m.httpMethodName)
+	m.responseBody = httpRule.GetResponseBody()
 	return m, nil
 }
 
