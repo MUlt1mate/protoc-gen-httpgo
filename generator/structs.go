@@ -24,13 +24,13 @@ type (
 	generator struct {
 		gf              *protogen.GeneratedFile
 		cfg             Config
+		bodylessMethods map[string]struct{}
+		services        []serviceParams
 		filename        string
 		clientInput     string
 		clientOutput    string
 		serverInput     string
 		serverOutput    string
-		services        []serviceParams
-		bodylessMethods map[string]struct{}
 	}
 
 	serviceParams struct {
