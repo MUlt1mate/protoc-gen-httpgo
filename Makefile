@@ -28,8 +28,8 @@ test:    			## run tests
 
 lint:        		## lint code
 	@printf "\033[34mLinting code...\033[0m %s\n"
-	@golangci-lint run
-	@(cd ./example && golangci-lint run)
+	@golangci-lint run --fix
+	@(cd ./example && golangci-lint run --fix)
 
 format:				## format code
 	@printf "\033[36mFormatting code...\033[0m\n"

@@ -106,3 +106,6 @@ issues:
     - linters:
         - gosec
       text: "G115:" # skip overflow check
+    - linters:
+        - revive
+      text: "context-keys-type:" # intensional use of string type

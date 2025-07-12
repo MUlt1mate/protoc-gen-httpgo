@@ -110,7 +110,9 @@ func (g *Generator) genClientMethod(
 	g.gf.P("		}")
 	g.gf.P("	}")
 	g.gf.P("	resp = &", method.outputMsgName, "{}")
-	g.genUnmarshalResponseStruct()
+	if err = g.genUnmarshalResponseStruct(method); err != nil {
+		return err
+	}
 	g.gf.P("	return resp, err")
 	g.gf.P("}")
 	g.gf.P()
@@ -122,7 +124,7 @@ func (g *Generator) getRequestURIAndParams(method methodParams) (requestURI stri
 	requestURI = method.uri
 	var placeholder string
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
-		if f, ok := method.fields[match[1]]; ok {
+		if f, ok := method.inputFields[match[1]]; ok {
 			if placeholder, err = f.getVariablePlaceholder(); err != nil {
 				return "", nil, err
 			}
@@ -234,18 +236,18 @@ func (g *Generator) genQueryRequestParameters(method methodParams) (err error) {
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
 		pathParams[match[1]] = struct{}{}
 	}
-	if len(pathParams) == len(method.fieldList) {
+	if len(pathParams) == len(method.inputFieldList) {
 		return nil
 	}
 	var (
 		parameters, values []string
 		placeholder        string
 	)
-	for _, f := range method.fieldList {
+	for _, f := range method.inputFieldList {
 		if _, ok := pathParams[f]; ok {
 			continue
 		}
-		methodField := method.fields[f]
+		methodField := method.inputFields[f]
 		if methodField.cardinality == protoreflect.Repeated {
 			continue
 		}
@@ -265,11 +267,11 @@ func (g *Generator) genQueryRequestParameters(method methodParams) (err error) {
 		g.gf.P(q, ",")
 	}
 	g.gf.P("}")
-	for _, f := range method.fieldList {
+	for _, f := range method.inputFieldList {
 		if _, ok := pathParams[f]; ok {
 			continue
 		}
-		methodField := method.fields[f]
+		methodField := method.inputFields[f]
 		if methodField.cardinality != protoreflect.Repeated {
 			continue
 		}
@@ -287,23 +289,34 @@ func (g *Generator) genQueryRequestParameters(method methodParams) (err error) {
 }
 
 // genUnmarshalResponseStruct generates unmarshalling from []byte to struct for response
-func (g *Generator) genUnmarshalResponseStruct() {
+func (g *Generator) genUnmarshalResponseStruct(method methodParams) error {
+	respStruct := "resp"
+	respStructPointer := respStruct
+	if method.responseBody != "" {
+		respField, ok := method.outputFields[method.responseBody]
+		if !ok {
+			return fmt.Errorf("field %s not found in struct %s for method %s", method.responseBody, method.outputMsgName.String(), method.name)
+		}
+		respStruct = "resp." + respField.goName
+		respStructPointer = "&" + respStruct
+	}
 	switch *g.cfg.Marshaller {
 	case marshallerEasyJSON:
-		g.gf.P("	if respEJ, ok := interface{}(resp).(", easyjsonPackage.Ident("Unmarshaler"), "); ok {")
+		g.gf.P("	if respEJ, ok := interface{}(", respStruct, ").(", easyjsonPackage.Ident("Unmarshaler"), "); ok {")
 		g.gf.P("		if err = ", easyjsonPackage.Ident("Unmarshal"), "(reqResp.Body(), respEJ); err != nil {")
 		g.gf.P("			return nil, err")
 		g.gf.P("		}")
 		g.gf.P("	} else {")
-		g.gf.P("		if err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), resp); err != nil {")
+		g.gf.P("		if err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), ", respStructPointer, "); err != nil {")
 		g.gf.P("			return nil, err")
 		g.gf.P("		}")
 		g.gf.P("	}")
 	case marshallerProtoJSON:
-		g.gf.P("	err = ", protojsonPackage.Ident("Unmarshal"), "(reqResp.Body(), resp)")
+		g.gf.P("	err = ", protojsonPackage.Ident("Unmarshal"), "(reqResp.Body(), ", respStructPointer, ")")
 	default:
-		g.gf.P("	err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), resp)")
+		g.gf.P("	err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), ", respStructPointer, ")")
 	}
+	return nil
 }
 
 // genChainClientMiddlewares generates client middleware chain functions

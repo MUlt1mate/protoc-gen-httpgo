@@ -110,8 +110,8 @@ func (g *Generator) genBuildRequestMethod(serviceName string, method methodParam
 	g.gf.P("ctx.QueryArgs().VisitAll(func(key, value []byte) {")
 	g.gf.P("	var strKey = string(key)")
 	g.gf.P("	switch strKey {")
-	for _, f := range method.fieldList {
-		if err = g.genQueryArgCheck(method.fields[f]); err != nil {
+	for _, f := range method.inputFieldList {
+		if err = g.genQueryArgCheck(method.inputFields[f]); err != nil {
 			return err
 		}
 	}
@@ -122,7 +122,7 @@ func (g *Generator) genBuildRequestMethod(serviceName string, method methodParam
 	g.gf.P("})")
 
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
-		if f, ok := method.fields[match[1]]; ok {
+		if f, ok := method.inputFields[match[1]]; ok {
 			if err = g.genBuildPathArgument(f); err != nil {
 				return err
 			}
