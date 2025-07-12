@@ -24,8 +24,8 @@ type (
 	generator struct {
 		gf              *protogen.GeneratedFile
 		cfg             Config
-		bodylessMethods map[string]struct{}
 		services        []serviceParams
+		bodylessMethods map[string]struct{}
 		filename        string
 		clientInput     string
 		clientOutput    string
