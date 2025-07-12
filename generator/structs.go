@@ -10,7 +10,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
-	"google.golang.org/protobuf/types/pluginpb"
 )
 
 const (
@@ -22,15 +21,16 @@ const (
 )
 
 type (
-	Generator struct {
-		gf           *protogen.GeneratedFile
-		cfg          Config
-		filename     string
-		clientInput  string
-		clientOutput string
-		serverInput  string
-		serverOutput string
-		services     []serviceParams
+	generator struct {
+		gf              *protogen.GeneratedFile
+		cfg             Config
+		filename        string
+		clientInput     string
+		clientOutput    string
+		serverInput     string
+		serverOutput    string
+		services        []serviceParams
+		bodylessMethods map[string]struct{}
 	}
 
 	serviceParams struct {
@@ -65,16 +65,15 @@ type (
 		Only               *string
 		AutoURI            *bool
 		BodylessMethodsStr *string
-		bodylessMethods    map[string]struct{}
 		ContextStruct      *string
 	}
 )
 
-func NewGenerator(
+func newGenerator(
 	file *protogen.File,
 	cfg Config,
 	gf *protogen.GeneratedFile,
-) Generator {
+) generator {
 	var bodylessMethods = make(map[string]struct{})
 	if cfg.BodylessMethodsStr == nil || *cfg.BodylessMethodsStr == "" {
 		bodylessMethods = map[string]struct{}{"GET": {}, "DELETE": {}}
@@ -84,25 +83,25 @@ func NewGenerator(
 			bodylessMethods[strings.TrimSpace(l)] = struct{}{}
 		}
 	}
-	cfg.bodylessMethods = bodylessMethods
 
-	g := Generator{
-		filename: getFilename(file),
-		cfg:      cfg,
-		gf:       gf,
+	g := generator{
+		filename:        getFilename(file),
+		cfg:             cfg,
+		gf:              gf,
+		bodylessMethods: bodylessMethods,
 	}
 	g.initTemplates(gf)
 	g.fillServices(file)
 	return g
 }
 
+// Run is the main function that start generation with given parameters
 func Run(gen *protogen.Plugin, cfg Config) (err error) {
-	gen.SupportedFeatures = uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)
 	for _, f := range gen.Files {
 		if !f.Generate {
 			continue
 		}
-		g := NewGenerator(
+		g := newGenerator(
 			f,
 			cfg,
 			gen.NewGeneratedFile(f.GeneratedFilenamePrefix+".httpgo.go", f.GoImportPath),
@@ -118,7 +117,7 @@ func Run(gen *protogen.Plugin, cfg Config) (err error) {
 }
 
 // fillServices scans services and methods from file for further generation
-func (g *Generator) fillServices(file *protogen.File) {
+func (g *generator) fillServices(file *protogen.File) {
 	for _, srv := range file.Services {
 		var methods []methodParams
 		for _, protoMethod := range srv.Methods {
@@ -181,7 +180,7 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 
 // initTemplates fill predefined templates
 // we have to convert to strings here, because we can't pass other types like slices to protogen.P()
-func (g *Generator) initTemplates(gf *protogen.GeneratedFile) {
+func (g *generator) initTemplates(gf *protogen.GeneratedFile) {
 	if g.cfg.ContextStruct != nil && *g.cfg.ContextStruct == "native" {
 		g.serverInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req interface{}"
 	} else {
@@ -249,7 +248,7 @@ func (f field) getVariablePlaceholder() (string, error) {
 	}
 }
 
-func (g *Generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceName string) (methodParams, error) {
+func (g *generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceName string) (methodParams, error) {
 	m := methodParams{}
 	options, ok := protoMethod.Desc.Options().(*descriptorpb.MethodOptions)
 	if !ok {
@@ -298,7 +297,7 @@ func (g *Generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceNam
 	default:
 		return m, fmt.Errorf("unknown method type %T", httpRule.GetPattern())
 	}
-	m.hasBody = g.cfg.MethodShouldHasBody(m.httpMethodName)
+	m.hasBody = g.MethodShouldHasBody(m.httpMethodName)
 	m.responseBody = httpRule.GetResponseBody()
 	return m, nil
 }
@@ -309,7 +308,7 @@ func (m methodParams) HasBody() bool {
 }
 
 // MethodShouldHasBody checks if method may have a body
-func (c Config) MethodShouldHasBody(method string) bool {
-	_, ok := c.bodylessMethods[method]
+func (g *generator) MethodShouldHasBody(method string) bool {
+	_, ok := g.bodylessMethods[method]
 	return !ok
 }
