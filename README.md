@@ -50,7 +50,7 @@ message TestMessage {
 ### Generation
 
 ```bash  
-protoc -I=. --httpgo_out=. --httpgo_opt=paths=source_relative,context=native example/proto/example.proto
+protoc -I=. --httpgo_out=paths=source_relative,context=native:. example/proto/example.proto
 ```  
 
 #### Parameters
@@ -67,7 +67,7 @@ protoc -I=. --httpgo_out=. --httpgo_opt=paths=source_relative,context=native exa
 Example of parameters usage:
 
 ```bash
-protoc -I=. --httpgo_out=.  --httpgo_opt=paths=source_relative,marshaller=easyjson,only=server,autoURI=true,context=native example/proto/example.proto
+protoc -I=. --httpgo_out=paths=source_relative,marshaller=easyjson,only=server,autoURI=true,context=native:. example/proto/example.proto
 ```
 
 The plugin will create an example.httpgo.go file with the following:
@@ -219,3 +219,12 @@ with proto names.
 
 - Improve test cases
 - Implement more web servers
+  - native net/http
+  - gin
+  - chi
+- File upload
+- Full support for [httprule](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule)
+  - response_body supports for client natively, for server only in custom middleware
+- dependabot
+- buf
+- verbose levels

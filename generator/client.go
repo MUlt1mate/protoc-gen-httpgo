@@ -10,8 +10,8 @@ import (
 
 var uriParametersRegexp = regexp.MustCompile(`(?mU){(.*)}`)
 
-// GenerateClients generates HTTP clients for all services if the file
-func (g *Generator) GenerateClients() (err error) {
+// GenerateClients generates HTTP clients for all services in the file
+func (g *generator) GenerateClients() (err error) {
 	if *g.cfg.Only == onlyServer {
 		return nil
 	}
@@ -26,7 +26,7 @@ func (g *Generator) GenerateClients() (err error) {
 }
 
 // genServiceClient generates HTTP client for serviceParams
-func (g *Generator) genServiceClient(service serviceParams) (err error) {
+func (g *generator) genServiceClient(service serviceParams) (err error) {
 	g.gf.P("var _  ", service.name, "HTTPGoService = & ", service.name, "HTTPGoClient{}")
 	g.gf.P("")
 	g.gf.P("type ", service.name, "HTTPGoClient struct {")
@@ -59,7 +59,7 @@ func (g *Generator) genServiceClient(service serviceParams) (err error) {
 }
 
 // genClientMethod generates method for HTTP client
-func (g *Generator) genClientMethod(
+func (g *generator) genClientMethod(
 	srvName string,
 	method methodParams,
 ) (err error) {
@@ -120,7 +120,7 @@ func (g *Generator) genClientMethod(
 }
 
 // getRequestURIAndParams returns the request URI and parameters for the HTTP client method
-func (g *Generator) getRequestURIAndParams(method methodParams) (requestURI string, params []string, err error) {
+func (g *generator) getRequestURIAndParams(method methodParams) (requestURI string, params []string, err error) {
 	requestURI = method.uri
 	var placeholder string
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
@@ -143,7 +143,7 @@ func (g *Generator) getRequestURIAndParams(method methodParams) (requestURI stri
 	return requestURI, params, nil
 }
 
-func (g *Generator) genClientRepeatedFieldRequestValues(f field) (err error) {
+func (g *generator) genClientRepeatedFieldRequestValues(f field) (err error) {
 	switch f.kind {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind:
 		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
@@ -208,7 +208,7 @@ func (g *Generator) genClientRepeatedFieldRequestValues(f field) (err error) {
 }
 
 // genMarshalRequestStruct generates marshalling from struct to []byte for request
-func (g *Generator) genMarshalRequestStruct() {
+func (g *generator) genMarshalRequestStruct() {
 	g.gf.P("	var body []byte")
 	switch *g.cfg.Marshaller {
 	case marshallerEasyJSON:
@@ -231,7 +231,7 @@ func (g *Generator) genMarshalRequestStruct() {
 // genQueryRequestParameters
 //
 //nolint:prealloc // false positive
-func (g *Generator) genQueryRequestParameters(method methodParams) (err error) {
+func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 	pathParams := make(map[string]struct{})
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
 		pathParams[match[1]] = struct{}{}
@@ -289,7 +289,7 @@ func (g *Generator) genQueryRequestParameters(method methodParams) (err error) {
 }
 
 // genUnmarshalResponseStruct generates unmarshalling from []byte to struct for response
-func (g *Generator) genUnmarshalResponseStruct(method methodParams) error {
+func (g *generator) genUnmarshalResponseStruct(method methodParams) error {
 	respStruct := "resp"
 	respStructPointer := respStruct
 	if method.responseBody != "" {
@@ -320,7 +320,7 @@ func (g *Generator) genUnmarshalResponseStruct(method methodParams) error {
 }
 
 // genChainClientMiddlewares generates client middleware chain functions
-func (g *Generator) genChainClientMiddlewares() {
+func (g *generator) genChainClientMiddlewares() {
 	g.gf.P("func chainClientMiddlewares", g.filename, "(")
 	g.gf.P("	middlewares []func(", g.clientInput, ", handler func(", g.clientInput, ") (", g.clientOutput, ")) (", g.clientOutput, "),")
 	g.gf.P(") func(", g.clientInput, ", handler func(", g.clientInput, ") (", g.clientOutput, ")) (", g.clientOutput, ") {")

@@ -2,6 +2,8 @@
 
 PWD := $(shell pwd)
 GOPATH := $(shell go env GOPATH)
+GOWORKPATH := "/home/mult1mate/go"
+INCLUDEPATH := "/usr/local/include"
 .PHONY: debug
 
 help:
@@ -26,7 +28,7 @@ test:    			## run tests
 	@go test -v ./...
 	@(cd ./example/ && go test -v ./...)
 
-lint:        		## lint code
+lint:        		## lint code https://golangci-lint.run/welcome/install/
 	@printf "\033[34mLinting code...\033[0m %s\n"
 	@golangci-lint run --fix
 	@(cd ./example && golangci-lint run --fix)
@@ -44,3 +46,22 @@ debug: ## go install github.com/lyft/protoc-gen-star/protoc-gen-debug@latest
        --plugin=protoc-gen-debug=/home/mult1mate/go/bin/protoc-gen-debug \
        --debug_out="./debug:." \
        ./example/proto/*.proto
+
+installdeps:
+	@go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
+	@go install github.com/mailru/easyjson/...@v0.9.0
+	@mkdir ${GOWORKPATH}/bin/ -p
+	@wget -q https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protoc-31.1-linux-x86_64.zip -P .  \
+             && unzip ./protoc-31.1-linux-x86_64.zip -d ./protoc  \
+             && mv ./protoc/bin/* ${GOWORKPATH}/bin/.  \
+             && sudo mv ./protoc/include/google ${INCLUDEPATH}/.  \
+             && chmod 755 ${GOWORKPATH}/bin/* \
+             && rm -rf ./protoc
+	@export TMP_PATH=${GOWORKPATH}/src/github.com/googleapis \
+         && sudo mkdir ${INCLUDEPATH}/google/api -p \
+         && git clone https://github.com/googleapis/googleapis.git $TMP_PATH \
+         && cd $TMP_PATH \
+         && git checkout d9eae9f029427bd9ed4379d8e3cd46ca69f1a33f \
+         && sudo cp google/api/annotations.proto google/api/field_behavior.proto google/api/http.proto google/api/httpbody.proto \
+         ${INCLUDEPATH}/google/api \
+         && rm -rf $TMP_PATH

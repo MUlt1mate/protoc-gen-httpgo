@@ -28,6 +28,8 @@ linters-settings:
     settings:
       shadow:
         strict: true
+    disable:
+      - fieldalignment
 
 linters:
   disable-all: true
