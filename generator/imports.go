@@ -9,6 +9,10 @@ var (
 	fmtPackage     = protogen.GoImportPath("fmt")
 	strconvPackage = protogen.GoImportPath("strconv")
 	stringsPackage = protogen.GoImportPath("strings")
+	httpPackage    = protogen.GoImportPath("net/http")
+	ioPackage      = protogen.GoImportPath("io")
+	bytesPackage   = protogen.GoImportPath("bytes")
+	urlPackage     = protogen.GoImportPath("net/url")
 
 	fasthttpPackage  = protogen.GoImportPath("github.com/valyala/fasthttp")
 	routerPackage    = protogen.GoImportPath("github.com/fasthttp/router")
