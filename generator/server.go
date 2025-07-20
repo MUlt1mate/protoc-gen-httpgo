@@ -48,7 +48,12 @@ func (g *generator) genServiceInterface(service serviceParams) {
 func (g *generator) genServiceServer(service serviceParams) (err error) {
 	g.gf.P("func Register", service.name, "HTTPGoServer(")
 	g.gf.P("	_ ", contextPackage.Ident("Context"), ",")
-	g.gf.P("	r *", routerPackage.Ident("Router"), ",")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	r *", g.lib.Ident("ServeMux"), ",")
+	case libraryFastHTTP:
+		g.gf.P("	r *", routerPackage.Ident("Router"), ",")
+	}
 	g.gf.P("	h ", service.name, "HTTPGoService,")
 	g.gf.P("	middlewares []func(", g.serverInput, ", handler func(", g.serverInput, ") (", g.serverOutput, ")) (", g.serverOutput, "),")
 	g.gf.P(") error {")
@@ -72,15 +77,31 @@ func (g *generator) genServiceServer(service serviceParams) (err error) {
 // genMethodDeclaration generates binding route with handler
 func (g *generator) genMethodDeclaration(serviceName string, method methodParams) {
 	g.gf.P(method.comment)
-	g.gf.P("	r.", method.httpMethodName, "( \"", method.uri, "\", func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
-	g.gf.P("		input, err := build", g.getBuildMethodInputName(serviceName, method), "(ctx)")
-	g.gf.P("		if err != nil {")
-	g.gf.P("			ctx.SetStatusCode(", fasthttpPackage.Ident("StatusBadRequest"), ")")
-	g.gf.P("			_, _ = ctx.WriteString(err.Error())")
-	g.gf.P("			return")
-	g.gf.P("		}")
-	g.gf.P("		ctx.SetUserValue(\"proto_service\", \"" + serviceName + "\")")
-	g.gf.P("		ctx.SetUserValue(\"proto_method\", \"" + method.name + "\")")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	r.HandleFunc( \"", method.httpMethodName, " ", method.uri, "\", func(w ", g.lib.Ident("ResponseWriter"), ", r *", g.lib.Ident("Request"), ") { ")
+		g.gf.P("		input, err := build", g.getBuildMethodInputName(serviceName, method), "(r)")
+		g.gf.P("		if err != nil {")
+		g.gf.P("			w.WriteHeader(", g.lib.Ident("StatusBadRequest"), ")")
+		g.gf.P("			_, _ = w.Write([]byte(err.Error()))")
+		g.gf.P("			return")
+		g.gf.P("		}")
+		g.gf.P("		ctx := r.Context()")
+		g.gf.P("		ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"proto_service\", \""+serviceName+"\")")
+		g.gf.P("		ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"proto_method\", \""+method.name+"\")")
+		g.gf.P("		ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"writer\", w)")
+		g.gf.P("		ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"request\", r)")
+	case libraryFastHTTP:
+		g.gf.P("	r.", method.httpMethodName, "( \"", method.uri, "\", func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
+		g.gf.P("		input, err := build", g.getBuildMethodInputName(serviceName, method), "(ctx)")
+		g.gf.P("		if err != nil {")
+		g.gf.P("			ctx.SetStatusCode(", fasthttpPackage.Ident("StatusBadRequest"), ")")
+		g.gf.P("			_, _ = ctx.WriteString(err.Error())")
+		g.gf.P("			return")
+		g.gf.P("		}")
+		g.gf.P("		ctx.SetUserValue(\"proto_service\", \"" + serviceName + "\")")
+		g.gf.P("		ctx.SetUserValue(\"proto_method\", \"" + method.name + "\")")
+	}
 	g.gf.P("		handler := func(", g.serverInput, ") (", g.serverOutput, ") {")
 	g.gf.P("			return h.", method.name, "(ctx, input)")
 	g.gf.P("		}")
@@ -101,25 +122,44 @@ func (g *generator) getBuildMethodInputName(serviceName string, method methodPar
 
 // genBuildRequestMethod generates method that build request struct
 func (g *generator) genBuildRequestMethod(serviceName string, method methodParams) error {
-	g.gf.P("func build", g.getBuildMethodInputName(serviceName, method), "(ctx *", fasthttpPackage.Ident("RequestCtx"), ") (arg *", method.inputMsgName, ", err error) {")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("func build", g.getBuildMethodInputName(serviceName, method), "(r *", g.lib.Ident("Request"), ") (arg *", method.inputMsgName, ", err error) {")
+	case libraryFastHTTP:
+		g.gf.P("func build", g.getBuildMethodInputName(serviceName, method), "(ctx *", fasthttpPackage.Ident("RequestCtx"), ") (arg *", method.inputMsgName, ", err error) {")
+	}
 	g.gf.P("	arg = &", method.inputMsgName, "{}")
 	if method.HasBody() {
 		g.genUnmarshalRequestStruct()
 	}
 	var err error
-	g.gf.P("ctx.QueryArgs().VisitAll(func(key, value []byte) {")
-	g.gf.P("	var strKey = string(key)")
-	g.gf.P("	switch strKey {")
-	for _, f := range method.inputFieldList {
-		if err = g.genQueryArgCheck(method.inputFields[f]); err != nil {
-			return err
+	if len(method.inputFieldList) != 0 {
+		switch *g.cfg.Library {
+		case libraryNetHTTP:
+			g.gf.P("for key, values := range r.URL.Query() {")
+			g.gf.P("	var value = values[0]")
+		case libraryFastHTTP:
+			g.gf.P("ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {")
+			g.gf.P("	var key = string(keyB)")
+			g.gf.P("	var value = string(valueB)")
+		}
+		g.gf.P("	switch key {")
+		for _, f := range method.inputFieldList {
+			if err = g.genQueryArgCheck(method.inputFields[f]); err != nil {
+				return err
+			}
+		}
+		g.gf.P("	default:")
+		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"unknown query parameter %s\", key)")
+		g.gf.P("		return")
+		g.gf.P("	}")
+		switch *g.cfg.Library {
+		case libraryNetHTTP:
+			g.gf.P("}")
+		case libraryFastHTTP:
+			g.gf.P("})")
 		}
 	}
-	g.gf.P("	default:")
-	g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"unknown query parameter %s\", strKey)")
-	g.gf.P("		return")
-	g.gf.P("	}")
-	g.gf.P("})")
 
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
 		if f, ok := method.inputFields[match[1]]; ok {
@@ -139,9 +179,15 @@ func (g *generator) genBuildRequestMethod(serviceName string, method methodParam
 func (g *generator) genBuildPathArgument(
 	f field,
 ) error {
-	g.gf.P("	", f.goName, "Str, ok := ctx.UserValue(\"", f.protoName, "\").(string)")
-	g.gf.P("	if !ok {")
-	g.gf.P("		return nil, ", errorsPackage.Ident("New"), "(\"incorrect type for parameter ", f.protoName, "\")")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	", f.goName, "Str := r.PathValue(\"", f.protoName, "\")")
+		g.gf.P("	if len(", f.goName, "Str) == 0 {")
+	case libraryFastHTTP:
+		g.gf.P("	", f.goName, "Str, ok := ctx.UserValue(\"", f.protoName, "\").(string)")
+		g.gf.P("	if !ok || len(", f.goName, "Str) == 0 {")
+	}
+	g.gf.P("		return nil, ", errorsPackage.Ident("New"), "(\"empty value for parameter ", f.protoName, "\")")
 	g.gf.P("	}")
 	if f.cardinality == protoreflect.Repeated {
 		return g.genRepeatedPathArgCheck(f)
@@ -328,7 +374,17 @@ func (g *generator) genChainServerMiddlewares() {
 
 // genUnmarshalRequestStruct generates unmarshalling from []byte to struct for request
 func (g *generator) genUnmarshalRequestStruct() {
-	g.gf.P("	if body := ctx.PostBody(); len(body) > 0 { ")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	var body []byte")
+		g.gf.P("	if body, err = ", ioPackage.Ident("ReadAll"), "(r.Body); err != nil {")
+		g.gf.P("		return nil, err")
+		g.gf.P("	}")
+		g.gf.P("	_ = r.Body.Close()")
+	case libraryFastHTTP:
+		g.gf.P("	var body = ctx.PostBody()")
+	}
+	g.gf.P("	if len(body) > 0 { ")
 	switch *g.cfg.Marshaller {
 	case marshallerEasyJSON:
 		g.gf.P("		if argEJ, ok := interface{}(arg).(", easyjsonPackage.Ident("Unmarshaler"), "); ok {")
@@ -365,8 +421,7 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 	g.gf.P("	case \"" + f.protoName + "\":")
 	switch f.kind {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind:
-		g.gf.P("	"+f.goName, "Str := string(value)")
-		g.gf.P("	", f.goName, ", convErr := ", strconvPackage.Ident("ParseInt"), "(", f.goName, "Str, 10, 32)")
+		g.gf.P("	", f.goName, ", convErr := ", strconvPackage.Ident("ParseInt"), "(value, 10, 32)")
 		g.gf.P("	if convErr != nil {")
 		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
 		g.gf.P("		return")
@@ -374,16 +429,14 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 		g.gf.P("	", f.goName, "Value := ", f.getGolangTypeName(), "(", f.goName, ")")
 		g.gf.P("	arg.", f.goName, " = ", reference, f.goName, "Value")
 	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
-		g.gf.P("	"+f.goName, "Str := string(value)")
-		g.gf.P("	", f.goName, "Value, convErr := ", strconvPackage.Ident("ParseInt"), "(", f.goName, "Str, 10, 64)")
+		g.gf.P("	", f.goName, "Value, convErr := ", strconvPackage.Ident("ParseInt"), "(value, 10, 64)")
 		g.gf.P("	if convErr != nil {")
 		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
 		g.gf.P("		return")
 		g.gf.P("	}")
 		g.gf.P("	arg.", f.goName, " = ", reference, f.goName, "Value")
 	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
-		g.gf.P("	"+f.goName, "Str := string(value)")
-		g.gf.P("	", f.goName, ", convErr := ", strconvPackage.Ident("ParseInt"), "(", f.goName, "Str, 10, 64)")
+		g.gf.P("	", f.goName, ", convErr := ", strconvPackage.Ident("ParseInt"), "(value, 10, 64)")
 		g.gf.P("	if convErr != nil {")
 		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
 		g.gf.P("		return")
@@ -391,16 +444,14 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 		g.gf.P("	", f.goName, "Value := ", f.getGolangTypeName(), "(", f.goName, ")")
 		g.gf.P("	arg.", f.goName, " = ", reference, f.goName, "Value")
 	case protoreflect.DoubleKind:
-		g.gf.P("	"+f.goName, "Str := string(value)")
-		g.gf.P("	", f.goName, "Value, convErr := ", strconvPackage.Ident("ParseFloat"), "(", f.goName, "Str, 64)")
+		g.gf.P("	", f.goName, "Value, convErr := ", strconvPackage.Ident("ParseFloat"), "(value, 64)")
 		g.gf.P("	if convErr != nil {")
 		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
 		g.gf.P("		return")
 		g.gf.P("	}")
 		g.gf.P("	arg.", f.goName, " = ", reference, f.goName, "Value")
 	case protoreflect.FloatKind:
-		g.gf.P("	"+f.goName, "Str := string(value)")
-		g.gf.P("	", f.goName, ", convErr := ", strconvPackage.Ident("ParseFloat"), "(", f.goName, "Str, 32)")
+		g.gf.P("	", f.goName, ", convErr := ", strconvPackage.Ident("ParseFloat"), "(value, 32)")
 		g.gf.P("	if convErr != nil {")
 		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
 		g.gf.P("		return")
@@ -408,13 +459,11 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 		g.gf.P("	", f.goName, "Value := float32(", f.goName, ")")
 		g.gf.P("	arg.", f.goName, " = ", reference, f.goName, "Value")
 	case protoreflect.StringKind:
-		g.gf.P("	" + f.goName + "Value := string(value)")
-		g.gf.P("	arg.", f.goName, " = ", reference, f.goName, "Value")
+		g.gf.P("	arg.", f.goName, " = ", reference, "value")
 	case protoreflect.BytesKind:
-		g.gf.P("	arg." + f.goName + " = value")
+		g.gf.P("	arg." + f.goName + " = []byte(value)")
 	case protoreflect.BoolKind:
-		g.gf.P("	"+f.goName, "Str := string(value)")
-		g.gf.P("	switch ", f.goName, "Str {")
+		g.gf.P("	switch value {")
 		g.gf.P("	case \"true\", \"t\", \"1\":")
 		g.gf.P("		" + f.goName + "Value := true")
 		g.gf.P("		arg."+f.goName+" = ", reference, f.goName, "Value")
@@ -422,16 +471,15 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 		g.gf.P("		" + f.goName + "Value := false")
 		g.gf.P("		arg."+f.goName+" = ", reference, f.goName, "Value")
 		g.gf.P("	default:")
-		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", ", f.goName, "Str)")
+		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", value)")
 		g.gf.P("		return")
 		g.gf.P("	}")
 	case protoreflect.EnumKind:
-		g.gf.P("	"+f.goName, "Str := string(value)")
-		g.gf.P("	if ", f.enumName, "Value, optValueOk := ", f.enumName, "_value[", stringsPackage.Ident("ToUpper"), "(", f.goName, "Str)]; optValueOk {")
+		g.gf.P("	if ", f.enumName, "Value, optValueOk := ", f.enumName, "_value[", stringsPackage.Ident("ToUpper"), "(value)]; optValueOk {")
 		g.gf.P("		", f.goName, f.enumName, "Value := ", f.enumName, "(", f.enumName, "Value)")
 		g.gf.P("		arg.", f.goName, " = ", reference, f.goName, f.enumName, "Value")
 		g.gf.P("	} else {")
-		g.gf.P("		if intOptionValue, convErr := ", strconvPackage.Ident("ParseInt"), "(", f.goName, "Str, 10, 32); convErr == nil {")
+		g.gf.P("		if intOptionValue, convErr := ", strconvPackage.Ident("ParseInt"), "(value, 10, 32); convErr == nil {")
 		g.gf.P("			if _, optIntValueOk := ", f.enumName, "_name[int32(intOptionValue)]; optIntValueOk {")
 		g.gf.P("				", f.goName, f.enumName, "Value := ", f.enumName, "(intOptionValue)")
 		g.gf.P("				arg.", f.goName, " = ", reference, f.goName, f.enumName, "Value")
@@ -448,72 +496,63 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 func (g *generator) genRepeatedQueryArgCheck(f field) error {
 	switch f.kind {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind:
-		g.gf.P(f.goName, "Str := string(value)")
-		g.gf.P(f.goName, "Val, convErr := ", strconvPackage.Ident("ParseInt"), "(", f.goName, "Str, 10, 32)")
+		g.gf.P(f.goName, "Val, convErr := ", strconvPackage.Ident("ParseInt"), "(value, 10, 32)")
 		g.gf.P("if convErr != nil {")
-		g.gf.P("err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
-		g.gf.P("return")
+		g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
+		g.gf.P("	return")
 		g.gf.P("}")
 		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", ", f.getGolangTypeName(), "(", f.goName, "Val))")
 	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
-		g.gf.P(f.goName, "Str := string(value)")
-		g.gf.P(f.goName, "Val, convErr := ", strconvPackage.Ident("ParseInt"), "(", f.goName, "Str, 10, 64)")
+		g.gf.P(f.goName, "Val, convErr := ", strconvPackage.Ident("ParseInt"), "(value, 10, 64)")
 		g.gf.P("if convErr != nil {")
-		g.gf.P("err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
-		g.gf.P("return")
+		g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
+		g.gf.P("	return")
 		g.gf.P("}")
 		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", ", f.goName, "Val)")
 	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
-		g.gf.P(f.goName, "Str := string(value)")
-		g.gf.P(f.goName, "Val, convErr := ", strconvPackage.Ident("ParseUint"), "(", f.goName, "Str, 10, 64)")
+		g.gf.P(f.goName, "Val, convErr := ", strconvPackage.Ident("ParseUint"), "(value, 10, 64)")
 		g.gf.P("if convErr != nil {")
-		g.gf.P("err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
-		g.gf.P("return")
+		g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
+		g.gf.P("	return")
 		g.gf.P("}")
 		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", ", f.goName, "Val)")
 	case protoreflect.DoubleKind:
-		g.gf.P(f.goName, "Str := string(value)")
-		g.gf.P(f.goName, "Val, convErr := ", strconvPackage.Ident("ParseFloat"), "(", f.goName, "Str, 64)")
+		g.gf.P(f.goName, "Val, convErr := ", strconvPackage.Ident("ParseFloat"), "(value, 64)")
 		g.gf.P("if convErr != nil {")
-		g.gf.P("err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
-		g.gf.P("return")
+		g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
+		g.gf.P("	return")
 		g.gf.P("}")
 		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", ", f.goName, "Val)")
 	case protoreflect.FloatKind:
-		g.gf.P(f.goName, "Str := string(value)")
-		g.gf.P(f.goName, "Val, convErr := ", strconvPackage.Ident("ParseFloat"), "(", f.goName, "Str, 32)")
+		g.gf.P(f.goName, "Val, convErr := ", strconvPackage.Ident("ParseFloat"), "(value, 32)")
 		g.gf.P("if convErr != nil {")
-		g.gf.P("err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
-		g.gf.P("return")
+		g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)")
+		g.gf.P("	return")
 		g.gf.P("}")
 		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", float32(", f.goName, "Val))")
 	case protoreflect.StringKind:
-		g.gf.P(f.goName, " := string(value)")
-		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", ", f.goName, ")")
+		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", value)")
 	case protoreflect.BytesKind:
-		g.gf.P(f.goName, " := value")
-		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", ", f.goName, ")")
+		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", []byte(value))")
 	case protoreflect.BoolKind:
-		g.gf.P(f.goName, "Str := string(value)")
-		g.gf.P("switch ", f.goName, "Str {")
-		g.gf.P("case \"true\", \"t\", \"1\":")
-		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", true)")
-		g.gf.P("case \"false\", \"f\", \"0\":")
-		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", false)")
-		g.gf.P("default:")
-		g.gf.P("err = ", fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", ", f.goName, "Str)")
-		g.gf.P("return")
+		g.gf.P("switch value {")
+		g.gf.P("	case \"true\", \"t\", \"1\":")
+		g.gf.P("		arg.", f.goName, " = append(arg.", f.goName, ", true)")
+		g.gf.P("	case \"false\", \"f\", \"0\":")
+		g.gf.P("		arg.", f.goName, " = append(arg.", f.goName, ", false)")
+		g.gf.P("	default:")
+		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", value)")
+		g.gf.P("		return")
 		g.gf.P("}")
 	case protoreflect.EnumKind:
-		g.gf.P(f.goName, "Str := string(value)")
-		g.gf.P("if ", f.enumName, "Value, optValueOk := ", f.enumName, "_value[", stringsPackage.Ident("ToUpper"), "(", f.goName, "Str)]; optValueOk {")
-		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", ", f.enumName, "(", f.enumName, "Value))")
+		g.gf.P("if ", f.enumName, "Value, optValueOk := ", f.enumName, "_value[", stringsPackage.Ident("ToUpper"), "(value)]; optValueOk {")
+		g.gf.P("	arg.", f.goName, " = append(arg.", f.goName, ", ", f.enumName, "(", f.enumName, "Value))")
 		g.gf.P("} else {")
-		g.gf.P("if intOptionValue, convErr := ", strconvPackage.Ident("ParseInt"), "(", f.goName, "Str, 10, 32); convErr == nil {")
-		g.gf.P("if _, optIntValueOk := ", f.enumName, "_name[int32(intOptionValue)]; optIntValueOk {")
-		g.gf.P("arg.", f.goName, " = append(arg.", f.goName, ", ", f.enumName, "(intOptionValue))")
-		g.gf.P("}")
-		g.gf.P("}")
+		g.gf.P("	if intOptionValue, convErr := ", strconvPackage.Ident("ParseInt"), "(value, 10, 32); convErr == nil {")
+		g.gf.P("		if _, optIntValueOk := ", f.enumName, "_name[int32(intOptionValue)]; optIntValueOk {")
+		g.gf.P("			arg.", f.goName, " = append(arg.", f.goName, ", ", f.enumName, "(intOptionValue))")
+		g.gf.P("		}")
+		g.gf.P("	}")
 		g.gf.P("}")
 	default:
 		g.gf.P("err = ", fmtPackage.Ident("Errorf"), "(\"unsupported type repeated ", f.kind.String(), " for query argument ", f.protoName, "\")")

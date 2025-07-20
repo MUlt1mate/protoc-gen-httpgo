@@ -219,12 +219,17 @@ with proto names.
 
 - Improve test cases
 - Implement more web servers
-  - native net/http
-  - gin
-  - chi
+    - native net/http
+    - gin
+    - chi
 - File upload
-- Full support for [httprule](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule)
-  - response_body supports for client natively, for server only in custom middleware
+- Full support
+  for [httprule](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule)
+    - response_body supports for client natively, for server only in custom middleware
 - dependabot
 - buf
 - verbose levels
+- benchmark
+- websocket
+- production ready middleware example
+- optionally ignore unknown query parameters
