@@ -18,7 +18,7 @@ const (
 	onlyServer               = "server"
 	onlyClient               = "client"
 	pathRepeatedArgDelimiter = ","
-	libraryNetHTTP           = "net/http"
+	libraryNetHTTP           = "nethttp"
 	libraryFastHTTP          = "fasthttp"
 )
 

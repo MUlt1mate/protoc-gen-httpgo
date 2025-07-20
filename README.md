@@ -64,7 +64,7 @@ protoc -I=. --httpgo_out=paths=source_relative,context=native:. example/proto/ex
 | autoURI         | false, true             | Create method URI if annotation is missing.                                                                      |
 | bodylessMethods | GET;DELETE              | List of semicolon separated http methods that should not have a body.                                            |
 | context         | native, fasthttp        | Type of ctx struct in server middlewares. fasthttp is default for backward compatibility. native is recommended  |
-| library         | net/http, fasthttp      | Server library                                                                                                   |
+| library         | nethttp, fasthttp       | Server library                                                                                                   |
 
 Example of parameters usage:
 
