@@ -385,7 +385,7 @@ func TestHTTPGoServer(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			if req, err = http.NewRequestWithContext(
-				t.Context(),
+				context.Background(),
 				test.method,
 				"http://"+ln.Addr().String()+test.uri,
 				bytes.NewReader(test.requestBody),
