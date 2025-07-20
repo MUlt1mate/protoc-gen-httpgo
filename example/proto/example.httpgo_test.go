@@ -18,7 +18,7 @@ import (
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/middleware"
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto"
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
 )
 
 type testCaseClient struct {

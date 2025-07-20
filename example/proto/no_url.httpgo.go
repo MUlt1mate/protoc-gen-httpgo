@@ -1,4 +1,4 @@
-// source: proto/no_url.proto
+// source: no_url.proto
 
 package proto
 
@@ -8,10 +8,11 @@ import (
 	fmt "fmt"
 	router "github.com/fasthttp/router"
 	fasthttp "github.com/valyala/fasthttp"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 type NoURLHTTPGoService interface {
-	MethodWithoutURLAnnotation(context.Context, *Empty) (*Empty, error)
+	MethodWithoutURLAnnotation(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
 
 func RegisterNoURLHTTPGoServer(
@@ -44,8 +45,8 @@ func RegisterNoURLHTTPGoServer(
 	return nil
 }
 
-func buildNourlNoURLMethodWithoutURLAnnotationEmpty(ctx *fasthttp.RequestCtx) (arg *Empty, err error) {
-	arg = &Empty{}
+func buildNourlNoURLMethodWithoutURLAnnotationEmpty(ctx *fasthttp.RequestCtx) (arg *emptypb.Empty, err error) {
+	arg = &emptypb.Empty{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
@@ -106,7 +107,7 @@ func GetNoURLHTTPGoClient(
 	}, nil
 }
 
-func (p *NoURLHTTPGoClient) MethodWithoutURLAnnotation(ctx context.Context, request *Empty) (resp *Empty, err error) {
+func (p *NoURLHTTPGoClient) MethodWithoutURLAnnotation(ctx context.Context, request *emptypb.Empty) (resp *emptypb.Empty, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var body []byte
@@ -134,7 +135,7 @@ func (p *NoURLHTTPGoClient) MethodWithoutURLAnnotation(ctx context.Context, requ
 			return nil, err
 		}
 	}
-	resp = &Empty{}
+	resp = &emptypb.Empty{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	err = json.Unmarshal(respBody, resp)
 	return resp, err

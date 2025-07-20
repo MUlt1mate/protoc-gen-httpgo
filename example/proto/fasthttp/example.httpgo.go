@@ -1,4 +1,4 @@
-// source: proto/example.proto
+// source: example.proto
 
 package proto
 
