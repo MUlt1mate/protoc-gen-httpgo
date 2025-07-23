@@ -8,7 +8,8 @@ This is a protoc plugin that generates HTTP server and client code from proto fi
 ## Features
 
 - Generation of both server and client code
-    - At the moment works with [fasthttp](https://github.com/valyala/fasthttp)
+    - Supports [net/http](https://pkg.go.dev/net/http)
+    - Supports [fasthttp](https://github.com/valyala/fasthttp)
 - Provides multiple options for Marshaling/Unmarshaling:
     - Uses the native `encoding/json` by default
     - Optional usage of [easyjson](https://github.com/mailru/easyjson) for performance
@@ -63,11 +64,12 @@ protoc -I=. --httpgo_out=paths=source_relative,context=native:. example/proto/ex
 | autoURI         | false, true             | Create method URI if annotation is missing.                                                                      |
 | bodylessMethods | GET;DELETE              | List of semicolon separated http methods that should not have a body.                                            |
 | context         | native, fasthttp        | Type of ctx struct in server middlewares. fasthttp is default for backward compatibility. native is recommended  |
+| library         | nethttp, fasthttp       | Server library                                                                                                   |
 
 Example of parameters usage:
 
 ```bash
-protoc -I=. --httpgo_out=paths=source_relative,marshaller=easyjson,only=server,autoURI=true,context=native:. example/proto/example.proto
+protoc -I=. --httpgo_out=paths=source_relative,marshaller=easyjson,only=server,autoURI=true,context=native,library=fasthttp:. example/proto/example.proto
 ```
 
 The plugin will create an example.httpgo.go file with the following:
@@ -219,12 +221,17 @@ with proto names.
 
 - Improve test cases
 - Implement more web servers
-  - native net/http
-  - gin
-  - chi
+    - native net/http
+    - gin
+    - chi
 - File upload
-- Full support for [httprule](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule)
-  - response_body supports for client natively, for server only in custom middleware
+- Full support
+  for [httprule](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule)
+    - response_body supports for client natively, for server only in custom middleware
 - dependabot
 - buf
 - verbose levels
+- benchmark
+- websocket
+- production ready middleware example
+- optionally ignore unknown query parameters

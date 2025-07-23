@@ -6,7 +6,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto"
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 )
 

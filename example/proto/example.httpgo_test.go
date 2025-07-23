@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"reflect"
 	"sync"
 	"testing"
@@ -19,7 +18,7 @@ import (
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/middleware"
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto"
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
 )
 
 type testCaseClient struct {
@@ -55,16 +54,6 @@ type responseData struct {
 	code int
 }
 
-type readCloser struct {
-	io.Reader
-}
-
-func (readCloser) Close() error { return nil }
-
-func getReadCloser(r io.Reader) io.ReadCloser {
-	return readCloser{r}
-}
-
 func TestHTTPGoClient(t *testing.T) {
 	var (
 		reqCh  = make(chan requestData)
@@ -79,6 +68,7 @@ func TestHTTPGoClient(t *testing.T) {
 	)
 	if client, err = proto.GetServiceNameHTTPGoClient(
 		ctx,
+		//&http.Client{},
 		&fasthttp.Client{},
 		mockServer.URL,
 		middleware.ClientMiddlewares,
@@ -304,7 +294,8 @@ func TestHTTPGoServer(t *testing.T) {
 		err     error
 		ctx                                    = context.Background()
 		handler proto.ServiceNameHTTPGoService = &implementation.Handler{}
-		r                                      = router.New()
+		//r                                      = http.NewServeMux()
+		r = router.New()
 	)
 	if err = proto.RegisterServiceNameHTTPGoServer(ctx, r, handler, middleware.ServerMiddlewares); err != nil {
 		t.Fatal(err)
@@ -315,6 +306,7 @@ func TestHTTPGoServer(t *testing.T) {
 		t.Fatal(err)
 	}
 	go func() {
+		//_ = http.Serve(ln, r)
 		_ = fasthttp.Serve(ln, r.Handler)
 	}()
 
@@ -384,25 +376,22 @@ func TestHTTPGoServer(t *testing.T) {
 		},
 	}
 	var (
-		resp       *http.Response
-		requestURL *url.URL
-		host       = "http://" + ln.Addr().String()
-		body       []byte
-		client     = http.Client{}
+		resp   *http.Response
+		body   []byte
+		client = http.Client{}
+		req    *http.Request
 	)
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if requestURL, err = requestURL.Parse(host + test.uri); err != nil {
+			if req, err = http.NewRequestWithContext(
+				context.Background(),
+				test.method,
+				"http://"+ln.Addr().String()+test.uri,
+				bytes.NewReader(test.requestBody),
+			); err != nil {
 				t.Fatal(err)
 			}
-			req := &http.Request{
-				Method: test.method,
-				URL:    requestURL,
-				Header: http.Header{},
-				Body:   getReadCloser(bytes.NewReader(test.requestBody)),
-			}
-
 			req.Header.Add("Content-Type", "application/json")
 			defer func() {
 				if resp != nil && resp.Body != nil {

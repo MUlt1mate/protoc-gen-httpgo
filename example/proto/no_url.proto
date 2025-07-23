@@ -3,8 +3,8 @@ syntax = "proto3";
 package example;
 option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/example/proto;proto";
 
-service NoURL {
-  rpc MethodWithoutURLAnnotation (Empty) returns (Empty) {}
-}
+import "google/protobuf/empty.proto";
 
-message Empty {}
+service NoURL {
+  rpc MethodWithoutURLAnnotation (google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}

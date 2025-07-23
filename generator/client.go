@@ -30,7 +30,7 @@ func (g *generator) genServiceClient(service serviceParams) (err error) {
 	g.gf.P("var _  ", service.name, "HTTPGoService = & ", service.name, "HTTPGoClient{}")
 	g.gf.P("")
 	g.gf.P("type ", service.name, "HTTPGoClient struct {")
-	g.gf.P("	cl          *", fasthttpPackage.Ident("Client"), "")
+	g.gf.P("	cl          *", g.lib.Ident("Client"), "")
 	g.gf.P("	host        string")
 	g.gf.P("	middlewares []func(", g.clientInput, ", handler func(", g.clientInput, ") (", g.clientOutput, ")) (", g.clientOutput, ")")
 	g.gf.P("	middleware  func(", g.clientInput, ", handler func(", g.clientInput, ") (", g.clientOutput, ")) (", g.clientOutput, ")")
@@ -38,7 +38,7 @@ func (g *generator) genServiceClient(service serviceParams) (err error) {
 	g.gf.P("")
 	g.gf.P("func Get", service.name, "HTTPGoClient(")
 	g.gf.P("	_ ", contextPackage.Ident("Context"), ",")
-	g.gf.P("	cl *", fasthttpPackage.Ident("Client"), ",")
+	g.gf.P("	cl *", g.lib.Ident("Client"), ",")
 	g.gf.P("	host string,")
 	g.gf.P("	middlewares []func(", g.clientInput, ", handler func(", g.clientInput, ") (", g.clientOutput, ")) (", g.clientOutput, "),")
 	g.gf.P(") (*", service.name, "HTTPGoClient, error) {")
@@ -71,7 +71,12 @@ func (g *generator) genClientMethod(
 		g.gf.P(comment)
 	}
 	g.gf.P("func (p * ", srvName, "HTTPGoClient) ", method.name, "(ctx ", contextPackage.Ident("Context"), ", request *", method.inputMsgName, ") (resp *", method.outputMsgName, ", err error) {")
-	g.gf.P("	req := &fasthttp.Request{}")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	req := &", g.lib.Ident("Request"), "{Header: make(", g.lib.Ident("Header"), ")}")
+	case libraryFastHTTP:
+		g.gf.P("	req := &", g.lib.Ident("Request"), "{}")
+	}
 	g.gf.P("	var queryArgs string")
 	if method.HasBody() {
 		g.genMarshalRequestStruct()
@@ -90,15 +95,31 @@ func (g *generator) genClientMethod(
 	if len(params) > 0 {
 		paramsURI = "," + strings.Join(params, ", ")
 	}
-	g.gf.P("	req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"%s\""+paramsURI+",queryArgs))")
-	g.gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
-	g.gf.P("	var reqResp *fasthttp.Response")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	u, err := ", urlPackage.Ident("Parse"), "(", fmtPackage.Ident("Sprintf"), "(\"%s"+requestURI+"%s\",p.host"+paramsURI+",queryArgs))")
+		g.gf.P("	if err != nil {")
+		g.gf.P("		return nil, err")
+		g.gf.P("	}")
+		g.gf.P("	req.URL = u")
+		g.gf.P("	req.Method = ", g.lib.Ident("Method"+titleString(method.httpMethodName)))
+	case libraryFastHTTP:
+		g.gf.P("	req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"%s\""+paramsURI+",queryArgs))")
+		g.gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
+	}
+	g.gf.P("	var reqResp interface{}")
 	g.gf.P("	ctx = context.WithValue(ctx, \"proto_service\", \"" + srvName + "\")")
 	g.gf.P("	ctx = context.WithValue(ctx, \"proto_method\", \"" + method.name + "\")")
 	g.gf.P("	var handler = func(", g.clientInput, ") (", g.clientOutput, ") {")
-	g.gf.P("		resp = &fasthttp.Response{}")
-	g.gf.P("		err = p.cl.Do(req, resp)")
-	g.gf.P("		return resp, err")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("		resp, err = p.cl.Do(req.(*", g.lib.Ident("Request"), "))")
+		g.gf.P("		return resp, err")
+	case libraryFastHTTP:
+		g.gf.P("		resp = &", g.lib.Ident("Response"), "{}")
+		g.gf.P("		err = p.cl.Do(req.(*", g.lib.Ident("Request"), "), resp.(*", g.lib.Ident("Response"), "))")
+		g.gf.P("		return resp, err")
+	}
 	g.gf.P("	}")
 	g.gf.P("	if p.middleware == nil {")
 	g.gf.P("		if reqResp, err = handler(ctx, req); err != nil {")
@@ -225,7 +246,12 @@ func (g *generator) genMarshalRequestStruct() {
 	g.gf.P("	if err != nil {")
 	g.gf.P("		return nil, err")
 	g.gf.P("	}")
-	g.gf.P("	req.SetBody(body)")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	req.Body = ", ioPackage.Ident("NopCloser"), "(", bytesPackage.Ident("NewBuffer"), "(body))")
+	case libraryFastHTTP:
+		g.gf.P("	req.SetBody(body)")
+	}
 }
 
 // genQueryRequestParameters
@@ -292,6 +318,17 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 func (g *generator) genUnmarshalResponseStruct(method methodParams) error {
 	respStruct := "resp"
 	respStructPointer := respStruct
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	var respBody []byte")
+		g.gf.P("	if respBody, err = ", ioPackage.Ident("ReadAll"), "(reqResp.(*", g.lib.Ident("Response"), ").Body); err != nil {")
+		g.gf.P("		return nil, err")
+		g.gf.P("	}")
+		g.gf.P("	_ = reqResp.(*", g.lib.Ident("Response"), ").Body.Close()")
+	case libraryFastHTTP:
+		g.gf.P("	var respBody = reqResp.(*", g.lib.Ident("Response"), ").Body()")
+	}
+
 	if method.responseBody != "" {
 		respField, ok := method.outputFields[method.responseBody]
 		if !ok {
@@ -303,18 +340,18 @@ func (g *generator) genUnmarshalResponseStruct(method methodParams) error {
 	switch *g.cfg.Marshaller {
 	case marshallerEasyJSON:
 		g.gf.P("	if respEJ, ok := interface{}(", respStruct, ").(", easyjsonPackage.Ident("Unmarshaler"), "); ok {")
-		g.gf.P("		if err = ", easyjsonPackage.Ident("Unmarshal"), "(reqResp.Body(), respEJ); err != nil {")
+		g.gf.P("		if err = ", easyjsonPackage.Ident("Unmarshal"), "(respBody, respEJ); err != nil {")
 		g.gf.P("			return nil, err")
 		g.gf.P("		}")
 		g.gf.P("	} else {")
-		g.gf.P("		if err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), ", respStructPointer, "); err != nil {")
+		g.gf.P("		if err = ", jsonPackage.Ident("Unmarshal"), "(respBody, ", respStructPointer, "); err != nil {")
 		g.gf.P("			return nil, err")
 		g.gf.P("		}")
 		g.gf.P("	}")
 	case marshallerProtoJSON:
-		g.gf.P("	err = ", protojsonPackage.Ident("Unmarshal"), "(reqResp.Body(), ", respStructPointer, ")")
+		g.gf.P("	err = ", protojsonPackage.Ident("Unmarshal"), "(respBody, ", respStructPointer, ")")
 	default:
-		g.gf.P("	err = ", jsonPackage.Ident("Unmarshal"), "(reqResp.Body(), ", respStructPointer, ")")
+		g.gf.P("	err = ", jsonPackage.Ident("Unmarshal"), "(respBody, ", respStructPointer, ")")
 	}
 	return nil
 }

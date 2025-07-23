@@ -1,24 +1,24 @@
-package middleware
+package http
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"time"
 
 	"github.com/mailru/easyjson"
-	"github.com/valyala/fasthttp"
 )
 
 const (
-	serverExecutionTimeout        = time.Second * 5
-	ContextFastHTTPCtx     ctxKey = "fastCtx"
+	serverExecutionTimeout = time.Second * 5
 )
 
 type (
-	ctxKey    string
 	respError struct {
 		Error string
 	}
@@ -35,7 +35,6 @@ var (
 )
 
 var ServerMiddlewares = []func(ctx context.Context, arg interface{}, handler func(ctx context.Context, arg interface{}) (resp interface{}, err error)) (resp interface{}, err error){
-	ContextServerMiddleware,
 	LoggerServerMiddleware,
 	ResponseServerMiddleware,
 	HeadersServerMiddleware,
@@ -47,24 +46,6 @@ var ClientMiddlewares = []func(ctx context.Context, req interface{}, handler fun
 	HeadersClientMiddleware,
 	ErrorClientMiddleware,
 	TimeoutClientMiddleware,
-}
-
-// ContextServerMiddleware wraps fasthttp.RequestCtx from original ctx for further usage
-// This middleware should be executed first
-func ContextServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
-	if fastCtx, ok := ctx.(*fasthttp.RequestCtx); ok {
-		// wrap fasthttp.RequestCtx from original ctx for further usage
-		// Calls of ctx.Value will eventually call *fasthttp.RequestCtx.Value
-		ctx = context.WithValue(fastCtx, ContextFastHTTPCtx, fastCtx)
-	} else {
-		// We expect this middleware to be executed first
-		// Fail instantly, so we can resolve this quick during development
-		panic(fmt.Sprintf("incorrect ctx type, expected *fasthttp.RequestCtx, got %T", ctx))
-	}
-	return next(ctx, arg)
 }
 
 // LoggerServerMiddleware logs request and response for server
@@ -93,8 +74,8 @@ func ResponseServerMiddleware(
 	} else {
 		responseBody, _ = json.Marshal(resp)
 	}
-	fastCtx, _ := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx)
-	_, _ = fastCtx.Write(responseBody)
+	writer, _ := ctx.Value("writer").(http.ResponseWriter)
+	_, _ = writer.Write(responseBody)
 	return resp, err
 }
 
@@ -103,19 +84,20 @@ func HeadersServerMiddleware(
 	ctx context.Context, arg interface{},
 	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
-	fastCtx, _ := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx)
+	writer, _ := ctx.Value("writer").(http.ResponseWriter)
+	request, _ := ctx.Value("request").(*http.Request)
 	jsonContentType := "application/json"
-	contentType := string(fastCtx.Request.Header.ContentType())
+	contentType := request.Header.Get("Content-Type")
 	if contentType != jsonContentType {
-		fastCtx.SetStatusCode(fasthttp.StatusBadRequest)
+		writer.WriteHeader(http.StatusBadRequest)
 		return nil, errors.New("incorrect content type")
 	}
-	fastCtx.SetContentType(jsonContentType)
+	writer.Header().Add("Content-Type", jsonContentType)
 	resp, err = next(ctx, arg)
 	if err == nil {
-		fastCtx.SetStatusCode(fasthttp.StatusOK)
+		writer.WriteHeader(http.StatusOK)
 	} else {
-		fastCtx.SetStatusCode(fasthttp.StatusInternalServerError)
+		writer.WriteHeader(http.StatusInternalServerError)
 	}
 
 	return resp, err
@@ -137,10 +119,10 @@ func TimeoutServerMiddleware(
 
 	select {
 	case <-ctx.Done():
-		fastCtx, _ := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx)
-		fastCtx.SetStatusCode(fasthttp.StatusGatewayTimeout)
-		fastCtx.SetContentType("application/json")
-		_, _ = fastCtx.WriteString(errTimeoutBody)
+		writer, _ := ctx.Value("writer").(http.ResponseWriter)
+		writer.WriteHeader(http.StatusGatewayTimeout)
+		writer.Header().Add("Content-Type", "application/json")
+		_, _ = writer.Write([]byte(errTimeoutBody))
 		return resp, err
 	case <-done:
 		return resp, err
@@ -154,10 +136,10 @@ func ValidationServerMiddleware(
 ) (resp interface{}, err error) {
 	if validatorArg, ok := arg.(validator); ok {
 		if err = validatorArg.Validate(); err != nil {
-			fastCtx, _ := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx)
-			fastCtx.SetStatusCode(fasthttp.StatusBadRequest)
-			fastCtx.SetContentType("application/json")
-			_, _ = fastCtx.WriteString(err.Error())
+			writer, _ := ctx.Value("writer").(http.ResponseWriter)
+			writer.WriteHeader(http.StatusBadRequest)
+			writer.Header().Add("Content-Type", "application/json")
+			_, _ = writer.Write([]byte(err.Error()))
 			return nil, err
 		}
 	}
@@ -170,15 +152,21 @@ func LoggerClientMiddleware(
 	req interface{},
 	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
-	log.Printf("%s: client sending request with path %s", serviceName, req.(*fasthttp.Request).RequestURI())
+	log.Printf("%s: client sending request with path %s", serviceName, req.(*http.Request).RequestURI)
 	resp, err = next(ctx, req)
 	if err != nil {
 		log.Printf("%s: client got response with error %s", serviceName, err.Error())
 		return resp, err
 	}
 	if resp != nil {
-		respTyped := resp.(*fasthttp.Response)
-		log.Printf("%s: client got response with code %d, body %s", serviceName, respTyped.StatusCode(), string(respTyped.Body()))
+		respTyped := resp.(*http.Response)
+		body, err := io.ReadAll(respTyped.Body)
+		if err != nil {
+			return resp, err
+		}
+		// Replace the body with a new reader after reading from the original
+		respTyped.Body = io.NopCloser(bytes.NewBuffer(body))
+		log.Printf("%s: client got response with code %d, body %s", serviceName, respTyped.StatusCode, string(body))
 	}
 	return resp, err
 }
@@ -190,10 +178,10 @@ func HeadersClientMiddleware(
 	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
 	jsonContentType := "application/json"
-	req.(*fasthttp.Request).Header.SetContentType(jsonContentType)
+	req.(*http.Request).Header.Set("Content-Type", jsonContentType)
 	resp, err = next(ctx, req)
-	if err == nil && string(resp.(*fasthttp.Response).Header.ContentType()) != jsonContentType {
-		err = fmt.Errorf("incorrect response content type %s", string(resp.(*fasthttp.Response).Header.ContentType()))
+	if err == nil && resp.(*http.Response).Header.Get("Content-Type") != jsonContentType {
+		err = fmt.Errorf("incorrect response content type %s", string(resp.(*http.Response).Header.Get("Content-Type")))
 	}
 	return resp, err
 }
@@ -205,8 +193,8 @@ func ErrorClientMiddleware(
 	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
 	resp, err = next(ctx, req)
-	if err == nil && resp.(*fasthttp.Response).StatusCode() > fasthttp.StatusBadRequest {
-		return resp, fmt.Errorf("%w, code: %d", errRequestFailed, resp.(*fasthttp.Response).StatusCode())
+	if err == nil && resp.(*http.Response).StatusCode > http.StatusBadRequest {
+		return resp, fmt.Errorf("%w, code: %d", errRequestFailed, resp.(*http.Response).StatusCode)
 	}
 	return resp, err
 }
@@ -217,7 +205,9 @@ func TimeoutClientMiddleware(
 	req interface{},
 	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
-	req.(*fasthttp.Request).SetTimeout(time.Second * 1)
+	ctx, cancelFunc := context.WithTimeout(ctx, time.Second*1)
+	defer cancelFunc()
+	req = req.(*http.Request).WithContext(ctx)
 	resp, err = next(ctx, req)
 	return resp, err
 }

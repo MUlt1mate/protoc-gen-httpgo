@@ -18,6 +18,8 @@ const (
 	onlyServer               = "server"
 	onlyClient               = "client"
 	pathRepeatedArgDelimiter = ","
+	libraryNetHTTP           = "nethttp"
+	libraryFastHTTP          = "fasthttp"
 )
 
 type (
@@ -31,6 +33,7 @@ type (
 		clientOutput    string
 		serverInput     string
 		serverOutput    string
+		lib             protogen.GoImportPath
 	}
 
 	serviceParams struct {
@@ -66,6 +69,7 @@ type (
 		AutoURI            *bool
 		BodylessMethodsStr *string
 		ContextStruct      *string
+		Library            *string
 	}
 )
 
@@ -73,7 +77,7 @@ func newGenerator(
 	file *protogen.File,
 	cfg Config,
 	gf *protogen.GeneratedFile,
-) generator {
+) (generator, error) {
 	var bodylessMethods = make(map[string]struct{})
 	if cfg.BodylessMethodsStr == nil || *cfg.BodylessMethodsStr == "" {
 		bodylessMethods = map[string]struct{}{"GET": {}, "DELETE": {}}
@@ -90,22 +94,33 @@ func newGenerator(
 		gf:              gf,
 		bodylessMethods: bodylessMethods,
 	}
+	switch *cfg.Library {
+	case libraryNetHTTP:
+		g.lib = httpPackage
+	case libraryFastHTTP:
+		g.lib = fasthttpPackage
+	default:
+		return g, errors.New("unsupported library type: " + *cfg.Library)
+	}
 	g.initTemplates(gf)
 	g.fillServices(file)
-	return g
+	return g, nil
 }
 
 // Run is the main function that start generation with given parameters
 func Run(gen *protogen.Plugin, cfg Config) (err error) {
+	var g generator
 	for _, f := range gen.Files {
 		if !f.Generate {
 			continue
 		}
-		g := newGenerator(
+		if g, err = newGenerator(
 			f,
 			cfg,
 			gen.NewGeneratedFile(f.GeneratedFilenamePrefix+".httpgo.go", f.GoImportPath),
-		)
+		); err != nil {
+			return err
+		}
 		if err = g.GenerateServers(f); err != nil {
 			return err
 		}
@@ -183,14 +198,16 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 func (g *generator) initTemplates(gf *protogen.GeneratedFile) {
 	if g.cfg.ContextStruct != nil && *g.cfg.ContextStruct == "native" {
 		g.serverInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req interface{}"
+		g.clientInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req interface{}"
+		g.clientOutput = "resp interface{}, err error"
 	} else {
 		// this is default behavior for backward compatibility
 		g.serverInput = "ctx *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("RequestCtx")) + ", req interface{}"
+		g.clientInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Request"))
+		g.clientOutput = "resp *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Response")) + ", err error"
 	}
 
 	g.serverOutput = "resp interface{}, err error"
-	g.clientInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Request"))
-	g.clientOutput = "resp *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Response")) + ", err error"
 }
 
 // getFilename returns capitalized filename for generated method naming
@@ -311,4 +328,9 @@ func (m methodParams) HasBody() bool {
 func (g *generator) MethodShouldHasBody(method string) bool {
 	_, ok := g.bodylessMethods[method]
 	return !ok
+}
+
+func titleString(input string) string {
+	input = strings.ToLower(input)
+	return strings.ToUpper(string(input[0])) + input[1:]
 }
