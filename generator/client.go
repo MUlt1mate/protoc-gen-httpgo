@@ -104,7 +104,7 @@ func (g *generator) genClientMethod(
 		g.gf.P("	req.URL = u")
 		g.gf.P("	req.Method = ", g.lib.Ident("Method"+titleString(method.httpMethodName)))
 	case libraryFastHTTP:
-		g.gf.P("	req.SetRequestURI(p.host + ", fmtPackage.Ident("Sprintf"), "(\""+requestURI+"%s\""+paramsURI+",queryArgs))")
+		g.gf.P("	req.SetRequestURI(", fmtPackage.Ident("Sprintf"), "(\"%s"+requestURI+"%s\",p.host"+paramsURI+",queryArgs))")
 		g.gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
 	}
 	g.gf.P("	var reqResp interface{}")
@@ -117,7 +117,11 @@ func (g *generator) genClientMethod(
 		g.gf.P("		return resp, err")
 	case libraryFastHTTP:
 		g.gf.P("		resp = &", g.lib.Ident("Response"), "{}")
-		g.gf.P("		err = p.cl.Do(req.(*", g.lib.Ident("Request"), "), resp.(*", g.lib.Ident("Response"), "))")
+		if g.cfg.ContextStruct != nil && *g.cfg.ContextStruct == "native" {
+			g.gf.P("		err = p.cl.Do(req.(*", g.lib.Ident("Request"), "), resp.(*", g.lib.Ident("Response"), "))")
+		} else {
+			g.gf.P("		err = p.cl.Do(req, resp)")
+		}
 		g.gf.P("		return resp, err")
 	}
 	g.gf.P("	}")

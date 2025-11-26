@@ -31,6 +31,7 @@ type ServiceNameHTTPGoService interface {
 	EmptyGet(context.Context, *Empty) (*Empty, error)
 	EmptyPost(context.Context, *Empty) (*Empty, error)
 	TopLevelArray(context.Context, *Empty) (*Array, error)
+	OnlyStructInGet(context.Context, *OnlyStruct) (*Empty, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -289,6 +290,25 @@ func RegisterServiceNameHTTPGoServer(
 		_, _ = middleware(ctx, input, handler)
 	})
 
+	r.POST("/v1/onlyStruct", func(ctx *fasthttp.RequestCtx) {
+		input, err := buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx)
+		if err != nil {
+			ctx.SetStatusCode(fasthttp.StatusBadRequest)
+			_, _ = ctx.WriteString(err.Error())
+			return
+		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "OnlyStructInGet")
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+			return h.OnlyStructInGet(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx, input)
+			return
+		}
+		_, _ = middleware(ctx, input, handler)
+	})
+
 	return nil
 }
 
@@ -320,7 +340,7 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 		case "stringArgument":
 			arg.StringArgument = value
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	})
@@ -493,7 +513,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 			}
 			arg.SliceInt32Value = append(arg.SliceInt32Value, int32(SliceInt32ValueVal))
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	})
@@ -679,7 +699,7 @@ func buildExampleServiceNameCommonTypesAny(ctx *fasthttp.RequestCtx) (arg *anypb
 		case "value":
 			arg.Value = []byte(value)
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	})
@@ -707,7 +727,7 @@ func buildExampleServiceNameImportsSomeCustomMsg1(ctx *fasthttp.RequestCtx) (arg
 		case "val":
 			arg.Val = value
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	})
@@ -742,7 +762,7 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 		case "stringArgument":
 			arg.StringArgument = value
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	})
@@ -897,7 +917,7 @@ func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg
 			err = fmt.Errorf("unsupported type message for query argument MessageValue")
 			return
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	})
@@ -920,7 +940,7 @@ func buildExampleServiceNameGetMethodInputMsgName(ctx *fasthttp.RequestCtx) (arg
 		case "stringArgument":
 			arg.StringArgument = value
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	})
@@ -1044,7 +1064,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		case "StringValueQuery[]":
 			arg.StringValueQuery = append(arg.StringValueQuery, value)
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	})
@@ -1371,7 +1391,7 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.Reques
 		case "StringValueQuery[]":
 			arg.StringValueQuery = append(arg.StringValueQuery, value)
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	})
@@ -1512,7 +1532,7 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.Request
 		case "StringValueQuery[]":
 			arg.StringValueQuery = append(arg.StringValueQuery, value)
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	})
@@ -1560,6 +1580,35 @@ func buildExampleServiceNameTopLevelArrayEmpty(ctx *fasthttp.RequestCtx) (arg *E
 			}
 		}
 	}
+	return arg, err
+}
+
+func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx *fasthttp.RequestCtx) (arg *OnlyStruct, err error) {
+	arg = &OnlyStruct{}
+	var body = ctx.PostBody()
+	if len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
+		}
+	}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "value":
+			err = fmt.Errorf("unsupported type message for query argument value")
+			return
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
 	return arg, err
 }
 
@@ -1627,7 +1676,7 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *InputMsg
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%s/%d%s", request.StringArgument, request.Int64Argument, queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/test/%s/%d%s", p.host, request.StringArgument, request.Int64Argument, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -1673,7 +1722,7 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *All
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%t/%s/%d/%d/%d/%d/%d/%d/%d/%d/%f/%d/%d/%f/%s/%s%s", request.BoolValue, request.EnumValue, request.Int32Value, request.Sint32Value, request.Uint32Value, request.Int64Value, request.Sint64Value, request.Uint64Value, request.Sfixed32Value, request.Fixed32Value, request.FloatValue, request.Sfixed64Value, request.Fixed64Value, request.DoubleValue, request.StringValue, request.BytesValue, queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/test/%t/%s/%d/%d/%d/%d/%d/%d/%d/%d/%f/%d/%d/%f/%s/%s%s", p.host, request.BoolValue, request.EnumValue, request.Int32Value, request.Sint32Value, request.Uint32Value, request.Int64Value, request.Sint64Value, request.Uint64Value, request.Sfixed32Value, request.Fixed32Value, request.FloatValue, request.Sfixed64Value, request.Fixed64Value, request.DoubleValue, request.StringValue, request.BytesValue, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -1719,7 +1768,7 @@ func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anyp
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/commonTypes%s", queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/test/commonTypes%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -1765,7 +1814,7 @@ func (p *ServiceNameHTTPGoClient) Imports(ctx context.Context, request *somepack
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports%s", queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/test/imports%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -1812,7 +1861,7 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/%s%s", request.StringArgument, queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/test/%s%s", p.host, request.StringArgument, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -1858,7 +1907,7 @@ func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *Optiona
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/optional%s", queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/test/optional%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -1903,7 +1952,7 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *InputM
 		request.StringArgument,
 	}
 	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/get%s", queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/test/get%s", p.host, queryArgs))
 	req.Header.SetMethod("GET")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -2020,7 +2069,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request
 	}
 	BytesValueRequest := strings.Join(BytesValueStrs, ",")
 	StringValueQueryRequest := strings.Join(request.StringValueQuery, ",")
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/repeated/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s%s", BoolValueRequest, EnumValueRequest, Int32ValueRequest, Sint32ValueRequest, Uint32ValueRequest, Int64ValueRequest, Sint64ValueRequest, Uint64ValueRequest, Sfixed32ValueRequest, Fixed32ValueRequest, FloatValueRequest, Sfixed64ValueRequest, Fixed64ValueRequest, DoubleValueRequest, StringValueRequest, BytesValueRequest, StringValueQueryRequest, queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/repeated/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s%s", p.host, BoolValueRequest, EnumValueRequest, Int32ValueRequest, Sint32ValueRequest, Uint32ValueRequest, Int64ValueRequest, Sint64ValueRequest, Uint64ValueRequest, Sfixed32ValueRequest, Fixed32ValueRequest, FloatValueRequest, Sfixed64ValueRequest, Fixed64ValueRequest, DoubleValueRequest, StringValueRequest, BytesValueRequest, StringValueQueryRequest, queryArgs))
 	req.Header.SetMethod("GET")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -2124,7 +2173,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, reques
 	}
 	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
 	StringValueRequest := strings.Join(request.StringValue, ",")
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/repeated/%s%s", StringValueRequest, queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/repeated/%s%s", p.host, StringValueRequest, queryArgs))
 	req.Header.SetMethod("GET")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -2171,7 +2220,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request
 	}
 	req.SetBody(body)
 	StringValueRequest := strings.Join(request.StringValue, ",")
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/repeated/%s%s", StringValueRequest, queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/repeated/%s%s", p.host, StringValueRequest, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -2207,7 +2256,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request
 func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *Empty) (resp *Empty, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/emptyGet%s", queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/emptyGet%s", p.host, queryArgs))
 	req.Header.SetMethod("GET")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -2253,7 +2302,7 @@ func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *Empty)
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/emptyPost%s", queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/emptyPost%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -2299,7 +2348,7 @@ func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *Em
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/array%s", queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/array%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
@@ -2326,6 +2375,52 @@ func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *Em
 		}
 	} else {
 		if err = json.Unmarshal(respBody, &resp.Items); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *OnlyStruct) (resp *Empty, err error) {
+	req := &fasthttp.Request{}
+	var queryArgs string
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return nil, err
+	}
+	req.SetBody(body)
+	req.SetRequestURI(fmt.Sprintf("%s/v1/onlyStruct%s", p.host, queryArgs))
+	req.Header.SetMethod("POST")
+	var reqResp interface{}
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
+	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &Empty{}
+	var respBody = reqResp.(*fasthttp.Response).Body()
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(respBody, resp); err != nil {
 			return nil, err
 		}
 	}

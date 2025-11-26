@@ -23,7 +23,7 @@ func RegisterNoURLHTTPGoServer(
 ) error {
 	var middleware = chainServerMiddlewaresNourl(middlewares)
 
-	r.POST("NoURL/MethodWithoutURLAnnotation", func(ctx *fasthttp.RequestCtx) {
+	r.POST("/NoURL/MethodWithoutURLAnnotation", func(ctx *fasthttp.RequestCtx) {
 		input, err := buildNourlNoURLMethodWithoutURLAnnotationEmpty(ctx)
 		if err != nil {
 			ctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -116,7 +116,7 @@ func (p *NoURLHTTPGoClient) MethodWithoutURLAnnotation(ctx context.Context, requ
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("NoURL/MethodWithoutURLAnnotation%s", queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/NoURL/MethodWithoutURLAnnotation%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "NoURL")

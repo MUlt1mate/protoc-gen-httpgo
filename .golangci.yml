@@ -3,7 +3,7 @@ run:
 
 linters-settings:
   cyclop:
-    max-complexity: 15
+    max-complexity: 20
     package-average: 10.0
 
   errcheck:

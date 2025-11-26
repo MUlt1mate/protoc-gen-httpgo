@@ -280,7 +280,7 @@ func (g *generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceNam
 	if *g.cfg.AutoURI {
 		return methodParams{
 			httpMethodName: "POST",
-			uri:            serviceName + "/" + protoMethod.GoName,
+			uri:            "/" + serviceName + "/" + protoMethod.GoName,
 			hasBody:        true,
 		}, nil
 	}
