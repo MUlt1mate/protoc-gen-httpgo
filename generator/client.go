@@ -117,7 +117,11 @@ func (g *generator) genClientMethod(
 		g.gf.P("		return resp, err")
 	case libraryFastHTTP:
 		g.gf.P("		resp = &", g.lib.Ident("Response"), "{}")
-		g.gf.P("		err = p.cl.Do(req.(*", g.lib.Ident("Request"), "), resp.(*", g.lib.Ident("Response"), "))")
+		if g.cfg.ContextStruct != nil && *g.cfg.ContextStruct == "native" {
+			g.gf.P("		err = p.cl.Do(req.(*", g.lib.Ident("Request"), "), resp.(*", g.lib.Ident("Response"), "))")
+		} else {
+			g.gf.P("		err = p.cl.Do(req, resp)")
+		}
 		g.gf.P("		return resp, err")
 	}
 	g.gf.P("	}")
