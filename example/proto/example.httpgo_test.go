@@ -68,7 +68,7 @@ func TestHTTPGoClient(t *testing.T) {
 	)
 	if client, err = proto.GetServiceNameHTTPGoClient(
 		ctx,
-		//&http.Client{},
+		// &http.Client{},
 		&fasthttp.Client{},
 		mockServer.URL,
 		middleware.ClientMiddlewares,
@@ -294,7 +294,7 @@ func TestHTTPGoServer(t *testing.T) {
 		err     error
 		ctx                                    = context.Background()
 		handler proto.ServiceNameHTTPGoService = &implementation.Handler{}
-		//r                                      = http.NewServeMux()
+		// r                                      = http.NewServeMux()
 		r = router.New()
 	)
 	if err = proto.RegisterServiceNameHTTPGoServer(ctx, r, handler, middleware.ServerMiddlewares); err != nil {
@@ -306,7 +306,7 @@ func TestHTTPGoServer(t *testing.T) {
 		t.Fatal(err)
 	}
 	go func() {
-		//_ = http.Serve(ln, r)
+		// _ = http.Serve(ln, r)
 		_ = fasthttp.Serve(ln, r.Handler)
 	}()
 

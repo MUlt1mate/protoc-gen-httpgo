@@ -150,7 +150,7 @@ func (g *generator) genBuildRequestMethod(serviceName string, method methodParam
 			}
 		}
 		g.gf.P("	default:")
-		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"unknown query parameter %s\", key)")
+		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"unknown query parameter %s with value %s\", key, value)")
 		g.gf.P("		return")
 		g.gf.P("	}")
 		switch *g.cfg.Library {

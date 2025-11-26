@@ -84,6 +84,11 @@ service ServiceName {
       response_body: "items"
     };
   };
+  rpc OnlyStructInGet(OnlyStruct) returns (Empty){
+    option (google.api.http) = {
+      post: "/v1/onlyStruct"
+    };
+  };
 }
 
 message InputMsgName {
@@ -171,4 +176,8 @@ message Array {
 
 message ArrayItem {
   string value = 1;
+}
+
+message OnlyStruct {
+  ArrayItem value = 1;
 }

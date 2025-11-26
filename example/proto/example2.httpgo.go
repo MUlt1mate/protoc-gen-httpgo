@@ -49,7 +49,7 @@ func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepac
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports%s", queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/test/imports%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName2")
@@ -106,7 +106,7 @@ func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *s
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(p.host + fmt.Sprintf("/v1/test/imports%s", queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/test/imports%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "SecondServiceName2")

@@ -29,7 +29,7 @@ func serverExample(ctx context.Context) (err error) {
 	var (
 		handler proto.ServiceNameHTTPGoService = &implementation.Handler{}
 		r                                      = router.New()
-		//r                                      = http.NewServeMux()
+		// r                                      = http.NewServeMux()
 	)
 	if err = proto.RegisterServiceNameHTTPGoServer(ctx, r, handler, serverMiddlewares); err != nil {
 		return err
@@ -37,7 +37,7 @@ func serverExample(ctx context.Context) (err error) {
 
 	go func() {
 		_ = fasthttp.ListenAndServe(":8080", r.Handler)
-		//_ = http.ListenAndServe(":8080", r)
+		// _ = http.ListenAndServe(":8080", r)
 	}()
 	return nil
 }
@@ -45,7 +45,7 @@ func serverExample(ctx context.Context) (err error) {
 func clientExample(ctx context.Context) (err error) {
 	var (
 		client *proto.ServiceNameHTTPGoClient
-		//httpClient = &http.Client{}
+		// httpClient = &http.Client{}
 		httpClient = &fasthttp.Client{}
 		host       = "http://localhost:8080"
 	)

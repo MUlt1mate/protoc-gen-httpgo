@@ -34,6 +34,7 @@ type ServiceNameHTTPGoService interface {
 	EmptyGet(context.Context, *Empty) (*Empty, error)
 	EmptyPost(context.Context, *Empty) (*Empty, error)
 	TopLevelArray(context.Context, *Empty) (*Array, error)
+	OnlyStructInGet(context.Context, *OnlyStruct) (*Empty, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -331,6 +332,28 @@ func RegisterServiceNameHTTPGoServer(
 		_, _ = middleware(ctx, input, handler)
 	})
 
+	r.HandleFunc("POST /v1/onlyStruct", func(w http.ResponseWriter, r *http.Request) {
+		input, err := buildExampleServiceNameOnlyStructInGetOnlyStruct(r)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
+		ctx = context.WithValue(ctx, "writer", w)
+		ctx = context.WithValue(ctx, "request", r)
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+			return h.OnlyStructInGet(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx, input)
+			return
+		}
+		_, _ = middleware(ctx, input, handler)
+	})
+
 	return nil
 }
 
@@ -365,7 +388,7 @@ func buildExampleServiceNameRPCNameInputMsgName(r *http.Request) (arg *InputMsgN
 		case "stringArgument":
 			arg.StringArgument = value
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	}
@@ -541,7 +564,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *AllTy
 			}
 			arg.SliceInt32Value = append(arg.SliceInt32Value, int32(SliceInt32ValueVal))
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	}
@@ -730,7 +753,7 @@ func buildExampleServiceNameCommonTypesAny(r *http.Request) (arg *anypb.Any, err
 		case "value":
 			arg.Value = []byte(value)
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	}
@@ -761,7 +784,7 @@ func buildExampleServiceNameImportsSomeCustomMsg1(r *http.Request) (arg *somepac
 		case "val":
 			arg.Val = value
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	}
@@ -799,7 +822,7 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(r *http.Request) (arg
 		case "stringArgument":
 			arg.StringArgument = value
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	}
@@ -957,7 +980,7 @@ func buildExampleServiceNameOptionalOptionalField(r *http.Request) (arg *Optiona
 			err = fmt.Errorf("unsupported type message for query argument MessageValue")
 			return
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	}
@@ -979,7 +1002,7 @@ func buildExampleServiceNameGetMethodInputMsgName(r *http.Request) (arg *InputMs
 		case "stringArgument":
 			arg.StringArgument = value
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	}
@@ -1102,7 +1125,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		case "StringValueQuery[]":
 			arg.StringValueQuery = append(arg.StringValueQuery, value)
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	}
@@ -1428,7 +1451,7 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(r *http.Request) (ar
 		case "StringValueQuery[]":
 			arg.StringValueQuery = append(arg.StringValueQuery, value)
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	}
@@ -1572,7 +1595,7 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(r *http.Request) (arg
 		case "StringValueQuery[]":
 			arg.StringValueQuery = append(arg.StringValueQuery, value)
 		default:
-			err = fmt.Errorf("unknown query parameter %s", key)
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
 		}
 	}
@@ -1626,6 +1649,38 @@ func buildExampleServiceNameTopLevelArrayEmpty(r *http.Request) (arg *Empty, err
 			if err = json.Unmarshal(body, arg); err != nil {
 				return nil, err
 			}
+		}
+	}
+	return arg, err
+}
+
+func buildExampleServiceNameOnlyStructInGetOnlyStruct(r *http.Request) (arg *OnlyStruct, err error) {
+	arg = &OnlyStruct{}
+	var body []byte
+	if body, err = io.ReadAll(r.Body); err != nil {
+		return nil, err
+	}
+	_ = r.Body.Close()
+	if len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
+		}
+	}
+	for key, values := range r.URL.Query() {
+		var value = values[0]
+		switch key {
+		case "value":
+			err = fmt.Errorf("unsupported type message for query argument value")
+			return
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
 		}
 	}
 	return arg, err
@@ -2485,6 +2540,59 @@ func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *Em
 		}
 	} else {
 		if err = json.Unmarshal(respBody, &resp.Items); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *OnlyStruct) (resp *Empty, err error) {
+	req := &http.Request{Header: make(http.Header)}
+	var queryArgs string
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return nil, err
+	}
+	req.Body = io.NopCloser(bytes.NewBuffer(body))
+	u, err := url.Parse(fmt.Sprintf("%s/v1/onlyStruct%s", p.host, queryArgs))
+	if err != nil {
+		return nil, err
+	}
+	req.URL = u
+	req.Method = http.MethodPost
+	var reqResp interface{}
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
+	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		resp, err = p.cl.Do(req.(*http.Request))
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &Empty{}
+	var respBody []byte
+	if respBody, err = io.ReadAll(reqResp.(*http.Response).Body); err != nil {
+		return nil, err
+	}
+	_ = reqResp.(*http.Response).Body.Close()
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(respBody, resp); err != nil {
 			return nil, err
 		}
 	}
