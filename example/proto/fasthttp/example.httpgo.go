@@ -3,18 +3,22 @@
 package proto
 
 import (
-	context "context"
-	json "encoding/json"
-	errors "errors"
-	fmt "fmt"
-	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
-	router "github.com/fasthttp/router"
-	easyjson "github.com/mailru/easyjson"
-	fasthttp "github.com/valyala/fasthttp"
-	anypb "google.golang.org/protobuf/types/known/anypb"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	strconv "strconv"
-	strings "strings"
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"mime/multipart"
+	"strconv"
+	"strings"
+
+	"github.com/fasthttp/router"
+	"github.com/mailru/easyjson"
+	"github.com/valyala/fasthttp"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -32,6 +36,7 @@ type ServiceNameHTTPGoService interface {
 	EmptyPost(context.Context, *Empty) (*Empty, error)
 	TopLevelArray(context.Context, *Empty) (*Array, error)
 	OnlyStructInGet(context.Context, *OnlyStruct) (*Empty, error)
+	MultipartForm(context.Context, *MultipartFormRequest) (*Empty, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -301,6 +306,25 @@ func RegisterServiceNameHTTPGoServer(
 		ctx.SetUserValue("proto_method", "OnlyStructInGet")
 		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.OnlyStructInGet(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx, input)
+			return
+		}
+		_, _ = middleware(ctx, input, handler)
+	})
+
+	r.POST("/v1/multipart", func(ctx *fasthttp.RequestCtx) {
+		input, err := buildExampleServiceNameMultipartFormMultipartFormRequest(ctx)
+		if err != nil {
+			ctx.SetStatusCode(fasthttp.StatusBadRequest)
+			_, _ = ctx.WriteString(err.Error())
+			return
+		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "MultipartForm")
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+			return h.MultipartForm(ctx, input)
 		}
 		if middleware == nil {
 			_, _ = handler(ctx, input)
@@ -1612,6 +1636,38 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx *fasthttp.RequestCtx) 
 	return arg, err
 }
 
+func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx *fasthttp.RequestCtx) (arg *MultipartFormRequest, err error) {
+	arg = &MultipartFormRequest{}
+	body, err := ctx.MultipartForm()
+	if err != nil {
+		return nil, err
+	}
+	file, ok := body.File["file"]
+	if ok && len(file) > 0 {
+		f, err := file[0].Open()
+		if err != nil {
+			return nil, err
+		}
+		arg.File = make([]byte, file[0].Size)
+		_, err = f.Read(arg.File)
+		if err != nil {
+			return nil, err
+		}
+	}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "file":
+			arg.File = []byte(value)
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	return arg, err
+}
+
 func chainServerMiddlewaresExample(
 	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
 ) func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
@@ -2399,6 +2455,80 @@ func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
+	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &Empty{}
+	var respBody = reqResp.(*fasthttp.Response).Body()
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(respBody, resp); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *MultipartFormRequest) (resp *Empty, err error) {
+	req := &fasthttp.Request{}
+	var queryArgs string
+	// var body []byte
+	// if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+	// 	body, err = easyjson.Marshal(rqEJ)
+	// } else {
+	// 	body, err = json.Marshal(request)
+	// }
+	// if err != nil {
+	// 	return nil, err
+	// }
+	//
+	var (
+		requestBody bytes.Buffer
+		// decodedData = make([]byte, base64.StdEncoding.DecodedLen(len(request.File)))
+	)
+	writer := multipart.NewWriter(&requestBody)
+	// _, err = base64.StdEncoding.Decode(decodedData, request.File)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to decode base64 string: %w", err)
+	// }
+
+	part, err := writer.CreateFormFile("file", "file")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create form file: %w", err)
+	}
+
+	if _, err = part.Write(request.File); err != nil {
+		return nil, fmt.Errorf("failed to write data to part: %w", err)
+	}
+
+	if err = writer.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close writer: %w", err)
+	}
+
+	req.SetBody(requestBody.Bytes())
+	req.Header.SetContentType(writer.FormDataContentType())
+	//
+
+	// req.SetBody(body)
+	req.SetRequestURI(fmt.Sprintf("%s/v1/multipart%s", p.host, queryArgs))
+	req.Header.SetMethod("POST")
+	var reqResp interface{}
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
 	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))

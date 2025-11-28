@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/fasthttp/router"
@@ -53,11 +54,16 @@ func clientExample(ctx context.Context) (err error) {
 		return err
 	}
 	// sending our request
-	_, _ = client.RPCName(context.Background(), &proto.InputMsgName{Int64Argument: 999, StringArgument: "rand"})
-	_, _ = client.AllTypesTest(context.Background(), &proto.AllTypesMsg{
-		SliceStringValue: []string{"a", "b"},
-		BytesValue:       []byte("hello world"),
-		StringValue:      "hello world",
-	})
+	// _, _ = client.RPCName(context.Background(), &proto.InputMsgName{Int64Argument: 999, StringArgument: "rand"})
+	// _, _ = client.AllTypesTest(context.Background(), &proto.AllTypesMsg{
+	// 	SliceStringValue: []string{"a", "b"},
+	// 	BytesValue:       []byte("hello world"),
+	// 	StringValue:      "hello world",
+	// })
+
+	_, err = client.MultipartForm(context.Background(), &proto.MultipartFormRequest{File: []byte(`file content`)})
+	if err != nil {
+		log.Println(err)
+	}
 	return nil
 }

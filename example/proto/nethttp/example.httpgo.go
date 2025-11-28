@@ -35,6 +35,7 @@ type ServiceNameHTTPGoService interface {
 	EmptyPost(context.Context, *Empty) (*Empty, error)
 	TopLevelArray(context.Context, *Empty) (*Array, error)
 	OnlyStructInGet(context.Context, *OnlyStruct) (*Empty, error)
+	MultipartForm(context.Context, *MultipartFormRequest) (*Empty, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -346,6 +347,28 @@ func RegisterServiceNameHTTPGoServer(
 		ctx = context.WithValue(ctx, "request", r)
 		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.OnlyStructInGet(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx, input)
+			return
+		}
+		_, _ = middleware(ctx, input, handler)
+	})
+
+	r.HandleFunc("POST /v1/multipart", func(w http.ResponseWriter, r *http.Request) {
+		input, err := buildExampleServiceNameMultipartFormMultipartFormRequest(r)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
+		ctx = context.WithValue(ctx, "writer", w)
+		ctx = context.WithValue(ctx, "request", r)
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+			return h.MultipartForm(ctx, input)
 		}
 		if middleware == nil {
 			_, _ = handler(ctx, input)
@@ -1686,6 +1709,37 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(r *http.Request) (arg *Onl
 	return arg, err
 }
 
+func buildExampleServiceNameMultipartFormMultipartFormRequest(r *http.Request) (arg *MultipartFormRequest, err error) {
+	arg = &MultipartFormRequest{}
+	var body []byte
+	if body, err = io.ReadAll(r.Body); err != nil {
+		return nil, err
+	}
+	_ = r.Body.Close()
+	if len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
+		}
+	}
+	for key, values := range r.URL.Query() {
+		var value = values[0]
+		switch key {
+		case "file":
+			arg.File = []byte(value)
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	}
+	return arg, err
+}
+
 func chainServerMiddlewaresExample(
 	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
 ) func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
@@ -2568,6 +2622,59 @@ func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
+	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		resp, err = p.cl.Do(req.(*http.Request))
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &Empty{}
+	var respBody []byte
+	if respBody, err = io.ReadAll(reqResp.(*http.Response).Body); err != nil {
+		return nil, err
+	}
+	_ = reqResp.(*http.Response).Body.Close()
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(respBody, resp); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *MultipartFormRequest) (resp *Empty, err error) {
+	req := &http.Request{Header: make(http.Header)}
+	var queryArgs string
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return nil, err
+	}
+	req.Body = io.NopCloser(bytes.NewBuffer(body))
+	u, err := url.Parse(fmt.Sprintf("%s/v1/multipart%s", p.host, queryArgs))
+	if err != nil {
+		return nil, err
+	}
+	req.URL = u
+	req.Method = http.MethodPost
+	var reqResp interface{}
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
 	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 		resp, err = p.cl.Do(req.(*http.Request))
 		return resp, err

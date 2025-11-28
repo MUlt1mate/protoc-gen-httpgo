@@ -2,6 +2,7 @@ package implementation
 
 import (
 	"context"
+	"log"
 
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -151,5 +152,10 @@ func (h *Handler) TopLevelArray(ctx context.Context, empty *proto.Empty) (*proto
 }
 
 func (h *Handler) OnlyStructInGet(ctx context.Context, onlyStruct *proto.OnlyStruct) (*proto.Empty, error) {
+	return &proto.Empty{}, nil
+}
+
+func (h *Handler) MultipartForm(ctx context.Context, request *proto.MultipartFormRequest) (*proto.Empty, error) {
+	log.Println(string(request.File))
 	return &proto.Empty{}, nil
 }

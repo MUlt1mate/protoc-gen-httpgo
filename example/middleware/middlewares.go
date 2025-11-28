@@ -105,11 +105,11 @@ func HeadersServerMiddleware(
 ) (resp interface{}, err error) {
 	fastCtx, _ := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx)
 	jsonContentType := "application/json"
-	contentType := string(fastCtx.Request.Header.ContentType())
-	if contentType != jsonContentType {
-		fastCtx.SetStatusCode(fasthttp.StatusBadRequest)
-		return nil, errors.New("incorrect content type")
-	}
+	// contentType := string(fastCtx.Request.Header.ContentType())
+	// if contentType != jsonContentType {
+	// 	fastCtx.SetStatusCode(fasthttp.StatusBadRequest)
+	// 	return nil, errors.New("incorrect content type")
+	// }
 	fastCtx.SetContentType(jsonContentType)
 	resp, err = next(ctx, arg)
 	if err == nil {
@@ -192,9 +192,9 @@ func HeadersClientMiddleware(
 	jsonContentType := "application/json"
 	req.(*fasthttp.Request).Header.SetContentType(jsonContentType)
 	resp, err = next(ctx, req)
-	if err == nil && string(resp.(*fasthttp.Response).Header.ContentType()) != jsonContentType {
-		err = fmt.Errorf("incorrect response content type %s", string(resp.(*fasthttp.Response).Header.ContentType()))
-	}
+	// if err == nil && string(resp.(*fasthttp.Response).Header.ContentType()) != jsonContentType {
+	// 	err = fmt.Errorf("incorrect response content type %s", string(resp.(*fasthttp.Response).Header.ContentType()))
+	// }
 	return resp, err
 }
 

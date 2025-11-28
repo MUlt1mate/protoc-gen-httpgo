@@ -89,6 +89,11 @@ service ServiceName {
       post: "/v1/onlyStruct"
     };
   };
+  rpc MultipartForm(MultipartFormRequest) returns (Empty){
+    option (google.api.http) = {
+      post: "/v1/multipart"
+    };
+  };
 }
 
 message InputMsgName {
@@ -180,4 +185,8 @@ message ArrayItem {
 
 message OnlyStruct {
   ArrayItem value = 1;
+}
+
+message MultipartFormRequest {
+  bytes file = 1;
 }
