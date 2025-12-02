@@ -178,7 +178,7 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 		}
 		fields[f.protoName] = f
 		method.inputFieldList = append(method.inputFieldList, f.protoName)
-		if f.kind == protoreflect.BytesKind && strings.HasPrefix(strings.ToLower(f.protoName), "file") {
+		if f.isFile() {
 			method.withFiles = true
 		}
 	}
@@ -271,6 +271,10 @@ func (f field) getVariablePlaceholder() (string, error) {
 	default:
 		return "", fmt.Errorf(`unsupported type %s for path variable: "%s"`, f.kind, f.goName)
 	}
+}
+
+func (f field) isFile() bool {
+	return f.kind == protoreflect.BytesKind && strings.HasPrefix(strings.ToLower(f.protoName), "file")
 }
 
 func (g *generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceName string) (methodParams, error) {

@@ -265,20 +265,23 @@ func (g *generator) getMultipartRequestClient(method methodParams) {
 	g.gf.P("writer := ", multipartPackage.Ident("NewWriter"), "(&requestBody)")
 	for _, f := range method.inputFieldList {
 		methodField := method.inputFields[f]
-		g.gf.P("part, err := writer.CreateFormFile(\"", methodField.protoName, "\", \"", methodField.protoName, "\")")
-		g.gf.P("if err != nil {")
-		g.gf.P("	return nil, fmt.Errorf(\"failed to create form file, field: ", methodField.protoName, ":  %w\", err)")
-		g.gf.P("}")
-		g.gf.P("")
-		g.gf.P("if _, err = part.Write(request.", methodField.goName, "); err != nil {")
-		g.gf.P("	return nil, fmt.Errorf(\"failed to write data to part, field: ", methodField.protoName, ": %w\", err)")
-		g.gf.P("}")
-		g.gf.P("")
+		if methodField.isFile() {
+			g.gf.P("part, err := writer.CreateFormFile(\"", methodField.protoName, "\", \"", methodField.protoName, "\")")
+			g.gf.P("if err != nil {")
+			g.gf.P("	return nil, fmt.Errorf(\"failed to create form file ", methodField.protoName, ":  %w\", err)")
+			g.gf.P("}")
+			g.gf.P("if _, err = part.Write(request.", methodField.goName, "); err != nil {")
+			g.gf.P("	return nil, fmt.Errorf(\"failed to write data to part ", methodField.protoName, ": %w\", err)")
+			g.gf.P("}")
+		} else {
+			g.gf.P("if err = writer.WriteField(\"", methodField.protoName, "\", request.", methodField.goName, "); err != nil {")
+			g.gf.P("	return nil, fmt.Errorf(\"failed to write field ", methodField.protoName, ":  %w\", err)")
+			g.gf.P("}")
+		}
 	}
 	g.gf.P("if err = writer.Close(); err != nil {")
 	g.gf.P("	return nil, fmt.Errorf(\"failed to close writer: %w\", err)")
 	g.gf.P("}")
-	g.gf.P("")
 	g.gf.P("req.SetBody(requestBody.Bytes())")
 	g.gf.P("req.Header.SetContentType(writer.FormDataContentType())")
 }

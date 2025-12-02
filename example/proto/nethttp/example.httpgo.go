@@ -1716,24 +1716,30 @@ func buildExampleServiceNameMultipartFormMultipartFormRequest(r *http.Request) (
 	if err != nil {
 		return nil, err
 	}
-	file, ok := body.File["file"]
+	file, ok := body.File["fileOne"]
 	if ok && len(file) > 0 {
 		var f multipart.File
 		f, err = file[0].Open()
 		if err != nil {
-			return nil, fmt.Errorf("failed to open file: file: %w", err)
+			return nil, fmt.Errorf("failed to open file: fileOne: %w", err)
 		}
-		arg.File = make([]byte, file[0].Size)
-		_, err = f.Read(arg.File)
+		arg.FileOne = make([]byte, file[0].Size)
+		_, err = f.Read(arg.FileOne)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read file: file: %w", err)
+			return nil, fmt.Errorf("failed to read file: fileOne: %w", err)
 		}
+	}
+	values, ok := body.Value["otherField"]
+	if ok && len(values) > 0 {
+		arg.OtherField = values[0]
 	}
 	for key, values := range r.URL.Query() {
 		var value = values[0]
 		switch key {
-		case "file":
-			arg.File = []byte(value)
+		case "fileOne":
+			arg.FileOne = []byte(value)
+		case "otherField":
+			arg.OtherField = value
 		default:
 			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
@@ -2660,19 +2666,19 @@ func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *Mu
 	var queryArgs string
 	var requestBody bytes.Buffer
 	writer := multipart.NewWriter(&requestBody)
-	part, err := writer.CreateFormFile("file", "file")
+	part, err := writer.CreateFormFile("fileOne", "fileOne")
 	if err != nil {
-		return nil, fmt.Errorf("failed to create form file, field: file:  %w", err)
+		return nil, fmt.Errorf("failed to create form file fileOne:  %w", err)
 	}
-
-	if _, err = part.Write(request.File); err != nil {
-		return nil, fmt.Errorf("failed to write data to part, field: file: %w", err)
+	if _, err = part.Write(request.FileOne); err != nil {
+		return nil, fmt.Errorf("failed to write data to part fileOne: %w", err)
 	}
-
+	if err = writer.WriteField("otherField", request.OtherField); err != nil {
+		return nil, fmt.Errorf("failed to write field otherField:  %w", err)
+	}
 	if err = writer.Close(); err != nil {
 		return nil, fmt.Errorf("failed to close writer: %w", err)
 	}
-
 	req.SetBody(requestBody.Bytes())
 	req.Header.SetContentType(writer.FormDataContentType())
 	u, err := url.Parse(fmt.Sprintf("%s/v1/multipart%s", p.host, queryArgs))

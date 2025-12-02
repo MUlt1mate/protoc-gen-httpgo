@@ -156,6 +156,6 @@ func (h *Handler) OnlyStructInGet(ctx context.Context, onlyStruct *proto.OnlyStr
 }
 
 func (h *Handler) MultipartForm(ctx context.Context, request *proto.MultipartFormRequest) (*proto.Empty, error) {
-	log.Println(string(request.File))
+	log.Printf("file: %s, other field: %s", string(request.FileOne), request.OtherField)
 	return &proto.Empty{}, nil
 }

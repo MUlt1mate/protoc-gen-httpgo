@@ -417,19 +417,26 @@ func (g *generator) getMultipartRequestServer(method methodParams) {
 	g.gf.P("}")
 	for _, f := range method.inputFieldList {
 		methodField := method.inputFields[f]
-		g.gf.P("file, ok := body.File[\"", methodField.protoName, "\"]")
-		g.gf.P("if ok && len(file) > 0 {")
-		g.gf.P("	var f ", multipartPackage.Ident("File"))
-		g.gf.P("	f, err = file[0].Open()")
-		g.gf.P("	if err != nil {")
-		g.gf.P("		return nil, fmt.Errorf(\"failed to open file: ", methodField.protoName, ": %w\", err)")
-		g.gf.P("	}")
-		g.gf.P("	arg.", methodField.goName, " = make([]byte, file[0].Size)")
-		g.gf.P("	_, err = f.Read(arg.", methodField.goName, ")")
-		g.gf.P("	if err != nil {")
-		g.gf.P("		return nil, fmt.Errorf(\"failed to read file: ", methodField.protoName, ": %w\", err)")
-		g.gf.P("	}")
-		g.gf.P("}")
+		if methodField.isFile() {
+			g.gf.P("file, ok := body.File[\"", methodField.protoName, "\"]")
+			g.gf.P("if ok && len(file) > 0 {")
+			g.gf.P("	var f ", multipartPackage.Ident("File"))
+			g.gf.P("	f, err = file[0].Open()")
+			g.gf.P("	if err != nil {")
+			g.gf.P("		return nil, fmt.Errorf(\"failed to open file: ", methodField.protoName, ": %w\", err)")
+			g.gf.P("	}")
+			g.gf.P("	arg.", methodField.goName, " = make([]byte, file[0].Size)")
+			g.gf.P("	_, err = f.Read(arg.", methodField.goName, ")")
+			g.gf.P("	if err != nil {")
+			g.gf.P("		return nil, fmt.Errorf(\"failed to read file: ", methodField.protoName, ": %w\", err)")
+			g.gf.P("	}")
+			g.gf.P("}")
+		} else {
+			g.gf.P("values, ok := body.Value[\"", methodField.protoName, "\"]")
+			g.gf.P("if ok && len(values) > 0 {")
+			g.gf.P("	arg.", methodField.goName, " = values[0]")
+			g.gf.P("}")
+		}
 	}
 }
 

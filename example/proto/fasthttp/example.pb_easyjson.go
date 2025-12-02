@@ -1356,13 +1356,15 @@ func easyjson758af8aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoFasthttp4
 			continue
 		}
 		switch key {
-		case "file":
+		case "fileOne":
 			if in.IsNull() {
 				in.Skip()
-				out.File = nil
+				out.FileOne = nil
 			} else {
-				out.File = in.Bytes()
+				out.FileOne = in.Bytes()
 			}
+		case "otherField":
+			out.OtherField = string(in.String())
 		default:
 			in.SkipRecursive()
 		}
@@ -1377,11 +1379,21 @@ func easyjson758af8aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoFasthttp4
 	out.RawByte('{')
 	first := true
 	_ = first
-	if len(in.File) != 0 {
-		const prefix string = ",\"file\":"
+	if len(in.FileOne) != 0 {
+		const prefix string = ",\"fileOne\":"
 		first = false
 		out.RawString(prefix[1:])
-		out.Base64Bytes(in.File)
+		out.Base64Bytes(in.FileOne)
+	}
+	if in.OtherField != "" {
+		const prefix string = ",\"otherField\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.OtherField))
 	}
 	out.RawByte('}')
 }

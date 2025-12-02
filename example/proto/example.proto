@@ -188,5 +188,6 @@ message OnlyStruct {
 }
 
 message MultipartFormRequest {
-  bytes file = 1;
+  bytes fileOne = 1;
+  string otherField = 2;
 }

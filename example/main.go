@@ -61,7 +61,7 @@ func clientExample(ctx context.Context) (err error) {
 	// 	StringValue:      "hello world",
 	// })
 
-	_, err = client.MultipartForm(context.Background(), &proto.MultipartFormRequest{File: []byte(`file content`)})
+	_, err = client.MultipartForm(context.Background(), &proto.MultipartFormRequest{FileOne: []byte(`file content`), OtherField: "otherField"})
 	if err != nil {
 		log.Println(err)
 	}
