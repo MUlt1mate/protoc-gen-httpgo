@@ -189,8 +189,8 @@ func HeadersClientMiddleware(
 	req interface{},
 	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
-	jsonContentType := "application/json"
-	req.(*fasthttp.Request).Header.SetContentType(jsonContentType)
+	// jsonContentType := "application/json"
+	// req.(*fasthttp.Request).Header.SetContentType(jsonContentType)
 	resp, err = next(ctx, req)
 	// if err == nil && string(resp.(*fasthttp.Response).Header.ContentType()) != jsonContentType {
 	// 	err = fmt.Errorf("incorrect response content type %s", string(resp.(*fasthttp.Response).Header.ContentType()))
