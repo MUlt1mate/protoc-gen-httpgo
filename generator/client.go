@@ -78,7 +78,9 @@ func (g *generator) genClientMethod(
 		g.gf.P("	req := &", g.lib.Ident("Request"), "{}")
 	}
 	g.gf.P("	var queryArgs string")
-	if method.HasBody() {
+	if method.withFiles {
+		g.getMultipartRequestClient(method)
+	} else if method.HasBody() {
 		g.genMarshalRequestStruct()
 	} else {
 		if err = g.genQueryRequestParameters(method); err != nil {
@@ -256,6 +258,29 @@ func (g *generator) genMarshalRequestStruct() {
 	case libraryFastHTTP:
 		g.gf.P("	req.SetBody(body)")
 	}
+}
+
+func (g *generator) getMultipartRequestClient(method methodParams) {
+	g.gf.P("var requestBody ", bytesPackage.Ident("Buffer"))
+	g.gf.P("writer := ", multipartPackage.Ident("NewWriter"), "(&requestBody)")
+	for _, f := range method.inputFieldList {
+		methodField := method.inputFields[f]
+		g.gf.P("part, err := writer.CreateFormFile(\"", methodField.protoName, "\", \"", methodField.protoName, "\")")
+		g.gf.P("if err != nil {")
+		g.gf.P("	return nil, fmt.Errorf(\"failed to create form file, field: ", methodField.protoName, ":  %w\", err)")
+		g.gf.P("}")
+		g.gf.P("")
+		g.gf.P("if _, err = part.Write(request.", methodField.goName, "); err != nil {")
+		g.gf.P("	return nil, fmt.Errorf(\"failed to write data to part, field: ", methodField.protoName, ": %w\", err)")
+		g.gf.P("}")
+		g.gf.P("")
+	}
+	g.gf.P("if err = writer.Close(); err != nil {")
+	g.gf.P("	return nil, fmt.Errorf(\"failed to close writer: %w\", err)")
+	g.gf.P("}")
+	g.gf.P("")
+	g.gf.P("req.SetBody(requestBody.Bytes())")
+	g.gf.P("req.Header.SetContentType(writer.FormDataContentType())")
 }
 
 // genQueryRequestParameters

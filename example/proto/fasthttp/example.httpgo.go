@@ -3,18 +3,22 @@
 package proto
 
 import (
-	context "context"
-	json "encoding/json"
-	errors "errors"
-	fmt "fmt"
-	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
-	router "github.com/fasthttp/router"
-	easyjson "github.com/mailru/easyjson"
-	fasthttp "github.com/valyala/fasthttp"
-	anypb "google.golang.org/protobuf/types/known/anypb"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	strconv "strconv"
-	strings "strings"
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"mime/multipart"
+	"strconv"
+	"strings"
+
+	"github.com/fasthttp/router"
+	"github.com/mailru/easyjson"
+	"github.com/valyala/fasthttp"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -1634,16 +1638,21 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx *fasthttp.RequestCtx) 
 
 func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx *fasthttp.RequestCtx) (arg *MultipartFormRequest, err error) {
 	arg = &MultipartFormRequest{}
-	var body = ctx.PostBody()
-	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+	body, err := ctx.MultipartForm()
+	if err != nil {
+		return nil, err
+	}
+	file, ok := body.File["file"]
+	if ok && len(file) > 0 {
+		var f multipart.File
+		f, err = file[0].Open()
+		if err != nil {
+			return nil, fmt.Errorf("failed to open file: file: %w", err)
+		}
+		arg.File = make([]byte, file[0].Size)
+		_, err = f.Read(arg.File)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file: file: %w", err)
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
@@ -2478,16 +2487,23 @@ func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *
 func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *MultipartFormRequest) (resp *Empty, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
-	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+	part, err := writer.CreateFormFile("file", "file")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create form file, field: file:  %w", err)
 	}
-	req.SetBody(body)
+
+	if _, err = part.Write(request.File); err != nil {
+		return nil, fmt.Errorf("failed to write data to part, field: file: %w", err)
+	}
+
+	if err = writer.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close writer: %w", err)
+	}
+
+	req.SetBody(requestBody.Bytes())
+	req.Header.SetContentType(writer.FormDataContentType())
 	req.SetRequestURI(fmt.Sprintf("%s/v1/multipart%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
 	var reqResp interface{}

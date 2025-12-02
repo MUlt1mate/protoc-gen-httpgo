@@ -20,6 +20,8 @@ const (
 	pathRepeatedArgDelimiter = ","
 	libraryNetHTTP           = "nethttp"
 	libraryFastHTTP          = "fasthttp"
+	contentTypeJsonApp       = "application/json"
+	contentTypeMultipart     = "multipart/form-data"
 )
 
 type (
@@ -53,6 +55,7 @@ type (
 		responseBody   string
 		inputFieldList []string // slice for constant sorting
 		hasBody        bool
+		withFiles      bool
 	}
 
 	field struct {
@@ -159,7 +162,9 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 	method.name = protoMethod.GoName
 	method.inputMsgName = protoMethod.Input.GoIdent
 	method.outputMsgName = protoMethod.Output.GoIdent
-	var fields = make(map[string]field)
+	var (
+		fields = make(map[string]field)
+	)
 	for _, protoField := range protoMethod.Input.Fields {
 		f := field{
 			goName:      protoField.GoName,
@@ -173,6 +178,9 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 		}
 		fields[f.protoName] = f
 		method.inputFieldList = append(method.inputFieldList, f.protoName)
+		if f.kind == protoreflect.BytesKind && strings.HasPrefix(strings.ToLower(f.protoName), "file") {
+			method.withFiles = true
+		}
 	}
 	method.inputFields = fields
 	fields = make(map[string]field)
@@ -333,4 +341,11 @@ func (g *generator) MethodShouldHasBody(method string) bool {
 func titleString(input string) string {
 	input = strings.ToLower(input)
 	return strings.ToUpper(string(input[0])) + input[1:]
+}
+
+func (m methodParams) GetContentType() string {
+	if m.withFiles {
+		return contentTypeMultipart
+	}
+	return contentTypeJsonApp
 }

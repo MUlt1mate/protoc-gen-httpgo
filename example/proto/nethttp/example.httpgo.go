@@ -14,6 +14,7 @@ import (
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	io "io"
+	multipart "mime/multipart"
 	http "net/http"
 	url "net/url"
 	strconv "strconv"
@@ -1711,20 +1712,21 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(r *http.Request) (arg *Onl
 
 func buildExampleServiceNameMultipartFormMultipartFormRequest(r *http.Request) (arg *MultipartFormRequest, err error) {
 	arg = &MultipartFormRequest{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	body, err := ctx.MultipartForm()
+	if err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+	file, ok := body.File["file"]
+	if ok && len(file) > 0 {
+		var f multipart.File
+		f, err = file[0].Open()
+		if err != nil {
+			return nil, fmt.Errorf("failed to open file: file: %w", err)
+		}
+		arg.File = make([]byte, file[0].Size)
+		_, err = f.Read(arg.File)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file: file: %w", err)
 		}
 	}
 	for key, values := range r.URL.Query() {
@@ -2656,16 +2658,23 @@ func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *
 func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *MultipartFormRequest) (resp *Empty, err error) {
 	req := &http.Request{Header: make(http.Header)}
 	var queryArgs string
-	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+	part, err := writer.CreateFormFile("file", "file")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create form file, field: file:  %w", err)
 	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
+
+	if _, err = part.Write(request.File); err != nil {
+		return nil, fmt.Errorf("failed to write data to part, field: file: %w", err)
+	}
+
+	if err = writer.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close writer: %w", err)
+	}
+
+	req.SetBody(requestBody.Bytes())
+	req.Header.SetContentType(writer.FormDataContentType())
 	u, err := url.Parse(fmt.Sprintf("%s/v1/multipart%s", p.host, queryArgs))
 	if err != nil {
 		return nil, err
