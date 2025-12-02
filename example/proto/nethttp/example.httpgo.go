@@ -1712,27 +1712,15 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(r *http.Request) (arg *Onl
 
 func buildExampleServiceNameMultipartFormMultipartFormRequest(r *http.Request) (arg *MultipartFormRequest, err error) {
 	arg = &MultipartFormRequest{}
-	body, err := ctx.MultipartForm()
-	if err != nil {
-		return nil, err
-	}
-	file, ok := body.File["fileOne"]
-	if ok && len(file) > 0 {
-		var f multipart.File
-		f, err = file[0].Open()
-		if err != nil {
-			return nil, fmt.Errorf("failed to open file: fileOne: %w", err)
-		}
-		arg.FileOne = make([]byte, file[0].Size)
+	f, fh, err := r.FormFile("fileOne")
+	if err == nil && !errors.Is(err, http.ErrMissingFile) {
+		arg.FileOne = make([]byte, fh.Size)
 		_, err = f.Read(arg.FileOne)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read file: fileOne: %w", err)
 		}
 	}
-	values, ok := body.Value["otherField"]
-	if ok && len(values) > 0 {
-		arg.OtherField = values[0]
-	}
+	arg.OtherField = r.FormValue("otherField")
 	for key, values := range r.URL.Query() {
 		var value = values[0]
 		switch key {
@@ -2679,8 +2667,7 @@ func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *Mu
 	if err = writer.Close(); err != nil {
 		return nil, fmt.Errorf("failed to close writer: %w", err)
 	}
-	req.SetBody(requestBody.Bytes())
-	req.Header.SetContentType(writer.FormDataContentType())
+	req.Body = io.NopCloser(bytes.NewBuffer(requestBody.Bytes()))
 	u, err := url.Parse(fmt.Sprintf("%s/v1/multipart%s", p.host, queryArgs))
 	if err != nil {
 		return nil, err

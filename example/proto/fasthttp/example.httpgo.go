@@ -3,22 +3,20 @@
 package proto
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"mime/multipart"
-	"strconv"
-	"strings"
-
-	"github.com/fasthttp/router"
-	"github.com/mailru/easyjson"
-	"github.com/valyala/fasthttp"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/emptypb"
-
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	bytes "bytes"
+	context "context"
+	json "encoding/json"
+	errors "errors"
+	fmt "fmt"
+	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	router "github.com/fasthttp/router"
+	easyjson "github.com/mailru/easyjson"
+	fasthttp "github.com/valyala/fasthttp"
+	anypb "google.golang.org/protobuf/types/known/anypb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	multipart "mime/multipart"
+	strconv "strconv"
+	strings "strings"
 )
 
 type ServiceNameHTTPGoService interface {

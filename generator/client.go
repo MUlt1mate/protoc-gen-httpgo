@@ -282,8 +282,13 @@ func (g *generator) getMultipartRequestClient(method methodParams) {
 	g.gf.P("if err = writer.Close(); err != nil {")
 	g.gf.P("	return nil, fmt.Errorf(\"failed to close writer: %w\", err)")
 	g.gf.P("}")
-	g.gf.P("req.SetBody(requestBody.Bytes())")
-	g.gf.P("req.Header.SetContentType(writer.FormDataContentType())")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	req.Body = ", ioPackage.Ident("NopCloser"), "(", bytesPackage.Ident("NewBuffer"), "(requestBody.Bytes()))")
+	case libraryFastHTTP:
+		g.gf.P("req.SetBody(requestBody.Bytes())")
+		g.gf.P("req.Header.SetContentType(writer.FormDataContentType())")
+	}
 }
 
 // genQueryRequestParameters
