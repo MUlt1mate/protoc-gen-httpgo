@@ -65,6 +65,11 @@ type (
 		kind        protoreflect.Kind
 		cardinality protoreflect.Cardinality
 		optional    bool
+		isFile      bool
+		fileStruct  struct {
+			Name string
+			Path string
+		}
 	}
 	Config struct {
 		Marshaller         *string
@@ -172,15 +177,18 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 			kind:        protoField.Desc.Kind(),
 			cardinality: protoField.Desc.Cardinality(),
 			optional:    protoField.Desc.HasOptionalKeyword(),
+			isFile:      isFileField(protoField),
+		}
+		if f.isFile {
+			f.fileStruct.Path = string(protoField.Message.GoIdent.GoImportPath)
+			f.fileStruct.Name = protoField.Message.GoIdent.GoName
+			method.withFiles = true
 		}
 		if protoField.Desc.Kind() == protoreflect.EnumKind {
 			f.enumName = protoField.Enum.GoIdent.GoName
 		}
 		fields[f.protoName] = f
 		method.inputFieldList = append(method.inputFieldList, f.protoName)
-		if f.isFile() {
-			method.withFiles = true
-		}
 	}
 	method.inputFields = fields
 	fields = make(map[string]field)
@@ -273,8 +281,8 @@ func (f field) getVariablePlaceholder() (string, error) {
 	}
 }
 
-func (f field) isFile() bool {
-	return f.kind == protoreflect.BytesKind && strings.HasPrefix(strings.ToLower(f.protoName), "file")
+func (f field) genFileStruct() protogen.GoIdent {
+	return protogen.GoImportPath(f.fileStruct.Path).Ident(f.fileStruct.Name)
 }
 
 func (g *generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceName string) (methodParams, error) {
@@ -352,4 +360,37 @@ func (m methodParams) GetContentType() string {
 		return contentTypeMultipart
 	}
 	return contentTypeJsonApp
+}
+
+func isFileField(field *protogen.Field) bool {
+	if field.Desc.Kind() != protoreflect.MessageKind {
+		return false
+	}
+
+	msg := field.Message
+	if msg == nil {
+		return false
+	}
+
+	var (
+		matchedFields int
+		totalFields   = 3
+	)
+
+	for _, nf := range msg.Fields {
+		switch nf.Desc.JSONName() {
+		case "file":
+			if nf.Desc.Kind() == protoreflect.BytesKind {
+				matchedFields += 1
+			}
+		case "name":
+			if nf.Desc.Kind() == protoreflect.StringKind {
+				matchedFields += 1
+			}
+		case "headers":
+			matchedFields += 1
+		}
+	}
+
+	return matchedFields == totalFields
 }

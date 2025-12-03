@@ -265,12 +265,12 @@ func (g *generator) getMultipartRequestClient(method methodParams) {
 	g.gf.P("writer := ", multipartPackage.Ident("NewWriter"), "(&requestBody)")
 	for _, f := range method.inputFieldList {
 		methodField := method.inputFields[f]
-		if methodField.isFile() {
-			g.gf.P("part, err := writer.CreateFormFile(\"", methodField.protoName, "\", \"", methodField.protoName, "\")")
+		if methodField.isFile {
+			g.gf.P("part, err := writer.CreateFormFile(\"", methodField.protoName, "\", request.", methodField.goName, ".Name)")
 			g.gf.P("if err != nil {")
 			g.gf.P("	return nil, fmt.Errorf(\"failed to create form file ", methodField.protoName, ":  %w\", err)")
 			g.gf.P("}")
-			g.gf.P("if _, err = part.Write(request.", methodField.goName, "); err != nil {")
+			g.gf.P("if _, err = part.Write(request.", methodField.goName, ".File); err != nil {")
 			g.gf.P("	return nil, fmt.Errorf(\"failed to write data to part ", methodField.protoName, ": %w\", err)")
 			g.gf.P("}")
 		} else {

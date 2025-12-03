@@ -1712,20 +1712,28 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(r *http.Request) (arg *Onl
 
 func buildExampleServiceNameMultipartFormMultipartFormRequest(r *http.Request) (arg *MultipartFormRequest, err error) {
 	arg = &MultipartFormRequest{}
-	f, fh, err := r.FormFile("fileOne")
+	f, fh, err := r.FormFile("document")
 	if err == nil && !errors.Is(err, http.ErrMissingFile) {
-		arg.FileOne = make([]byte, fh.Size)
-		_, err = f.Read(arg.FileOne)
+		arg.Document = &FileEx{
+			File:    make([]byte, fh.Size),
+			Name:    fh.Filename,
+			Headers: make(map[string]string, len(fh.Header)),
+		}
+		for key, value := range fh.Header {
+			arg.Document.Headers[key] = value[0]
+		}
+		_, err = f.Read(arg.Document.File)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read file: fileOne: %w", err)
+			return nil, fmt.Errorf("failed to read file: document: %w", err)
 		}
 	}
 	arg.OtherField = r.FormValue("otherField")
 	for key, values := range r.URL.Query() {
 		var value = values[0]
 		switch key {
-		case "fileOne":
-			arg.FileOne = []byte(value)
+		case "document":
+			err = fmt.Errorf("unsupported type message for query argument document")
+			return
 		case "otherField":
 			arg.OtherField = value
 		default:
@@ -2654,12 +2662,12 @@ func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *Mu
 	var queryArgs string
 	var requestBody bytes.Buffer
 	writer := multipart.NewWriter(&requestBody)
-	part, err := writer.CreateFormFile("fileOne", "fileOne")
+	part, err := writer.CreateFormFile("document", request.Document.Name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create form file fileOne:  %w", err)
+		return nil, fmt.Errorf("failed to create form file document:  %w", err)
 	}
-	if _, err = part.Write(request.FileOne); err != nil {
-		return nil, fmt.Errorf("failed to write data to part fileOne: %w", err)
+	if _, err = part.Write(request.Document.File); err != nil {
+		return nil, fmt.Errorf("failed to write data to part document: %w", err)
 	}
 	if err = writer.WriteField("otherField", request.OtherField); err != nil {
 		return nil, fmt.Errorf("failed to write field otherField:  %w", err)

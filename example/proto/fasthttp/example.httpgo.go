@@ -3,20 +3,22 @@
 package proto
 
 import (
-	bytes "bytes"
-	context "context"
-	json "encoding/json"
-	errors "errors"
-	fmt "fmt"
-	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
-	router "github.com/fasthttp/router"
-	easyjson "github.com/mailru/easyjson"
-	fasthttp "github.com/valyala/fasthttp"
-	anypb "google.golang.org/protobuf/types/known/anypb"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	multipart "mime/multipart"
-	strconv "strconv"
-	strings "strings"
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"mime/multipart"
+	"strconv"
+	"strings"
+
+	"github.com/fasthttp/router"
+	"github.com/mailru/easyjson"
+	"github.com/valyala/fasthttp"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -1640,17 +1642,24 @@ func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx *fasthttp.Requ
 	if err != nil {
 		return nil, err
 	}
-	file, ok := body.File["fileOne"]
+	file, ok := body.File["document"]
 	if ok && len(file) > 0 {
 		var f multipart.File
 		f, err = file[0].Open()
 		if err != nil {
-			return nil, fmt.Errorf("failed to open file: fileOne: %w", err)
+			return nil, fmt.Errorf("failed to open file: document: %w", err)
 		}
-		arg.FileOne = make([]byte, file[0].Size)
-		_, err = f.Read(arg.FileOne)
+		arg.Document = &FileEx{
+			File:    make([]byte, file[0].Size),
+			Name:    file[0].Filename,
+			Headers: make(map[string]string, len(file[0].Header)),
+		}
+		for key, value := range file[0].Header {
+			arg.Document.Headers[key] = value[0]
+		}
+		_, err = f.Read(arg.Document.File)
 		if err != nil {
-			return nil, fmt.Errorf("failed to read file: fileOne: %w", err)
+			return nil, fmt.Errorf("failed to read file: document: %w", err)
 		}
 	}
 	values, ok := body.Value["otherField"]
@@ -1661,8 +1670,9 @@ func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx *fasthttp.Requ
 		var key = string(keyB)
 		var value = string(valueB)
 		switch key {
-		case "fileOne":
-			arg.FileOne = []byte(value)
+		case "document":
+			err = fmt.Errorf("unsupported type message for query argument document")
+			return
 		case "otherField":
 			arg.OtherField = value
 		default:
@@ -2493,12 +2503,12 @@ func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *Mu
 	var queryArgs string
 	var requestBody bytes.Buffer
 	writer := multipart.NewWriter(&requestBody)
-	part, err := writer.CreateFormFile("fileOne", "fileOne")
+	part, err := writer.CreateFormFile("document", request.Document.Name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create form file fileOne:  %w", err)
+		return nil, fmt.Errorf("failed to create form file document:  %w", err)
 	}
-	if _, err = part.Write(request.FileOne); err != nil {
-		return nil, fmt.Errorf("failed to write data to part fileOne: %w", err)
+	if _, err = part.Write(request.Document.File); err != nil {
+		return nil, fmt.Errorf("failed to write data to part document: %w", err)
 	}
 	if err = writer.WriteField("otherField", request.OtherField); err != nil {
 		return nil, fmt.Errorf("failed to write field otherField:  %w", err)

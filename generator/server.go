@@ -421,11 +421,18 @@ func (g *generator) getMultipartRequestServer(method methodParams) {
 		methodField := method.inputFields[f]
 		switch *g.cfg.Library {
 		case libraryNetHTTP:
-			if methodField.isFile() {
+			if methodField.isFile {
 				g.gf.P("f, fh, err := r.FormFile(\"", methodField.protoName, "\")")
 				g.gf.P("if err == nil && !errors.Is(err, http.ErrMissingFile) {")
-				g.gf.P("	arg.", methodField.goName, " = make([]byte, fh.Size)")
-				g.gf.P("	_, err = f.Read(arg.", methodField.goName, ")")
+				g.gf.P("	arg.", methodField.goName, " = &", methodField.genFileStruct(), "{")
+				g.gf.P("		File:    make([]byte, fh.Size),")
+				g.gf.P("		Name:    fh.Filename,")
+				g.gf.P("		Headers: make(map[string]string, len(fh.Header)),")
+				g.gf.P("	}")
+				g.gf.P("	for key, value := range fh.Header {")
+				g.gf.P("		arg.", methodField.goName, ".Headers[key] = value[0]")
+				g.gf.P("	}")
+				g.gf.P("	_, err = f.Read(arg.", methodField.goName, ".File)")
 				g.gf.P("	if err != nil {")
 				g.gf.P("		return nil, fmt.Errorf(\"failed to read file: ", methodField.protoName, ": %w\", err)")
 				g.gf.P("	}")
@@ -434,7 +441,7 @@ func (g *generator) getMultipartRequestServer(method methodParams) {
 				g.gf.P("arg.", methodField.goName, " = r.FormValue(\"", methodField.protoName, "\")")
 			}
 		case libraryFastHTTP:
-			if methodField.isFile() {
+			if methodField.isFile {
 				g.gf.P("file, ok := body.File[\"", methodField.protoName, "\"]")
 				g.gf.P("if ok && len(file) > 0 {")
 				g.gf.P("	var f ", multipartPackage.Ident("File"))
@@ -442,8 +449,15 @@ func (g *generator) getMultipartRequestServer(method methodParams) {
 				g.gf.P("	if err != nil {")
 				g.gf.P("		return nil, fmt.Errorf(\"failed to open file: ", methodField.protoName, ": %w\", err)")
 				g.gf.P("	}")
-				g.gf.P("	arg.", methodField.goName, " = make([]byte, file[0].Size)")
-				g.gf.P("	_, err = f.Read(arg.", methodField.goName, ")")
+				g.gf.P("	arg.", methodField.goName, " = &", methodField.genFileStruct(), "{")
+				g.gf.P("		File:    make([]byte, file[0].Size),")
+				g.gf.P("		Name:    file[0].Filename,")
+				g.gf.P("		Headers: make(map[string]string, len(file[0].Header)),")
+				g.gf.P("	}")
+				g.gf.P("	for key, value := range file[0].Header {")
+				g.gf.P("		arg.", methodField.goName, ".Headers[key] = value[0]")
+				g.gf.P("	}")
+				g.gf.P("	_, err = f.Read(arg.", methodField.goName, ".File)")
 				g.gf.P("	if err != nil {")
 				g.gf.P("		return nil, fmt.Errorf(\"failed to read file: ", methodField.protoName, ": %w\", err)")
 				g.gf.P("	}")
