@@ -6,15 +6,15 @@ import (
 	context "context"
 	json "encoding/json"
 	fmt "fmt"
-	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
 	fasthttp "github.com/valyala/fasthttp"
+	strings "strings"
 )
 
 type ServiceName2HTTPGoService interface {
-	Imports(context.Context, *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error)
+	Imports(context.Context, *SomeCustomMsg) (*SomeCustomMsg, error)
 }
 type SecondServiceName2HTTPGoService interface {
-	Imports(context.Context, *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error)
+	Imports(context.Context, *SomeCustomMsg) (*SomeCustomMsg, error)
 }
 
 var _ ServiceName2HTTPGoService = &ServiceName2HTTPGoClient{}
@@ -40,7 +40,7 @@ func GetServiceName2HTTPGoClient(
 	}, nil
 }
 
-func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
+func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *SomeCustomMsg) (resp *SomeCustomMsg, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var body []byte
@@ -68,7 +68,7 @@ func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepac
 			return nil, err
 		}
 	}
-	resp = &somepackage.SomeCustomMsg2{}
+	resp = &SomeCustomMsg{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	err = json.Unmarshal(respBody, resp)
 	return resp, err
@@ -97,17 +97,20 @@ func GetSecondServiceName2HTTPGoClient(
 	}, nil
 }
 
-func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
+func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *SomeCustomMsg) (resp *SomeCustomMsg, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
+	var parameters = []string{
+		"val=%s",
+		"option=%s",
 	}
-	req.SetBody(body)
+	var values = []interface{}{
+		request.Val,
+		request.Option,
+	}
+	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/imports%s", p.host, queryArgs))
-	req.Header.SetMethod("POST")
+	req.Header.SetMethod("GET")
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "SecondServiceName2")
 	ctx = context.WithValue(ctx, "proto_method", "Imports")
@@ -125,7 +128,7 @@ func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *s
 			return nil, err
 		}
 	}
-	resp = &somepackage.SomeCustomMsg2{}
+	resp = &SomeCustomMsg{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	err = json.Unmarshal(respBody, resp)
 	return resp, err

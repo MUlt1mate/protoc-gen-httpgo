@@ -6,14 +6,14 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	proto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	protofasthttp "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
 )
 
 type Handler struct {
 }
 
-var _ proto.ServiceNameHTTPGoService = &Handler{}
+var _ protofasthttp.ServiceNameHTTPGoService = &Handler{}
 
 func (h *Handler) RPCName(_ context.Context, request *proto.InputMsgName) (*proto.OutputMsgName, error) {
 	p := &proto.OutputMsgName{
@@ -48,10 +48,6 @@ func (h *Handler) AllTypesTest(_ context.Context, msg *proto.AllTypesMsg) (*prot
 
 func (h *Handler) CommonTypes(_ context.Context, _ *anypb.Any) (*emptypb.Empty, error) {
 	return &emptypb.Empty{}, nil
-}
-
-func (h *Handler) Imports(_ context.Context, req *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error) {
-	return &somepackage.SomeCustomMsg2{Val: req.Val}, nil
 }
 
 func (h *Handler) SameInputAndOutput(_ context.Context, req *proto.InputMsgName) (*proto.OutputMsgName, error) {

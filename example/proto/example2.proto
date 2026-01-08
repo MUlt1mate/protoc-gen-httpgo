@@ -4,10 +4,9 @@ package example;
 option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/example/proto;proto";
 
 import "google/api/annotations.proto";
-import "somepackage/somepackage.proto";
 
 service ServiceName2 {
-  rpc Imports (somepackage.someCustomMsg1) returns (somepackage.someCustomMsg2) {
+  rpc Imports (someCustomMsg) returns (someCustomMsg) {
     option (google.api.http) = {
       post: "/v1/test/imports"
     };
@@ -15,12 +14,21 @@ service ServiceName2 {
 }
 
 service SecondServiceName2 {
-  rpc Imports (somepackage.someCustomMsg1) returns (somepackage.someCustomMsg2) {
+  rpc Imports (someCustomMsg) returns (someCustomMsg) {
     option (google.api.http) = {
-      post: "/v1/test/imports"
+      get: "/v1/test/imports"
     };
   }
 }
 
+message someCustomMsg {
+  string val = 1;
+  someOptions option = 2;
+}
 
+
+enum someOptions {
+  SOME_FIRST = 0;
+  SOME_SECOND = 1;
+} ;
 

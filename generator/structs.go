@@ -58,7 +58,7 @@ type (
 	field struct {
 		goName      string // name in go generated files
 		protoName   string // name in proto file and http requests
-		enumName    string
+		enumName    protogen.GoIdent
 		kind        protoreflect.Kind
 		cardinality protoreflect.Cardinality
 		optional    bool
@@ -169,7 +169,7 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 			optional:    protoField.Desc.HasOptionalKeyword(),
 		}
 		if protoField.Desc.Kind() == protoreflect.EnumKind {
-			f.enumName = protoField.Enum.GoIdent.GoName
+			f.enumName = protoField.Enum.GoIdent
 		}
 		fields[f.protoName] = f
 		method.inputFieldList = append(method.inputFieldList, f.protoName)
@@ -185,7 +185,7 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 			optional:    protoField.Desc.HasOptionalKeyword(),
 		}
 		if protoField.Desc.Kind() == protoreflect.EnumKind {
-			f.enumName = protoField.Enum.GoIdent.GoName
+			f.enumName = protoField.Enum.GoIdent
 		}
 		fields[f.protoName] = f
 	}

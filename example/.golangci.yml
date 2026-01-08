@@ -1,111 +1,114 @@
-run:
-  timeout: 1m
-
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-
-  gocognit:
-    min-complexity: 20
-
-  gocritic:
-    settings:
-      captLocal:
-        paramsOnly: false
-      underef:
-        skipRecvDeref: false
-
-  govet:
-    enable-all: true
-    settings:
-      shadow:
-        strict: true
-
+version: "2"
 linters:
-  disable-all: true
+  default: none
   enable:
-    ## enabled by default
-    - errcheck # checking for unchecked errors, these unchecked errors can be critical bugs in some cases
-    - gosimple # specializes in simplifying a code
-    - govet # reports suspicious constructs, such as Printf calls whose arguments do not align with the format string
-    - ineffassign # detects when assignments to existing variables are not used
-    - staticcheck # is a go vet on steroids, applying a ton of static analysis checks
-    - typecheck # like the front-end of a Go compiler, parses and type-checks Go code
-    - unused # checks for unused constants, variables, functions and types
-    ## disabled by default
-    - asasalint # checks for pass []any as any in variadic func(...any)
-    - asciicheck # checks that your code does not contain non-ASCII identifiers
-    - bidichk # checks for dangerous unicode character sequences
-    - bodyclose # checks whether HTTP response body is closed successfully
-    - durationcheck # checks for two durations multiplied together
-    - errname # checks that sentinel errors are prefixed with the Err and error types are suffixed with the Error
-    - errorlint # finds code that will cause problems with the error wrapping scheme introduced in Go 1.13
-#    - copyloopvar # checks for pointers to enclosing loop variables
-    - forbidigo # forbids identifiers
-    - gocheckcompilerdirectives # validates go compiler directive comments (//go:)
-    - gochecknoinits # checks that no init functions are present in Go code
-    - gocritic # provides diagnostics that check for bugs, performance and style issues
-    - gomoddirectives # manages the use of 'replace', 'retract', and 'excludes' directives in go.mod
-    - gomodguard # allow and block lists linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations
-    - goprintffuncname # checks that printf-like functions are named with f at the end
-    - gosec # inspects source code for security problems
-    - loggercheck # checks key value pairs for common logger libraries (kitlog,klog,logr,zap)
-    - makezero # finds slice declarations with non-zero initial length
-    - musttag # enforces field tags in (un)marshaled structs
-    - nakedret # finds naked returns in functions greater than a specified function length
-#    - nestif # reports deeply nested if statements
-    - nilerr # finds the code that returns nil even if it checks that the error is not nil
-    - nilnil # checks that there is no simultaneous return of nil error and an invalid value
-    - noctx # finds sending http request without context.Context
-    - nolintlint # reports ill-formed or insufficient nolint directives
-    - nosprintfhostport # checks for misuse of Sprintf to construct a host with port in a URL
-    - predeclared # finds code that shadows one of Go's predeclared identifiers
-    - promlinter # checks Prometheus metrics naming via promlint
-    - reassign # checks that package variables are not reassigned
-    - revive # fast, configurable, extensible, flexible, and beautiful linter for Go, drop-in replacement of golint
-    - rowserrcheck # checks whether Err of rows is checked successfully
-    - sqlclosecheck # checks that sql.Rows and sql.Stmt are closed
-    - stylecheck # is a replacement for golint
-    - testableexamples # checks if examples are testable (have an expected output)
-    - testpackage # makes you use a separate _test package
-    - tparallel # detects inappropriate usage of t.Parallel() method in your Go test codes
-    - unconvert # removes unnecessary type conversions
-    - unparam # reports unused function parameters
-    - usestdlibvars # detects the possibility to use variables/constants from the Go standard library
-    - wastedassign # finds wasted assignment statements
-    - whitespace # detects leading and trailing whitespace
-    - prealloc # [premature optimization, but can be used in some cases] finds slice declarations that could potentially be preallocated
-
-issues:
-  exclude-dirs-use-default: false
-  exclude-rules:
-    - linters:
-        - gosimple
-      text: "S1039: unnecessary use of fmt.Sprintf" # complains if there is no URI arguments. Workaround is not worth it at the moment
-    - linters:
-        - govet
-      text: "fieldalignment:" # a minor flaw, won't fix
-    - linters:
-        - gocritic
-      text: "captLocal:" # doesn't seem to matter
-    - linters:
-        - gocritic
-      text: "singleCaseSwitch:" # complains if there is a single query argument
-    - linters:
-        - staticcheck
-      text: "SA9005:" # complains about empty structs
-    - linters:
-        - revive
-      text: "unused-parameter: " # generated named parameters
-    - linters:
-        - revive
-      text: "var-naming:" # build in param names
-    - linters:
-        - stylecheck
-      text: "ST1003:" # build in param names
-    - linters:
-        - gosec
-      text: "G115:" # skip overflow check
-    - linters:
-        - revive
-      text: "context-keys-type:" # intensional use of string type
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - durationcheck
+    - errcheck
+    - errname
+    - errorlint
+    - forbidigo
+    - gocheckcompilerdirectives
+    - gochecknoinits
+    - gocritic
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - govet
+    - ineffassign
+    - loggercheck
+    - makezero
+    - musttag
+    - nakedret
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - nosprintfhostport
+    - prealloc
+    - predeclared
+    - promlinter
+    - reassign
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - testableexamples
+    - testpackage
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+  settings:
+    errcheck:
+      check-type-assertions: true
+    gocognit:
+      min-complexity: 20
+    gocritic:
+      settings:
+        captLocal:
+          paramsOnly: false
+        underef:
+          skipRecvDeref: false
+    govet:
+      enable-all: true
+      settings:
+        shadow:
+          strict: true
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - staticcheck
+        text: 'S1039: unnecessary use of fmt.Sprintf' # complains if there is no URI arguments. Workaround is not worth it at the moment
+      - linters:
+          - govet
+        text: 'fieldalignment:' # a minor flaw, won't fix
+      - linters:
+          - gocritic
+        text: 'captLocal:' # doesn't seem to matter
+      - linters:
+          - gocritic
+        text: 'singleCaseSwitch:' # complains if there is a single query argument
+      - linters:
+          - staticcheck
+        text: 'SA9005:' # complains about empty structs
+      - linters:
+          - revive
+        text: 'unused-parameter:' # generated named parameters
+      - linters:
+          - revive
+        text: 'var-naming:' # build in param names
+      - linters:
+          - staticcheck
+        text: 'ST1003:' # build in param names
+      - linters:
+          - staticcheck
+        text: 'SA1029:' # string key types in generated code
+      - linters:
+          - gosec
+        text: 'G115:' # skip overflow check
+      - linters:
+          - gosec
+        text: 'G114: Use of net/http serve function that has no support for setting timeouts' # no need for example
+      - linters:
+          - revive
+        text: 'context-keys-type:' # intensional use of string type
+      - linters:
+          - errcheck
+        text: 'Error return value is not checked' # false positive, might be a linter bug
+formatters:
+  exclusions:
+    generated: lax

@@ -160,8 +160,8 @@ func LoggerClientMiddleware(
 	}
 	if resp != nil {
 		respTyped := resp.(*http.Response)
-		body, err := io.ReadAll(respTyped.Body)
-		if err != nil {
+		var body []byte
+		if body, err = io.ReadAll(respTyped.Body); err != nil {
 			return resp, err
 		}
 		// Replace the body with a new reader after reading from the original
@@ -181,7 +181,7 @@ func HeadersClientMiddleware(
 	req.(*http.Request).Header.Set("Content-Type", jsonContentType)
 	resp, err = next(ctx, req)
 	if err == nil && resp.(*http.Response).Header.Get("Content-Type") != jsonContentType {
-		err = fmt.Errorf("incorrect response content type %s", string(resp.(*http.Response).Header.Get("Content-Type")))
+		err = fmt.Errorf("incorrect response content type %s", resp.(*http.Response).Header.Get("Content-Type"))
 	}
 	return resp, err
 }

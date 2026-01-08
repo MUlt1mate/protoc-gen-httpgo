@@ -6,15 +6,15 @@ option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/example/proto;proto"
 import "google/api/annotations.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/any.proto";
-import "somepackage/somepackage.proto";
+import "common/structs.proto";
 
 service ServiceName {
-  rpc RPCName (InputMsgName) returns (OutputMsgName) {
+  rpc RPCName (common.InputMsgName) returns (common.OutputMsgName) {
     option (google.api.http) = {
       post: "/v1/test/{stringArgument}/{int64Argument}"
     };
   }
-  rpc AllTypesTest (AllTypesMsg) returns (AllTypesMsg) {
+  rpc AllTypesTest (common.AllTypesMsg) returns (common.AllTypesMsg) {
     option (google.api.http) = {
       post: "/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}"
     };
@@ -24,160 +24,64 @@ service ServiceName {
       post: "/v1/test/commonTypes"
     };
   }
-  rpc Imports (somepackage.someCustomMsg1) returns (somepackage.someCustomMsg2) {
-    option (google.api.http) = {
-      post: "/v1/test/imports"
-    };
-  }
   // same types but different query, we need different query builder function
-  rpc sameInputAndOutput (InputMsgName) returns (OutputMsgName) {
+  rpc sameInputAndOutput (common.InputMsgName) returns (common.OutputMsgName) {
     option (google.api.http) = {
       post: "/v1/test/{stringArgument}"
     };
   }
   // should be ignored
-  rpc methodWithoutPath (InputMsgName) returns (OutputMsgName) {}
+  rpc methodWithoutPath (common.InputMsgName) returns (common.OutputMsgName) {}
   // should be ignored
-  rpc streams(stream InputMsgName) returns (stream OutputMsgName){
+  rpc streams(stream common.InputMsgName) returns (stream common.OutputMsgName){
     option (google.api.http) = {
       post: "/v1/test/stream"
     };
   };
-  rpc optional(OptionalField) returns (OptionalField){
+  rpc optional(common.OptionalField) returns (common.OptionalField){
     option (google.api.http) = {
       post: "/v1/test/optional"
     };
   };
-  rpc GetMethod(InputMsgName) returns (OutputMsgName){
+  rpc GetMethod(common.InputMsgName) returns (common.OutputMsgName){
     option (google.api.http) = {
       get: "/v1/test/get"
     };
   };
-  rpc CheckRepeatedPath(RepeatedCheck) returns (RepeatedCheck){
+  rpc CheckRepeatedPath(common.RepeatedCheck) returns (common.RepeatedCheck){
     option (google.api.http) = {
       get: "/v1/repeated/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}/{StringValueQuery}"
     };
   };
-  rpc CheckRepeatedQuery(RepeatedCheck) returns (RepeatedCheck){
+  rpc CheckRepeatedQuery(common.RepeatedCheck) returns (common.RepeatedCheck){
     option (google.api.http) = {
       get: "/v1/repeated/{StringValue}"
     };
   };
-  rpc CheckRepeatedPost(RepeatedCheck) returns (RepeatedCheck){
+  rpc CheckRepeatedPost(common.RepeatedCheck) returns (common.RepeatedCheck){
     option (google.api.http) = {
       post: "/v1/repeated/{StringValue}"
     };
   };
-  rpc EmptyGet(Empty) returns (Empty){
+  rpc EmptyGet(common.Empty) returns (common.Empty){
     option (google.api.http) = {
       get: "/v1/emptyGet"
     };
   };
-  rpc EmptyPost(Empty) returns (Empty){
+  rpc EmptyPost(common.Empty) returns (common.Empty){
     option (google.api.http) = {
       post: "/v1/emptyPost"
     };
   };
-  rpc TopLevelArray(Empty) returns (Array){
+  rpc TopLevelArray(common.Empty) returns (common.Array){
     option (google.api.http) = {
       post: "/v1/array",
       response_body: "items"
     };
   };
-  rpc OnlyStructInGet(OnlyStruct) returns (Empty){
+  rpc OnlyStructInGet(common.OnlyStruct) returns (common.Empty){
     option (google.api.http) = {
       post: "/v1/onlyStruct"
     };
   };
-}
-
-message InputMsgName {
-  int64 int64Argument = 1;
-  string stringArgument = 2;
-}
-
-message AllTypesMsg {
-  bool BoolValue = 1;
-  options EnumValue = 2;
-  int32 Int32Value = 3;
-  sint32 Sint32Value = 4;
-  uint32 Uint32Value = 5;
-  int64 Int64Value = 6;
-  sint64 Sint64Value = 7;
-  uint64 Uint64Value = 8;
-  sfixed32 Sfixed32Value = 9;
-  fixed32 Fixed32Value = 10;
-  float FloatValue = 11;
-  sfixed64 Sfixed64Value = 12;
-  fixed64 Fixed64Value = 13;
-  double DoubleValue = 14;
-  string StringValue = 15;
-  bytes BytesValue = 16;
-  InputMsgName MessageValue = 17; // not supported as URI argument
-  repeated string SliceStringValue = 18;
-  repeated int32 SliceInt32Value = 19;
-}
-
-enum options {
-  FIRST = 0;
-  SECOND = 1;
-} ;
-
-message OutputMsgName {
-  string stringValue = 1;
-  int64 intValue = 2;
-}
-
-message OptionalField {
-  optional bool BoolValue = 1;
-  optional options EnumValue = 2;
-  optional int32 Int32Value = 3;
-  optional sint32 Sint32Value = 4;
-  optional uint32 Uint32Value = 5;
-  optional int64 Int64Value = 6;
-  optional sint64 Sint64Value = 7;
-  optional uint64 Uint64Value = 8;
-  optional sfixed32 Sfixed32Value = 9;
-  optional fixed32 Fixed32Value = 10;
-  optional float FloatValue = 11;
-  optional sfixed64 Sfixed64Value = 12;
-  optional fixed64 Fixed64Value = 13;
-  optional double DoubleValue = 14;
-  optional string StringValue = 15;
-  optional bytes BytesValue = 16;
-  optional InputMsgName MessageValue = 17; // not supported as URI argument
-}
-
-message RepeatedCheck {
-  repeated bool BoolValue = 1;
-  repeated options EnumValue = 2;
-  repeated int32 Int32Value = 3;
-  repeated sint32 Sint32Value = 4;
-  repeated uint32 Uint32Value = 5;
-  repeated int64 Int64Value = 6;
-  repeated sint64 Sint64Value = 7;
-  repeated uint64 Uint64Value = 8;
-  repeated sfixed32 Sfixed32Value = 9;
-  repeated fixed32 Fixed32Value = 10;
-  repeated float FloatValue = 11;
-  repeated sfixed64 Sfixed64Value = 12;
-  repeated fixed64 Fixed64Value = 13;
-  repeated double DoubleValue = 14;
-  repeated string StringValue = 15;
-  repeated bytes BytesValue = 16; // this field represented as [][]byte and doesn't work properly as a path argument
-  repeated string StringValueQuery = 17;
-}
-
-message Empty {}
-
-message Array {
-  repeated ArrayItem items = 1;
-}
-
-message ArrayItem {
-  string value = 1;
-}
-
-message OnlyStruct {
-  ArrayItem value = 1;
 }
