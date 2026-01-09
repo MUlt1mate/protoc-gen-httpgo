@@ -3,20 +3,22 @@
 package proto
 
 import (
-	bytes "bytes"
-	context "context"
-	json "encoding/json"
-	errors "errors"
-	fmt "fmt"
-	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
-	router "github.com/fasthttp/router"
-	easyjson "github.com/mailru/easyjson"
-	fasthttp "github.com/valyala/fasthttp"
-	anypb "google.golang.org/protobuf/types/known/anypb"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	multipart "mime/multipart"
-	strconv "strconv"
-	strings "strings"
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"mime/multipart"
+	"strconv"
+	"strings"
+
+	"github.com/fasthttp/router"
+	"github.com/mailru/easyjson"
+	"github.com/valyala/fasthttp"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -356,10 +358,11 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 	if !ok || len(Int64ArgumentStr) == 0 {
 		return nil, errors.New("empty value for parameter int64Argument")
 	}
-	arg.Int64Argument, err = strconv.ParseInt(Int64ArgumentStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter int64Argument: %w", err)
+	Int64Argument, convErr := strconv.ParseInt(Int64ArgumentStr, 10, 64)
+	if convErr != nil {
+		return nil, fmt.Errorf("conversion failed for parameter int64Argument: %w", convErr)
 	}
+	arg.Int64Argument = Int64Argument
 
 	return arg, err
 }
@@ -385,11 +388,9 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		case "BoolValue":
 			switch value {
 			case "true", "t", "1":
-				BoolValueValue := true
-				arg.BoolValue = BoolValueValue
+				arg.BoolValue = true
 			case "false", "f", "0":
-				BoolValueValue := false
-				arg.BoolValue = BoolValueValue
+				arg.BoolValue = false
 			default:
 				err = fmt.Errorf("unknown bool string value %s", value)
 				return
@@ -573,19 +574,21 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 	if !ok || len(Int64ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Int64Value")
 	}
-	arg.Int64Value, err = strconv.ParseInt(Int64ValueStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
+	Int64Value, convErr := strconv.ParseInt(Int64ValueStr, 10, 64)
+	if convErr != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", convErr)
 	}
+	arg.Int64Value = Int64Value
 
 	Sint64ValueStr, ok := ctx.UserValue("Sint64Value").(string)
 	if !ok || len(Sint64ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Sint64Value")
 	}
-	arg.Sint64Value, err = strconv.ParseInt(Sint64ValueStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", err)
+	Sint64Value, convErr := strconv.ParseInt(Sint64ValueStr, 10, 64)
+	if convErr != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
 	}
+	arg.Sint64Value = Sint64Value
 
 	Uint64ValueStr, ok := ctx.UserValue("Uint64Value").(string)
 	if !ok || len(Uint64ValueStr) == 0 {
@@ -631,10 +634,11 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 	if !ok || len(Sfixed64ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Sfixed64Value")
 	}
-	arg.Sfixed64Value, err = strconv.ParseInt(Sfixed64ValueStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", err)
+	Sfixed64Value, convErr := strconv.ParseInt(Sfixed64ValueStr, 10, 64)
+	if convErr != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", convErr)
 	}
+	arg.Sfixed64Value = Sfixed64Value
 
 	Fixed64ValueStr, ok := ctx.UserValue("Fixed64Value").(string)
 	if !ok || len(Fixed64ValueStr) == 0 {
@@ -650,10 +654,11 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 	if !ok || len(DoubleValueStr) == 0 {
 		return nil, errors.New("empty value for parameter DoubleValue")
 	}
-	arg.DoubleValue, err = strconv.ParseFloat(DoubleValueStr, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
+	DoubleValue, convErr := strconv.ParseFloat(DoubleValueStr, 64)
+	if convErr != nil {
+		return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", convErr)
 	}
+	arg.DoubleValue = DoubleValue
 
 	StringValueStr, ok := ctx.UserValue("StringValue").(string)
 	if !ok || len(StringValueStr) == 0 {
@@ -762,11 +767,9 @@ func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg
 		case "BoolValue":
 			switch value {
 			case "true", "t", "1":
-				BoolValueValue := true
-				arg.BoolValue = &BoolValueValue
+				*arg.BoolValue = true
 			case "false", "f", "0":
-				BoolValueValue := false
-				arg.BoolValue = &BoolValueValue
+				*arg.BoolValue = false
 			default:
 				err = fmt.Errorf("unknown bool string value %s", value)
 				return
@@ -813,16 +816,14 @@ func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg
 				err = fmt.Errorf("conversion failed for parameter Int64Value: %w", convErr)
 				return
 			}
-			Int64ValueValue := Int64Value
-			arg.Int64Value = &Int64ValueValue
+			arg.Int64Value = &Int64Value
 		case "Sint64Value":
 			Sint64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
 				return
 			}
-			Sint64ValueValue := Sint64Value
-			arg.Sint64Value = &Sint64ValueValue
+			arg.Sint64Value = &Sint64Value
 		case "Uint64Value":
 			Uint64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
@@ -861,8 +862,7 @@ func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg
 				err = fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", convErr)
 				return
 			}
-			Sfixed64ValueValue := Sfixed64Value
-			arg.Sfixed64Value = &Sfixed64ValueValue
+			arg.Sfixed64Value = &Sfixed64Value
 		case "Fixed64Value":
 			Fixed64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
@@ -877,8 +877,7 @@ func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg
 				err = fmt.Errorf("conversion failed for parameter DoubleValue: %w", convErr)
 				return
 			}
-			DoubleValueValue := DoubleValue
-			arg.DoubleValue = &DoubleValueValue
+			arg.DoubleValue = &DoubleValue
 		case "StringValue":
 			arg.StringValue = &value
 		case "BytesValue":
@@ -965,26 +964,26 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 			}
 			arg.Uint32Value = append(arg.Uint32Value, uint32(Uint32Value))
 		case "Int64Value[]":
-			Int64ValueVal, convErr := strconv.ParseInt(value, 10, 64)
+			Int64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Int64Value: %w", convErr)
 				return
 			}
-			arg.Int64Value = append(arg.Int64Value, Int64ValueVal)
+			arg.Int64Value = append(arg.Int64Value, Int64Value)
 		case "Sint64Value[]":
-			Sint64ValueVal, convErr := strconv.ParseInt(value, 10, 64)
+			Sint64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
 				return
 			}
-			arg.Sint64Value = append(arg.Sint64Value, Sint64ValueVal)
+			arg.Sint64Value = append(arg.Sint64Value, Sint64Value)
 		case "Uint64Value[]":
-			Uint64ValueVal, convErr := strconv.ParseUint(value, 10, 64)
+			Uint64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Uint64Value: %w", convErr)
 				return
 			}
-			arg.Uint64Value = append(arg.Uint64Value, Uint64ValueVal)
+			arg.Uint64Value = append(arg.Uint64Value, uint64(Uint64Value))
 		case "Sfixed32Value[]":
 			Sfixed32Value, convErr := strconv.ParseInt(value, 10, 32)
 			if convErr != nil {
@@ -1000,33 +999,33 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 			}
 			arg.Fixed32Value = append(arg.Fixed32Value, uint32(Fixed32Value))
 		case "FloatValue[]":
-			FloatValueVal, convErr := strconv.ParseFloat(value, 32)
+			FloatValue, convErr := strconv.ParseFloat(value, 32)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
 				return
 			}
-			arg.FloatValue = append(arg.FloatValue, float32(FloatValueVal))
+			arg.FloatValue = append(arg.FloatValue, float32(FloatValue))
 		case "Sfixed64Value[]":
-			Sfixed64ValueVal, convErr := strconv.ParseInt(value, 10, 64)
+			Sfixed64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", convErr)
 				return
 			}
-			arg.Sfixed64Value = append(arg.Sfixed64Value, Sfixed64ValueVal)
+			arg.Sfixed64Value = append(arg.Sfixed64Value, Sfixed64Value)
 		case "Fixed64Value[]":
-			Fixed64ValueVal, convErr := strconv.ParseUint(value, 10, 64)
+			Fixed64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Fixed64Value: %w", convErr)
 				return
 			}
-			arg.Fixed64Value = append(arg.Fixed64Value, Fixed64ValueVal)
+			arg.Fixed64Value = append(arg.Fixed64Value, uint64(Fixed64Value))
 		case "DoubleValue[]":
-			DoubleValueVal, convErr := strconv.ParseFloat(value, 64)
+			DoubleValue, convErr := strconv.ParseFloat(value, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter DoubleValue: %w", convErr)
 				return
 			}
-			arg.DoubleValue = append(arg.DoubleValue, DoubleValueVal)
+			arg.DoubleValue = append(arg.DoubleValue, DoubleValue)
 		case "StringValue[]":
 			arg.StringValue = append(arg.StringValue, value)
 		case "BytesValue[]":
@@ -1112,12 +1111,11 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 	}
 	Int64ValueStrs := strings.Split(Int64ValueStr, ",")
 	for _, str := range Int64ValueStrs {
-		Int64ValueVal, convErr := strconv.ParseInt(str, 10, 64)
+		Int64Value, convErr := strconv.ParseInt(str, 10, 64)
 		if convErr != nil {
-			err = fmt.Errorf("conversion failed for parameter Int64Value: %w", convErr)
-			return nil, err
+			return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", convErr)
 		}
-		arg.Int64Value = append(arg.Int64Value, Int64ValueVal)
+		arg.Int64Value = append(arg.Int64Value, Int64Value)
 	}
 	Sint64ValueStr, ok := ctx.UserValue("Sint64Value").(string)
 	if !ok || len(Sint64ValueStr) == 0 {
@@ -1125,12 +1123,11 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 	}
 	Sint64ValueStrs := strings.Split(Sint64ValueStr, ",")
 	for _, str := range Sint64ValueStrs {
-		Sint64ValueVal, convErr := strconv.ParseInt(str, 10, 64)
+		Sint64Value, convErr := strconv.ParseInt(str, 10, 64)
 		if convErr != nil {
-			err = fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
-			return nil, err
+			return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
 		}
-		arg.Sint64Value = append(arg.Sint64Value, Sint64ValueVal)
+		arg.Sint64Value = append(arg.Sint64Value, Sint64Value)
 	}
 	Uint64ValueStr, ok := ctx.UserValue("Uint64Value").(string)
 	if !ok || len(Uint64ValueStr) == 0 {
@@ -1138,12 +1135,11 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 	}
 	Uint64ValueStrs := strings.Split(Uint64ValueStr, ",")
 	for _, str := range Uint64ValueStrs {
-		Uint64ValueVal, convErr := strconv.ParseUint(str, 10, 64)
+		Uint64Value, convErr := strconv.ParseInt(str, 10, 64)
 		if convErr != nil {
-			err = fmt.Errorf("conversion failed for parameter Uint64Value: %w", convErr)
-			return nil, err
+			return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", convErr)
 		}
-		arg.Uint64Value = append(arg.Uint64Value, Uint64ValueVal)
+		arg.Uint64Value = append(arg.Uint64Value, uint64(Uint64Value))
 	}
 	Sfixed32ValueStr, ok := ctx.UserValue("Sfixed32Value").(string)
 	if !ok || len(Sfixed32ValueStr) == 0 {
@@ -1175,12 +1171,11 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 	}
 	FloatValueStrs := strings.Split(FloatValueStr, ",")
 	for _, str := range FloatValueStrs {
-		FloatValueVal, convErr := strconv.ParseFloat(str, 32)
+		FloatValue, convErr := strconv.ParseFloat(str, 32)
 		if convErr != nil {
-			err = fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
-			return nil, err
+			return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
 		}
-		arg.FloatValue = append(arg.FloatValue, float32(FloatValueVal))
+		arg.FloatValue = append(arg.FloatValue, float32(FloatValue))
 	}
 	Sfixed64ValueStr, ok := ctx.UserValue("Sfixed64Value").(string)
 	if !ok || len(Sfixed64ValueStr) == 0 {
@@ -1188,12 +1183,11 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 	}
 	Sfixed64ValueStrs := strings.Split(Sfixed64ValueStr, ",")
 	for _, str := range Sfixed64ValueStrs {
-		Sfixed64ValueVal, convErr := strconv.ParseInt(str, 10, 64)
+		Sfixed64Value, convErr := strconv.ParseInt(str, 10, 64)
 		if convErr != nil {
-			err = fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", convErr)
-			return nil, err
+			return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", convErr)
 		}
-		arg.Sfixed64Value = append(arg.Sfixed64Value, Sfixed64ValueVal)
+		arg.Sfixed64Value = append(arg.Sfixed64Value, Sfixed64Value)
 	}
 	Fixed64ValueStr, ok := ctx.UserValue("Fixed64Value").(string)
 	if !ok || len(Fixed64ValueStr) == 0 {
@@ -1201,12 +1195,11 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 	}
 	Fixed64ValueStrs := strings.Split(Fixed64ValueStr, ",")
 	for _, str := range Fixed64ValueStrs {
-		Fixed64ValueVal, convErr := strconv.ParseUint(str, 10, 64)
+		Fixed64Value, convErr := strconv.ParseInt(str, 10, 64)
 		if convErr != nil {
-			err = fmt.Errorf("conversion failed for parameter Fixed64Value: %w", convErr)
-			return nil, err
+			return nil, fmt.Errorf("conversion failed for parameter Fixed64Value: %w", convErr)
 		}
-		arg.Fixed64Value = append(arg.Fixed64Value, Fixed64ValueVal)
+		arg.Fixed64Value = append(arg.Fixed64Value, uint64(Fixed64Value))
 	}
 	DoubleValueStr, ok := ctx.UserValue("DoubleValue").(string)
 	if !ok || len(DoubleValueStr) == 0 {
@@ -1214,12 +1207,11 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 	}
 	DoubleValueStrs := strings.Split(DoubleValueStr, ",")
 	for _, str := range DoubleValueStrs {
-		DoubleValueVal, convErr := strconv.ParseFloat(str, 64)
+		DoubleValue, convErr := strconv.ParseFloat(str, 64)
 		if convErr != nil {
-			err = fmt.Errorf("conversion failed for parameter DoubleValue: %w", convErr)
-			return nil, err
+			return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", convErr)
 		}
-		arg.DoubleValue = append(arg.DoubleValue, DoubleValueVal)
+		arg.DoubleValue = append(arg.DoubleValue, DoubleValue)
 	}
 	StringValueStr, ok := ctx.UserValue("StringValue").(string)
 	if !ok || len(StringValueStr) == 0 {
@@ -1287,26 +1279,26 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.Reques
 			}
 			arg.Uint32Value = append(arg.Uint32Value, uint32(Uint32Value))
 		case "Int64Value[]":
-			Int64ValueVal, convErr := strconv.ParseInt(value, 10, 64)
+			Int64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Int64Value: %w", convErr)
 				return
 			}
-			arg.Int64Value = append(arg.Int64Value, Int64ValueVal)
+			arg.Int64Value = append(arg.Int64Value, Int64Value)
 		case "Sint64Value[]":
-			Sint64ValueVal, convErr := strconv.ParseInt(value, 10, 64)
+			Sint64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
 				return
 			}
-			arg.Sint64Value = append(arg.Sint64Value, Sint64ValueVal)
+			arg.Sint64Value = append(arg.Sint64Value, Sint64Value)
 		case "Uint64Value[]":
-			Uint64ValueVal, convErr := strconv.ParseUint(value, 10, 64)
+			Uint64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Uint64Value: %w", convErr)
 				return
 			}
-			arg.Uint64Value = append(arg.Uint64Value, Uint64ValueVal)
+			arg.Uint64Value = append(arg.Uint64Value, uint64(Uint64Value))
 		case "Sfixed32Value[]":
 			Sfixed32Value, convErr := strconv.ParseInt(value, 10, 32)
 			if convErr != nil {
@@ -1322,33 +1314,33 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.Reques
 			}
 			arg.Fixed32Value = append(arg.Fixed32Value, uint32(Fixed32Value))
 		case "FloatValue[]":
-			FloatValueVal, convErr := strconv.ParseFloat(value, 32)
+			FloatValue, convErr := strconv.ParseFloat(value, 32)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
 				return
 			}
-			arg.FloatValue = append(arg.FloatValue, float32(FloatValueVal))
+			arg.FloatValue = append(arg.FloatValue, float32(FloatValue))
 		case "Sfixed64Value[]":
-			Sfixed64ValueVal, convErr := strconv.ParseInt(value, 10, 64)
+			Sfixed64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", convErr)
 				return
 			}
-			arg.Sfixed64Value = append(arg.Sfixed64Value, Sfixed64ValueVal)
+			arg.Sfixed64Value = append(arg.Sfixed64Value, Sfixed64Value)
 		case "Fixed64Value[]":
-			Fixed64ValueVal, convErr := strconv.ParseUint(value, 10, 64)
+			Fixed64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Fixed64Value: %w", convErr)
 				return
 			}
-			arg.Fixed64Value = append(arg.Fixed64Value, Fixed64ValueVal)
+			arg.Fixed64Value = append(arg.Fixed64Value, uint64(Fixed64Value))
 		case "DoubleValue[]":
-			DoubleValueVal, convErr := strconv.ParseFloat(value, 64)
+			DoubleValue, convErr := strconv.ParseFloat(value, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter DoubleValue: %w", convErr)
 				return
 			}
-			arg.DoubleValue = append(arg.DoubleValue, DoubleValueVal)
+			arg.DoubleValue = append(arg.DoubleValue, DoubleValue)
 		case "StringValue[]":
 			arg.StringValue = append(arg.StringValue, value)
 		case "BytesValue[]":
@@ -1428,26 +1420,26 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.Request
 			}
 			arg.Uint32Value = append(arg.Uint32Value, uint32(Uint32Value))
 		case "Int64Value[]":
-			Int64ValueVal, convErr := strconv.ParseInt(value, 10, 64)
+			Int64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Int64Value: %w", convErr)
 				return
 			}
-			arg.Int64Value = append(arg.Int64Value, Int64ValueVal)
+			arg.Int64Value = append(arg.Int64Value, Int64Value)
 		case "Sint64Value[]":
-			Sint64ValueVal, convErr := strconv.ParseInt(value, 10, 64)
+			Sint64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
 				return
 			}
-			arg.Sint64Value = append(arg.Sint64Value, Sint64ValueVal)
+			arg.Sint64Value = append(arg.Sint64Value, Sint64Value)
 		case "Uint64Value[]":
-			Uint64ValueVal, convErr := strconv.ParseUint(value, 10, 64)
+			Uint64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Uint64Value: %w", convErr)
 				return
 			}
-			arg.Uint64Value = append(arg.Uint64Value, Uint64ValueVal)
+			arg.Uint64Value = append(arg.Uint64Value, uint64(Uint64Value))
 		case "Sfixed32Value[]":
 			Sfixed32Value, convErr := strconv.ParseInt(value, 10, 32)
 			if convErr != nil {
@@ -1463,33 +1455,33 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.Request
 			}
 			arg.Fixed32Value = append(arg.Fixed32Value, uint32(Fixed32Value))
 		case "FloatValue[]":
-			FloatValueVal, convErr := strconv.ParseFloat(value, 32)
+			FloatValue, convErr := strconv.ParseFloat(value, 32)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
 				return
 			}
-			arg.FloatValue = append(arg.FloatValue, float32(FloatValueVal))
+			arg.FloatValue = append(arg.FloatValue, float32(FloatValue))
 		case "Sfixed64Value[]":
-			Sfixed64ValueVal, convErr := strconv.ParseInt(value, 10, 64)
+			Sfixed64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", convErr)
 				return
 			}
-			arg.Sfixed64Value = append(arg.Sfixed64Value, Sfixed64ValueVal)
+			arg.Sfixed64Value = append(arg.Sfixed64Value, Sfixed64Value)
 		case "Fixed64Value[]":
-			Fixed64ValueVal, convErr := strconv.ParseUint(value, 10, 64)
+			Fixed64Value, convErr := strconv.ParseInt(value, 10, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter Fixed64Value: %w", convErr)
 				return
 			}
-			arg.Fixed64Value = append(arg.Fixed64Value, Fixed64ValueVal)
+			arg.Fixed64Value = append(arg.Fixed64Value, uint64(Fixed64Value))
 		case "DoubleValue[]":
-			DoubleValueVal, convErr := strconv.ParseFloat(value, 64)
+			DoubleValue, convErr := strconv.ParseFloat(value, 64)
 			if convErr != nil {
 				err = fmt.Errorf("conversion failed for parameter DoubleValue: %w", convErr)
 				return
 			}
-			arg.DoubleValue = append(arg.DoubleValue, DoubleValueVal)
+			arg.DoubleValue = append(arg.DoubleValue, DoubleValue)
 		case "StringValue[]":
 			arg.StringValue = append(arg.StringValue, value)
 		case "BytesValue[]":
@@ -1676,7 +1668,8 @@ func GetServiceNameHTTPGoClient(
 }
 
 func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
 	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
@@ -1722,7 +1715,8 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *common.I
 }
 
 func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *common.AllTypesMsg) (resp *common.AllTypesMsg, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
 	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
@@ -1768,7 +1762,8 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *com
 }
 
 func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anypb.Any) (resp *emptypb.Empty, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
 	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
@@ -1815,7 +1810,8 @@ func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anyp
 
 // SameInputAndOutput same types but different query, we need different query builder function
 func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
 	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
@@ -1861,7 +1857,8 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 }
 
 func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *common.OptionalField) (resp *common.OptionalField, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
 	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
@@ -1907,7 +1904,8 @@ func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *common.
 }
 
 func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var parameters = []string{
 		"int64Argument=%d",
@@ -1952,7 +1950,8 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *common
 }
 
 func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	BoolValueStrs := make([]string, len(request.BoolValue))
 	for i, v := range request.BoolValue {
@@ -2069,7 +2068,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request
 }
 
 func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var parameters = []string{}
 	var values = []interface{}{}
@@ -2173,7 +2173,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, reques
 }
 
 func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
 	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
@@ -2220,7 +2221,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request
 }
 
 func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *common.Empty) (resp *common.Empty, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	req.SetRequestURI(fmt.Sprintf("%s/v1/emptyGet%s", p.host, queryArgs))
 	req.Header.SetMethod("GET")
@@ -2256,7 +2258,8 @@ func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *common.
 }
 
 func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *common.Empty) (resp *common.Empty, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
 	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
@@ -2302,7 +2305,8 @@ func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *common
 }
 
 func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *common.Empty) (resp *common.Array, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
 	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
@@ -2348,7 +2352,8 @@ func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *co
 }
 
 func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *common.OnlyStruct) (resp *common.Empty, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
 	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
@@ -2394,7 +2399,8 @@ func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *
 }
 
 func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *common.MultipartFormRequest) (resp *common.Empty, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var requestBody bytes.Buffer
 	writer := multipart.NewWriter(&requestBody)

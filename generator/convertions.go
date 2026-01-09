@@ -18,11 +18,11 @@ func (g *generator) genFieldConvertor(
 		g.gf.P(f.goName, ", convErr := ", strconvPackage.Ident("ParseInt"), "(", source, ", 10, 32)")
 	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind,
 		protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
-		g.gf.P(f.goName, ", convErr := ", strconvPackage.Ident("ParseInt"), "(value, 10, 64)")
+		g.gf.P(f.goName, ", convErr := ", strconvPackage.Ident("ParseInt"), "(", source, ", 10, 64)")
 	case protoreflect.DoubleKind:
-		g.gf.P(f.goName, ", convErr := ", strconvPackage.Ident("ParseFloat"), "(value, 64)")
+		g.gf.P(f.goName, ", convErr := ", strconvPackage.Ident("ParseFloat"), "(", source, ", 64)")
 	case protoreflect.FloatKind:
-		g.gf.P(f.goName, ", convErr := ", strconvPackage.Ident("ParseFloat"), "(value, 32)")
+		g.gf.P(f.goName, ", convErr := ", strconvPackage.Ident("ParseFloat"), "(", source, ", 32)")
 	}
 	g.gf.P("if convErr != nil {")
 	errValues := []interface{}{fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)"}
@@ -43,7 +43,7 @@ func (g *generator) genFieldConvertor(
 		nextValues = append(nextValues, ")")
 		g.gf.P(append([]interface{}{destination, " = append(", destination, ", "}, nextValues...)...)
 	} else {
-		if reference != "" {
+		if reference != "" && f.needToBeConverted() {
 			g.gf.P(append([]interface{}{f.goName, "Value := "}, nextValues...)...)
 			nextValues = []interface{}{f.goName, "Value"}
 		}

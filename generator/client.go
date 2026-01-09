@@ -75,7 +75,8 @@ func (g *generator) genClientMethod(
 	case libraryNetHTTP:
 		g.gf.P("	req := &", g.lib.Ident("Request"), "{Header: make(", g.lib.Ident("Header"), ")}")
 	case libraryFastHTTP:
-		g.gf.P("	req := &", g.lib.Ident("Request"), "{}")
+		g.gf.P("	req := ", g.lib.Ident("AcquireRequest"), "()")
+		g.gf.P("	defer ", g.lib.Ident("ReleaseRequest"), "(req)")
 	}
 	g.gf.P("	var queryArgs string")
 	switch {
