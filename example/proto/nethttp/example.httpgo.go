@@ -14,6 +14,7 @@ import (
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	io "io"
+	multipart "mime/multipart"
 	http "net/http"
 	url "net/url"
 	strconv "strconv"
@@ -34,6 +35,7 @@ type ServiceNameHTTPGoService interface {
 	EmptyPost(context.Context, *common.Empty) (*common.Empty, error)
 	TopLevelArray(context.Context, *common.Empty) (*common.Array, error)
 	OnlyStructInGet(context.Context, *common.OnlyStruct) (*common.Empty, error)
+	MultipartForm(context.Context, *common.MultipartFormRequest) (*common.Empty, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -323,6 +325,28 @@ func RegisterServiceNameHTTPGoServer(
 		ctx = context.WithValue(ctx, "request", r)
 		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.OnlyStructInGet(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx, input)
+			return
+		}
+		_, _ = middleware(ctx, input, handler)
+	})
+
+	r.HandleFunc("POST /v1/multipart", func(w http.ResponseWriter, r *http.Request) {
+		input, err := buildExampleServiceNameMultipartFormMultipartFormRequest(r)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
+		ctx = context.WithValue(ctx, "writer", w)
+		ctx = context.WithValue(ctx, "request", r)
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+			return h.MultipartForm(ctx, input)
 		}
 		if middleware == nil {
 			_, _ = handler(ctx, input)
@@ -1632,6 +1656,40 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(r *http.Request) (arg *com
 	return arg, err
 }
 
+func buildExampleServiceNameMultipartFormMultipartFormRequest(r *http.Request) (arg *common.MultipartFormRequest, err error) {
+	arg = &common.MultipartFormRequest{}
+	f, fh, err := r.FormFile("document")
+	if err == nil && !errors.Is(err, http.ErrMissingFile) {
+		arg.Document = &common.FileEx{
+			File:    make([]byte, fh.Size),
+			Name:    fh.Filename,
+			Headers: make(map[string]string, len(fh.Header)),
+		}
+		for key, value := range fh.Header {
+			arg.Document.Headers[key] = value[0]
+		}
+		_, err = f.Read(arg.Document.File)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read file: document: %w", err)
+		}
+	}
+	arg.OtherField = r.FormValue("otherField")
+	for key, values := range r.URL.Query() {
+		var value = values[0]
+		switch key {
+		case "document":
+			err = fmt.Errorf("unsupported type message for query argument document")
+			return
+		case "otherField":
+			arg.OtherField = value
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	}
+	return arg, err
+}
+
 func chainServerMiddlewaresExample(
 	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
 ) func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
@@ -2461,6 +2519,65 @@ func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *
 	var reqResp interface{}
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
+	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		resp, err = p.cl.Do(req.(*http.Request))
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.Empty{}
+	var respBody []byte
+	if respBody, err = io.ReadAll(reqResp.(*http.Response).Body); err != nil {
+		return nil, err
+	}
+	_ = reqResp.(*http.Response).Body.Close()
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(respBody, resp); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *common.MultipartFormRequest) (resp *common.Empty, err error) {
+	req := &http.Request{Header: make(http.Header)}
+	var queryArgs string
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+	part, err := writer.CreateFormFile("document", request.Document.Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create form file document:  %w", err)
+	}
+	if _, err = part.Write(request.Document.File); err != nil {
+		return nil, fmt.Errorf("failed to write data to part document: %w", err)
+	}
+	if err = writer.WriteField("otherField", request.OtherField); err != nil {
+		return nil, fmt.Errorf("failed to write field otherField:  %w", err)
+	}
+	if err = writer.Close(); err != nil {
+		return nil, fmt.Errorf("failed to close writer: %w", err)
+	}
+	req.Body = io.NopCloser(bytes.NewBuffer(requestBody.Bytes()))
+	u, err := url.Parse(fmt.Sprintf("%s/v1/multipart%s", p.host, queryArgs))
+	if err != nil {
+		return nil, err
+	}
+	req.URL = u
+	req.Method = http.MethodPost
+	var reqResp interface{}
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
 	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 		resp, err = p.cl.Do(req.(*http.Request))
 		return resp, err

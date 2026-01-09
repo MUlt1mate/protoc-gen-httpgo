@@ -129,7 +129,9 @@ func (g *generator) genBuildRequestMethod(serviceName string, method methodParam
 		g.gf.P("func build", g.getBuildMethodInputName(serviceName, method), "(ctx *", fasthttpPackage.Ident("RequestCtx"), ") (arg *", method.inputMsgName, ", err error) {")
 	}
 	g.gf.P("	arg = &", method.inputMsgName, "{}")
-	if method.HasBody() {
+	if method.withFiles {
+		g.getMultipartRequestServer(method)
+	} else if method.HasBody() {
 		g.genUnmarshalRequestStruct()
 	}
 	var err error
@@ -406,6 +408,68 @@ func (g *generator) genUnmarshalRequestStruct() {
 		g.gf.P("		}")
 	}
 	g.gf.P("	}")
+}
+
+func (g *generator) getMultipartRequestServer(method methodParams) {
+	if *g.cfg.Library == libraryFastHTTP {
+		g.gf.P("body, err := ctx.MultipartForm()")
+		g.gf.P("if err != nil {")
+		g.gf.P("	return nil, err")
+		g.gf.P("}")
+	}
+	for _, f := range method.inputFieldList {
+		methodField := method.inputFields[f]
+		switch *g.cfg.Library {
+		case libraryNetHTTP:
+			if methodField.isFile {
+				g.gf.P("f, fh, err := r.FormFile(\"", methodField.protoName, "\")")
+				g.gf.P("if err == nil && !errors.Is(err, http.ErrMissingFile) {")
+				g.gf.P("	arg.", methodField.goName, " = &", methodField.genFileStruct(), "{")
+				g.gf.P("		File:    make([]byte, fh.Size),")
+				g.gf.P("		Name:    fh.Filename,")
+				g.gf.P("		Headers: make(map[string]string, len(fh.Header)),")
+				g.gf.P("	}")
+				g.gf.P("	for key, value := range fh.Header {")
+				g.gf.P("		arg.", methodField.goName, ".Headers[key] = value[0]")
+				g.gf.P("	}")
+				g.gf.P("	_, err = f.Read(arg.", methodField.goName, ".File)")
+				g.gf.P("	if err != nil {")
+				g.gf.P("		return nil, fmt.Errorf(\"failed to read file: ", methodField.protoName, ": %w\", err)")
+				g.gf.P("	}")
+				g.gf.P("}")
+			} else {
+				g.gf.P("arg.", methodField.goName, " = r.FormValue(\"", methodField.protoName, "\")")
+			}
+		case libraryFastHTTP:
+			if methodField.isFile {
+				g.gf.P("file, ok := body.File[\"", methodField.protoName, "\"]")
+				g.gf.P("if ok && len(file) > 0 {")
+				g.gf.P("	var f ", multipartPackage.Ident("File"))
+				g.gf.P("	f, err = file[0].Open()")
+				g.gf.P("	if err != nil {")
+				g.gf.P("		return nil, fmt.Errorf(\"failed to open file: ", methodField.protoName, ": %w\", err)")
+				g.gf.P("	}")
+				g.gf.P("	arg.", methodField.goName, " = &", methodField.genFileStruct(), "{")
+				g.gf.P("		File:    make([]byte, file[0].Size),")
+				g.gf.P("		Name:    file[0].Filename,")
+				g.gf.P("		Headers: make(map[string]string, len(file[0].Header)),")
+				g.gf.P("	}")
+				g.gf.P("	for key, value := range file[0].Header {")
+				g.gf.P("		arg.", methodField.goName, ".Headers[key] = value[0]")
+				g.gf.P("	}")
+				g.gf.P("	_, err = f.Read(arg.", methodField.goName, ".File)")
+				g.gf.P("	if err != nil {")
+				g.gf.P("		return nil, fmt.Errorf(\"failed to read file: ", methodField.protoName, ": %w\", err)")
+				g.gf.P("	}")
+				g.gf.P("}")
+			} else {
+				g.gf.P("values, ok := body.Value[\"", methodField.protoName, "\"]")
+				g.gf.P("if ok && len(values) > 0 {")
+				g.gf.P("	arg.", methodField.goName, " = values[0]")
+				g.gf.P("}")
+			}
+		}
+	}
 }
 
 func (g *generator) genQueryArgCheck(f field) (err error) {

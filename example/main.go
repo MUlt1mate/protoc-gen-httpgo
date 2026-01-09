@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"time"
 
@@ -72,5 +73,16 @@ func clientExample(ctx context.Context) (err error) {
 	// 	BytesValue:       []byte("hello world"),
 	// 	StringValue:      "hello world",
 	// })
+
+	_, err = fastClient.MultipartForm(context.Background(), &common.MultipartFormRequest{
+		Document: &common.FileEx{
+			File: []byte(`file content`),
+			Name: "file.exe",
+		},
+		OtherField: "otherField",
+	})
+	if err != nil {
+		log.Println(err)
+	}
 	return nil
 }
