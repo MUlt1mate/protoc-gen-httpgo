@@ -108,7 +108,8 @@ func GetNoURLHTTPGoClient(
 }
 
 func (p *NoURLHTTPGoClient) MethodWithoutURLAnnotation(ctx context.Context, request *emptypb.Empty) (resp *emptypb.Empty, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
 	body, err = json.Marshal(request)

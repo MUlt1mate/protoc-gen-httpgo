@@ -20,6 +20,8 @@ const (
 	pathRepeatedArgDelimiter = ","
 	libraryNetHTTP           = "nethttp"
 	libraryFastHTTP          = "fasthttp"
+	contentTypeJSONApp       = "application/json"
+	contentTypeMultipart     = "multipart/form-data"
 )
 
 type (
@@ -53,6 +55,7 @@ type (
 		responseBody   string
 		inputFieldList []string // slice for constant sorting
 		hasBody        bool
+		withFiles      bool
 	}
 
 	field struct {
@@ -62,6 +65,11 @@ type (
 		kind        protoreflect.Kind
 		cardinality protoreflect.Cardinality
 		optional    bool
+		isFile      bool
+		fileStruct  struct {
+			Name string
+			Path string
+		}
 	}
 	Config struct {
 		Marshaller         *string
@@ -159,7 +167,9 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 	method.name = protoMethod.GoName
 	method.inputMsgName = protoMethod.Input.GoIdent
 	method.outputMsgName = protoMethod.Output.GoIdent
-	var fields = make(map[string]field)
+	var (
+		fields = make(map[string]field)
+	)
 	for _, protoField := range protoMethod.Input.Fields {
 		f := field{
 			goName:      protoField.GoName,
@@ -167,6 +177,12 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 			kind:        protoField.Desc.Kind(),
 			cardinality: protoField.Desc.Cardinality(),
 			optional:    protoField.Desc.HasOptionalKeyword(),
+			isFile:      isFileField(protoField),
+		}
+		if f.isFile {
+			f.fileStruct.Path = string(protoField.Message.GoIdent.GoImportPath)
+			f.fileStruct.Name = protoField.Message.GoIdent.GoName
+			method.withFiles = true
 		}
 		if protoField.Desc.Kind() == protoreflect.EnumKind {
 			f.enumName = protoField.Enum.GoIdent
@@ -232,9 +248,20 @@ func (f field) getGolangTypeName() string {
 		return protoreflect.Int32Kind.String()
 	case protoreflect.Fixed32Kind:
 		return protoreflect.Uint32Kind.String()
+	case protoreflect.FloatKind:
+		return "float32"
 	}
 
 	return f.kind.String()
+}
+
+func (f field) needToBeConverted() bool {
+	switch f.kind {
+	case protoreflect.Int64Kind, protoreflect.DoubleKind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		return false
+	}
+
+	return true
 }
 
 func (f field) getVariablePlaceholder() (string, error) {
@@ -263,6 +290,10 @@ func (f field) getVariablePlaceholder() (string, error) {
 	default:
 		return "", fmt.Errorf(`unsupported type %s for path variable: "%s"`, f.kind, f.goName)
 	}
+}
+
+func (f field) genFileStruct() protogen.GoIdent {
+	return protogen.GoImportPath(f.fileStruct.Path).Ident(f.fileStruct.Name)
 }
 
 func (g *generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceName string) (methodParams, error) {
@@ -333,4 +364,44 @@ func (g *generator) MethodShouldHasBody(method string) bool {
 func titleString(input string) string {
 	input = strings.ToLower(input)
 	return strings.ToUpper(string(input[0])) + input[1:]
+}
+
+func (m methodParams) GetContentType() string {
+	if m.withFiles {
+		return contentTypeMultipart
+	}
+	return contentTypeJSONApp
+}
+
+func isFileField(field *protogen.Field) bool {
+	if field.Desc.Kind() != protoreflect.MessageKind {
+		return false
+	}
+
+	msg := field.Message
+	if msg == nil {
+		return false
+	}
+
+	var (
+		matchedFields int
+		totalFields   = 3
+	)
+
+	for _, nf := range msg.Fields {
+		switch nf.Desc.JSONName() {
+		case "file":
+			if nf.Desc.Kind() == protoreflect.BytesKind {
+				matchedFields++
+			}
+		case "name":
+			if nf.Desc.Kind() == protoreflect.StringKind {
+				matchedFields++
+			}
+		case "headers":
+			matchedFields++
+		}
+	}
+
+	return matchedFields == totalFields
 }
