@@ -2,6 +2,7 @@ package implementation
 
 import (
 	"context"
+	"errors"
 	"log"
 
 	"google.golang.org/protobuf/types/known/anypb"
@@ -152,6 +153,9 @@ func (h *Handler) OnlyStructInGet(ctx context.Context, onlyStruct *proto.OnlyStr
 }
 
 func (h *Handler) MultipartForm(ctx context.Context, request *proto.MultipartFormRequest) (*proto.Empty, error) {
-	log.Printf("file %s: %s, other field: %s", request.Document.Name, string(request.Document.File), request.OtherField)
+	if request == nil || request.Document == nil {
+		return nil, errors.New("empty request")
+	}
+	log.Printf("file name %s with length %d, other field: %s", request.Document.Name, len(request.Document.File), request.OtherField)
 	return &proto.Empty{}, nil
 }

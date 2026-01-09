@@ -248,9 +248,20 @@ func (f field) getGolangTypeName() string {
 		return protoreflect.Int32Kind.String()
 	case protoreflect.Fixed32Kind:
 		return protoreflect.Uint32Kind.String()
+	case protoreflect.FloatKind:
+		return "float32"
 	}
 
 	return f.kind.String()
+}
+
+func (f field) needToBeConverted() bool {
+	switch f.kind {
+	case protoreflect.Int64Kind, protoreflect.DoubleKind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		return false
+	}
+
+	return true
 }
 
 func (f field) getVariablePlaceholder() (string, error) {

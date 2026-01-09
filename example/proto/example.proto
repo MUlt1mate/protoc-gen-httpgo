@@ -89,4 +89,9 @@ service ServiceName {
       post: "/v1/multipart"
     };
   };
+//  rpc MultipartFormAllTypes(common.MultipartFormAllTypes) returns (common.Empty){
+//    option (google.api.http) = {
+//      post: "/v1/multipartall"
+//    };
+//  };
 }
