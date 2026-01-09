@@ -7,7 +7,7 @@ import (
 	json "encoding/json"
 	errors "errors"
 	fmt "fmt"
-	somepackage "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/somepackage"
+	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 	router "github.com/fasthttp/router"
 	easyjson "github.com/mailru/easyjson"
 	fasthttp "github.com/valyala/fasthttp"
@@ -18,20 +18,19 @@ import (
 )
 
 type ServiceNameHTTPGoService interface {
-	RPCName(context.Context, *InputMsgName) (*OutputMsgName, error)
-	AllTypesTest(context.Context, *AllTypesMsg) (*AllTypesMsg, error)
+	RPCName(context.Context, *common.InputMsgName) (*common.OutputMsgName, error)
+	AllTypesTest(context.Context, *common.AllTypesMsg) (*common.AllTypesMsg, error)
 	CommonTypes(context.Context, *anypb.Any) (*emptypb.Empty, error)
-	Imports(context.Context, *somepackage.SomeCustomMsg1) (*somepackage.SomeCustomMsg2, error)
-	SameInputAndOutput(context.Context, *InputMsgName) (*OutputMsgName, error)
-	Optional(context.Context, *OptionalField) (*OptionalField, error)
-	GetMethod(context.Context, *InputMsgName) (*OutputMsgName, error)
-	CheckRepeatedPath(context.Context, *RepeatedCheck) (*RepeatedCheck, error)
-	CheckRepeatedQuery(context.Context, *RepeatedCheck) (*RepeatedCheck, error)
-	CheckRepeatedPost(context.Context, *RepeatedCheck) (*RepeatedCheck, error)
-	EmptyGet(context.Context, *Empty) (*Empty, error)
-	EmptyPost(context.Context, *Empty) (*Empty, error)
-	TopLevelArray(context.Context, *Empty) (*Array, error)
-	OnlyStructInGet(context.Context, *OnlyStruct) (*Empty, error)
+	SameInputAndOutput(context.Context, *common.InputMsgName) (*common.OutputMsgName, error)
+	Optional(context.Context, *common.OptionalField) (*common.OptionalField, error)
+	GetMethod(context.Context, *common.InputMsgName) (*common.OutputMsgName, error)
+	CheckRepeatedPath(context.Context, *common.RepeatedCheck) (*common.RepeatedCheck, error)
+	CheckRepeatedQuery(context.Context, *common.RepeatedCheck) (*common.RepeatedCheck, error)
+	CheckRepeatedPost(context.Context, *common.RepeatedCheck) (*common.RepeatedCheck, error)
+	EmptyGet(context.Context, *common.Empty) (*common.Empty, error)
+	EmptyPost(context.Context, *common.Empty) (*common.Empty, error)
+	TopLevelArray(context.Context, *common.Empty) (*common.Array, error)
+	OnlyStructInGet(context.Context, *common.OnlyStruct) (*common.Empty, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -91,25 +90,6 @@ func RegisterServiceNameHTTPGoServer(
 		ctx.SetUserValue("proto_method", "CommonTypes")
 		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.CommonTypes(ctx, input)
-		}
-		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
-		}
-		_, _ = middleware(ctx, input, handler)
-	})
-
-	r.POST("/v1/test/imports", func(ctx *fasthttp.RequestCtx) {
-		input, err := buildExampleServiceNameImportsSomeCustomMsg1(ctx)
-		if err != nil {
-			ctx.SetStatusCode(fasthttp.StatusBadRequest)
-			_, _ = ctx.WriteString(err.Error())
-			return
-		}
-		ctx.SetUserValue("proto_service", "ServiceName")
-		ctx.SetUserValue("proto_method", "Imports")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
-			return h.Imports(ctx, input)
 		}
 		if middleware == nil {
 			_, _ = handler(ctx, input)
@@ -312,8 +292,8 @@ func RegisterServiceNameHTTPGoServer(
 	return nil
 }
 
-func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
-	arg = &InputMsgName{}
+func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *common.InputMsgName, err error) {
+	arg = &common.InputMsgName{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
 		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
@@ -362,8 +342,8 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 	return arg, err
 }
 
-func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (arg *AllTypesMsg, err error) {
-	arg = &AllTypesMsg{}
+func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (arg *common.AllTypesMsg, err error) {
+	arg = &common.AllTypesMsg{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
 		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
@@ -393,13 +373,13 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 				return
 			}
 		case "EnumValue":
-			if OptionsValue, optValueOk := Options_value[strings.ToUpper(value)]; optValueOk {
-				EnumValueOptionsValue := Options(OptionsValue)
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				EnumValueOptionsValue := common.Options(OptionsValue)
 				arg.EnumValue = EnumValueOptionsValue
 			} else {
 				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
-					if _, optIntValueOk := Options_name[int32(intOptionValue)]; optIntValueOk {
-						EnumValueOptionsValue := Options(intOptionValue)
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						EnumValueOptionsValue := common.Options(intOptionValue)
 						arg.EnumValue = EnumValueOptionsValue
 					}
 				}
@@ -534,13 +514,13 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 	if !ok || len(EnumValueStr) == 0 {
 		return nil, errors.New("empty value for parameter EnumValue")
 	}
-	OptionsValue, optValueOk := Options_value[strings.ToUpper(EnumValueStr)]
+	OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumValueStr)]
 	if optValueOk {
-		arg.EnumValue = Options(OptionsValue)
+		arg.EnumValue = common.Options(OptionsValue)
 	} else {
 		if intOptionValue, convErr := strconv.ParseInt(EnumValueStr, 10, 32); convErr == nil {
-			if _, optIntValueOk := Options_name[int32(intOptionValue)]; optIntValueOk {
-				arg.EnumValue = Options(intOptionValue)
+			if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+				arg.EnumValue = common.Options(intOptionValue)
 			}
 		}
 	}
@@ -706,36 +686,8 @@ func buildExampleServiceNameCommonTypesAny(ctx *fasthttp.RequestCtx) (arg *anypb
 	return arg, err
 }
 
-func buildExampleServiceNameImportsSomeCustomMsg1(ctx *fasthttp.RequestCtx) (arg *somepackage.SomeCustomMsg1, err error) {
-	arg = &somepackage.SomeCustomMsg1{}
-	var body = ctx.PostBody()
-	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
-		}
-	}
-	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
-		var key = string(keyB)
-		var value = string(valueB)
-		switch key {
-		case "val":
-			arg.Val = value
-		default:
-			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
-			return
-		}
-	})
-	return arg, err
-}
-
-func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
-	arg = &InputMsgName{}
+func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.RequestCtx) (arg *common.InputMsgName, err error) {
+	arg = &common.InputMsgName{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
 		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
@@ -775,8 +727,8 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 	return arg, err
 }
 
-func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg *OptionalField, err error) {
-	arg = &OptionalField{}
+func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg *common.OptionalField, err error) {
+	arg = &common.OptionalField{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
 		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
@@ -806,13 +758,13 @@ func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg
 				return
 			}
 		case "EnumValue":
-			if OptionsValue, optValueOk := Options_value[strings.ToUpper(value)]; optValueOk {
-				EnumValueOptionsValue := Options(OptionsValue)
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				EnumValueOptionsValue := common.Options(OptionsValue)
 				arg.EnumValue = &EnumValueOptionsValue
 			} else {
 				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
-					if _, optIntValueOk := Options_name[int32(intOptionValue)]; optIntValueOk {
-						EnumValueOptionsValue := Options(intOptionValue)
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						EnumValueOptionsValue := common.Options(intOptionValue)
 						arg.EnumValue = &EnumValueOptionsValue
 					}
 				}
@@ -924,8 +876,8 @@ func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg
 	return arg, err
 }
 
-func buildExampleServiceNameGetMethodInputMsgName(ctx *fasthttp.RequestCtx) (arg *InputMsgName, err error) {
-	arg = &InputMsgName{}
+func buildExampleServiceNameGetMethodInputMsgName(ctx *fasthttp.RequestCtx) (arg *common.InputMsgName, err error) {
+	arg = &common.InputMsgName{}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
 		var key = string(keyB)
 		var value = string(valueB)
@@ -947,8 +899,8 @@ func buildExampleServiceNameGetMethodInputMsgName(ctx *fasthttp.RequestCtx) (arg
 	return arg, err
 }
 
-func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.RequestCtx) (arg *RepeatedCheck, err error) {
-	arg = &RepeatedCheck{}
+func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.RequestCtx) (arg *common.RepeatedCheck, err error) {
+	arg = &common.RepeatedCheck{}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
 		var key = string(keyB)
 		var value = string(valueB)
@@ -964,12 +916,12 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 				return
 			}
 		case "EnumValue[]":
-			if OptionsValue, optValueOk := Options_value[strings.ToUpper(value)]; optValueOk {
-				arg.EnumValue = append(arg.EnumValue, Options(OptionsValue))
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				arg.EnumValue = append(arg.EnumValue, common.Options(OptionsValue))
 			} else {
 				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
-					if _, optIntValueOk := Options_name[int32(intOptionValue)]; optIntValueOk {
-						arg.EnumValue = append(arg.EnumValue, Options(intOptionValue))
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.EnumValue = append(arg.EnumValue, common.Options(intOptionValue))
 					}
 				}
 			}
@@ -1090,12 +1042,12 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 	}
 	EnumValueStrs := strings.Split(EnumValueStr, ",")
 	for _, str := range EnumValueStrs {
-		if OptionsValue, optValueOk := Options_value[strings.ToUpper(str)]; optValueOk {
-			arg.EnumValue = append(arg.EnumValue, Options(OptionsValue))
+		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
+			arg.EnumValue = append(arg.EnumValue, common.Options(OptionsValue))
 		} else {
 			if intOptionValue, convErr := strconv.ParseInt(str, 10, 32); convErr == nil {
-				if _, optIntValueOk := Options_name[int32(intOptionValue)]; optIntValueOk {
-					arg.EnumValue = append(arg.EnumValue, Options(intOptionValue))
+				if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+					arg.EnumValue = append(arg.EnumValue, common.Options(intOptionValue))
 				}
 			}
 		}
@@ -1274,8 +1226,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 	return arg, err
 }
 
-func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.RequestCtx) (arg *RepeatedCheck, err error) {
-	arg = &RepeatedCheck{}
+func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.RequestCtx) (arg *common.RepeatedCheck, err error) {
+	arg = &common.RepeatedCheck{}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
 		var key = string(keyB)
 		var value = string(valueB)
@@ -1291,12 +1243,12 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.Reques
 				return
 			}
 		case "EnumValue[]":
-			if OptionsValue, optValueOk := Options_value[strings.ToUpper(value)]; optValueOk {
-				arg.EnumValue = append(arg.EnumValue, Options(OptionsValue))
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				arg.EnumValue = append(arg.EnumValue, common.Options(OptionsValue))
 			} else {
 				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
-					if _, optIntValueOk := Options_name[int32(intOptionValue)]; optIntValueOk {
-						arg.EnumValue = append(arg.EnumValue, Options(intOptionValue))
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.EnumValue = append(arg.EnumValue, common.Options(intOptionValue))
 					}
 				}
 			}
@@ -1403,8 +1355,8 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.Reques
 	return arg, err
 }
 
-func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.RequestCtx) (arg *RepeatedCheck, err error) {
-	arg = &RepeatedCheck{}
+func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.RequestCtx) (arg *common.RepeatedCheck, err error) {
+	arg = &common.RepeatedCheck{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
 		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
@@ -1432,12 +1384,12 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.Request
 				return
 			}
 		case "EnumValue[]":
-			if OptionsValue, optValueOk := Options_value[strings.ToUpper(value)]; optValueOk {
-				arg.EnumValue = append(arg.EnumValue, Options(OptionsValue))
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				arg.EnumValue = append(arg.EnumValue, common.Options(OptionsValue))
 			} else {
 				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
-					if _, optIntValueOk := Options_name[int32(intOptionValue)]; optIntValueOk {
-						arg.EnumValue = append(arg.EnumValue, Options(intOptionValue))
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.EnumValue = append(arg.EnumValue, common.Options(intOptionValue))
 					}
 				}
 			}
@@ -1544,13 +1496,13 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.Request
 	return arg, err
 }
 
-func buildExampleServiceNameEmptyGetEmpty(ctx *fasthttp.RequestCtx) (arg *Empty, err error) {
-	arg = &Empty{}
+func buildExampleServiceNameEmptyGetEmpty(ctx *fasthttp.RequestCtx) (arg *common.Empty, err error) {
+	arg = &common.Empty{}
 	return arg, err
 }
 
-func buildExampleServiceNameEmptyPostEmpty(ctx *fasthttp.RequestCtx) (arg *Empty, err error) {
-	arg = &Empty{}
+func buildExampleServiceNameEmptyPostEmpty(ctx *fasthttp.RequestCtx) (arg *common.Empty, err error) {
+	arg = &common.Empty{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
 		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
@@ -1566,8 +1518,8 @@ func buildExampleServiceNameEmptyPostEmpty(ctx *fasthttp.RequestCtx) (arg *Empty
 	return arg, err
 }
 
-func buildExampleServiceNameTopLevelArrayEmpty(ctx *fasthttp.RequestCtx) (arg *Empty, err error) {
-	arg = &Empty{}
+func buildExampleServiceNameTopLevelArrayEmpty(ctx *fasthttp.RequestCtx) (arg *common.Empty, err error) {
+	arg = &common.Empty{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
 		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
@@ -1583,8 +1535,8 @@ func buildExampleServiceNameTopLevelArrayEmpty(ctx *fasthttp.RequestCtx) (arg *E
 	return arg, err
 }
 
-func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx *fasthttp.RequestCtx) (arg *OnlyStruct, err error) {
-	arg = &OnlyStruct{}
+func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx *fasthttp.RequestCtx) (arg *common.OnlyStruct, err error) {
+	arg = &common.OnlyStruct{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
 		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
@@ -1663,7 +1615,7 @@ func GetServiceNameHTTPGoClient(
 	}, nil
 }
 
-func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *InputMsgName) (resp *OutputMsgName, err error) {
+func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var body []byte
@@ -1695,7 +1647,7 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *InputMsg
 			return nil, err
 		}
 	}
-	resp = &OutputMsgName{}
+	resp = &common.OutputMsgName{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
@@ -1709,7 +1661,7 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *InputMsg
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *AllTypesMsg) (resp *AllTypesMsg, err error) {
+func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *common.AllTypesMsg) (resp *common.AllTypesMsg, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var body []byte
@@ -1741,7 +1693,7 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *All
 			return nil, err
 		}
 	}
-	resp = &AllTypesMsg{}
+	resp = &common.AllTypesMsg{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
@@ -1801,54 +1753,8 @@ func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anyp
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) Imports(ctx context.Context, request *somepackage.SomeCustomMsg1) (resp *somepackage.SomeCustomMsg2, err error) {
-	req := &fasthttp.Request{}
-	var queryArgs string
-	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/test/imports%s", p.host, queryArgs))
-	req.Header.SetMethod("POST")
-	var reqResp interface{}
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "Imports")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &somepackage.SomeCustomMsg2{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
-	return resp, err
-}
-
 // SameInputAndOutput same types but different query, we need different query builder function
-func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, request *InputMsgName) (resp *OutputMsgName, err error) {
+func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var body []byte
@@ -1880,7 +1786,7 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 			return nil, err
 		}
 	}
-	resp = &OutputMsgName{}
+	resp = &common.OutputMsgName{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
@@ -1894,7 +1800,7 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *OptionalField) (resp *OptionalField, err error) {
+func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *common.OptionalField) (resp *common.OptionalField, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var body []byte
@@ -1926,7 +1832,7 @@ func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *Optiona
 			return nil, err
 		}
 	}
-	resp = &OptionalField{}
+	resp = &common.OptionalField{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
@@ -1940,7 +1846,7 @@ func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *Optiona
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *InputMsgName) (resp *OutputMsgName, err error) {
+func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var parameters = []string{
@@ -1971,7 +1877,7 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *InputM
 			return nil, err
 		}
 	}
-	resp = &OutputMsgName{}
+	resp = &common.OutputMsgName{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
@@ -1985,7 +1891,7 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *InputM
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request *RepeatedCheck) (resp *RepeatedCheck, err error) {
+func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	BoolValueStrs := make([]string, len(request.BoolValue))
@@ -2088,7 +1994,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request
 			return nil, err
 		}
 	}
-	resp = &RepeatedCheck{}
+	resp = &common.RepeatedCheck{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
@@ -2102,7 +2008,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, request *RepeatedCheck) (resp *RepeatedCheck, err error) {
+func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var parameters = []string{}
@@ -2192,7 +2098,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, reques
 			return nil, err
 		}
 	}
-	resp = &RepeatedCheck{}
+	resp = &common.RepeatedCheck{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
@@ -2206,7 +2112,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, reques
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request *RepeatedCheck) (resp *RepeatedCheck, err error) {
+func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var body []byte
@@ -2239,7 +2145,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request
 			return nil, err
 		}
 	}
-	resp = &RepeatedCheck{}
+	resp = &common.RepeatedCheck{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
@@ -2253,7 +2159,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *Empty) (resp *Empty, err error) {
+func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *common.Empty) (resp *common.Empty, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	req.SetRequestURI(fmt.Sprintf("%s/v1/emptyGet%s", p.host, queryArgs))
@@ -2275,7 +2181,7 @@ func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *Empty) 
 			return nil, err
 		}
 	}
-	resp = &Empty{}
+	resp = &common.Empty{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
@@ -2289,7 +2195,7 @@ func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *Empty) 
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *Empty) (resp *Empty, err error) {
+func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *common.Empty) (resp *common.Empty, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var body []byte
@@ -2321,7 +2227,7 @@ func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *Empty)
 			return nil, err
 		}
 	}
-	resp = &Empty{}
+	resp = &common.Empty{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
@@ -2335,7 +2241,7 @@ func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *Empty)
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *Empty) (resp *Array, err error) {
+func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *common.Empty) (resp *common.Array, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var body []byte
@@ -2367,7 +2273,7 @@ func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *Em
 			return nil, err
 		}
 	}
-	resp = &Array{}
+	resp = &common.Array{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp.Items).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
@@ -2381,7 +2287,7 @@ func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *Em
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *OnlyStruct) (resp *Empty, err error) {
+func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *common.OnlyStruct) (resp *common.Empty, err error) {
 	req := &fasthttp.Request{}
 	var queryArgs string
 	var body []byte
@@ -2413,7 +2319,7 @@ func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *
 			return nil, err
 		}
 	}
-	resp = &Empty{}
+	resp = &common.Empty{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {

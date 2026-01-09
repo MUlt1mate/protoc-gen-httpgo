@@ -11,6 +11,7 @@ import (
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
@@ -18,7 +19,9 @@ import (
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/middleware"
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	protoFast "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
+	protoHttp "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/nethttp"
 )
 
 type testCaseClient struct {
@@ -62,11 +65,11 @@ func TestHTTPGoClient(t *testing.T) {
 	mockServer := httptest.NewServer(http.HandlerFunc(getMockServer(reqCh, respCh)))
 	defer mockServer.Close()
 	var (
-		client *proto.ServiceNameHTTPGoClient
+		client *protoFast.ServiceNameHTTPGoClient
 		err    error
 		ctx    = context.Background()
 	)
-	if client, err = proto.GetServiceNameHTTPGoClient(
+	if client, err = protoFast.GetServiceNameHTTPGoClient(
 		ctx,
 		// &http.Client{},
 		&fasthttp.Client{},
@@ -82,8 +85,8 @@ func TestHTTPGoClient(t *testing.T) {
 			methodName:          "RPCName",
 			expectedMethod:      http.MethodPost,
 			expectedURI:         "/v1/test/test/1",
-			request:             &proto.InputMsgName{Int64Argument: 1, StringArgument: "test"},
-			expectedResponse:    &proto.OutputMsgName{StringValue: "StringValue", IntValue: 2},
+			request:             &common.InputMsgName{Int64Argument: 1, StringArgument: "test"},
+			expectedResponse:    &common.OutputMsgName{StringValue: "StringValue", IntValue: 2},
 			expectedResponseErr: nil,
 			expectedRequestBody: []byte(`{"int64Argument":1,"stringArgument":"test"}`),
 			mockResponse: responseData{
@@ -95,7 +98,7 @@ func TestHTTPGoClient(t *testing.T) {
 			name:           "CheckRepeatedQuery valid",
 			methodName:     "CheckRepeatedQuery",
 			expectedMethod: http.MethodGet,
-			request: &proto.RepeatedCheck{
+			request: &common.RepeatedCheck{
 				StringValue:      []string{"1", "2", "3"},
 				StringValueQuery: []string{"a", "b", "c"},
 			},
@@ -105,7 +108,7 @@ func TestHTTPGoClient(t *testing.T) {
 				body: []byte(`{"StringValue":["1","2","3"],"StringValueQuery":["a","b","c"]}`),
 				code: http.StatusOK,
 			},
-			expectedResponse: &proto.RepeatedCheck{
+			expectedResponse: &common.RepeatedCheck{
 				StringValue:      []string{"1", "2", "3"},
 				StringValueQuery: []string{"a", "b", "c"},
 			},
@@ -115,9 +118,9 @@ func TestHTTPGoClient(t *testing.T) {
 			name:           "CheckRepeatedPath valid",
 			methodName:     "CheckRepeatedPath",
 			expectedMethod: http.MethodGet,
-			request: &proto.RepeatedCheck{
+			request: &common.RepeatedCheck{
 				BoolValue:        []bool{true, true},
-				EnumValue:        []proto.Options{proto.Options_FIRST, proto.Options_SECOND},
+				EnumValue:        []common.Options{common.Options_FIRST, common.Options_SECOND},
 				Int32Value:       []int32{2, 3},
 				Sint32Value:      []int32{4, 5},
 				Uint32Value:      []uint32{6, 7},
@@ -140,9 +143,9 @@ func TestHTTPGoClient(t *testing.T) {
 				body: []byte(`{"BoolValue":[true,true],"EnumValue":[0,1],"Int32Value":[2,3],"Sint32Value":[4,5],"Uint32Value":[6,7],"Int64Value":[8,9],"Sint64Value":[10,11],"Uint64Value":[12,13],"Sfixed32Value":[14,15],"Fixed32Value":[16,17],"FloatValue":[18,19],"Sfixed64Value":[20,21],"Fixed64Value":[22,23],"DoubleValue":[24,25],"StringValue":["a","b"],"BytesValue":["Yyxk"],"StringValueQuery":["e","f"]}`),
 				code: http.StatusOK,
 			},
-			expectedResponse: &proto.RepeatedCheck{
+			expectedResponse: &common.RepeatedCheck{
 				BoolValue:        []bool{true, true},
-				EnumValue:        []proto.Options{proto.Options_FIRST, proto.Options_SECOND},
+				EnumValue:        []common.Options{common.Options_FIRST, common.Options_SECOND},
 				Int32Value:       []int32{2, 3},
 				Sint32Value:      []int32{4, 5},
 				Uint32Value:      []uint32{6, 7},
@@ -165,9 +168,9 @@ func TestHTTPGoClient(t *testing.T) {
 			name:           "CheckRepeatedPost valid",
 			methodName:     "CheckRepeatedPost",
 			expectedMethod: http.MethodPost,
-			request: &proto.RepeatedCheck{
+			request: &common.RepeatedCheck{
 				BoolValue:        []bool{true, true},
-				EnumValue:        []proto.Options{proto.Options_FIRST, proto.Options_SECOND},
+				EnumValue:        []common.Options{common.Options_FIRST, common.Options_SECOND},
 				Int32Value:       []int32{2, 3},
 				Sint32Value:      []int32{4, 5},
 				Uint32Value:      []uint32{6, 7},
@@ -190,9 +193,9 @@ func TestHTTPGoClient(t *testing.T) {
 				body: []byte(`{"BoolValue":[true,true],"EnumValue":[0,1],"Int32Value":[2,3],"Sint32Value":[4,5],"Uint32Value":[6,7],"Int64Value":[8,9],"Sint64Value":[10,11],"Uint64Value":[12,13],"Sfixed32Value":[14,15],"Fixed32Value":[16,17],"FloatValue":[18,19],"Sfixed64Value":[20,21],"Fixed64Value":[22,23],"DoubleValue":[24,25],"StringValue":["a","b"],"BytesValue":["Yw==","ZA=="],"StringValueQuery":["e","f"]}`),
 				code: http.StatusOK,
 			},
-			expectedResponse: &proto.RepeatedCheck{
+			expectedResponse: &common.RepeatedCheck{
 				BoolValue:        []bool{true, true},
-				EnumValue:        []proto.Options{proto.Options_FIRST, proto.Options_SECOND},
+				EnumValue:        []common.Options{common.Options_FIRST, common.Options_SECOND},
 				Int32Value:       []int32{2, 3},
 				Sint32Value:      []int32{4, 5},
 				Uint32Value:      []uint32{6, 7},
@@ -240,7 +243,7 @@ func TestHTTPGoClient(t *testing.T) {
 			respCh <- test.mockResponse
 			wg.Wait()
 			compareClientResults(t, request, test, err)
-			//nolint:errcheck
+
 			if !pb.Equal(test.expectedResponse.(pb.Message), resp.(pb.Message)) {
 				t.Errorf("Expected response '%v', \nbut got '%v'", test.expectedResponse, resp)
 			}
@@ -292,23 +295,42 @@ func getMockServer(
 func TestHTTPGoServer(t *testing.T) {
 	var (
 		err     error
-		ctx                                    = context.Background()
-		handler proto.ServiceNameHTTPGoService = &implementation.Handler{}
-		// r                                      = http.NewServeMux()
-		r = router.New()
+		ctx                                        = context.Background()
+		handler protoHttp.ServiceNameHTTPGoService = &implementation.Handler{}
+		rHttp                                      = http.NewServeMux()
+		r                                          = router.New()
 	)
-	if err = proto.RegisterServiceNameHTTPGoServer(ctx, r, handler, middleware.ServerMiddlewares); err != nil {
+	if err = protoFast.RegisterServiceNameHTTPGoServer(ctx, r, handler, middleware.ServerMiddlewares); err != nil {
+		t.Fatal(err)
+	}
+	if err = protoHttp.RegisterServiceNameHTTPGoServer(ctx, rHttp, handler, middleware.ServerMiddlewares); err != nil {
 		t.Fatal(err)
 	}
 
-	ln, err := net.Listen("tcp4", "127.0.0.1:8080")
+	// lnHttp, err := net.Listen("tcp4", "127.0.0.1:8081")
+	lnConfig := net.ListenConfig{}
+	ln, err := lnConfig.Listen(ctx, "tcp4", "127.0.0.1:8080")
 	if err != nil {
 		t.Fatal(err)
 	}
+	errCh := make(chan error, 1)
 	go func() {
-		// _ = http.Serve(ln, r)
-		_ = fasthttp.Serve(ln, r.Handler)
+		// if err = http.Serve(lnHttp, rHttp); err != nil {
+		// 	errCh <- err
+		// }
+		if err = fasthttp.Serve(ln, r.Handler); err != nil {
+			errCh <- err
+		}
 	}()
+
+	// Give the server a moment to start or perform your logic
+	// Then check if an error occurred
+	select {
+	case err = <-errCh:
+		t.Fatalf("server failed: %v", err)
+	case <-time.After(time.Millisecond * 50):
+		// we wait a bit for an error to occur
+	}
 
 	tests := []testCaseServer{
 		{
@@ -317,24 +339,6 @@ func TestHTTPGoServer(t *testing.T) {
 			uri:                    "/v1/test/test/1",
 			requestBody:            []byte(`{"int64Argument":1,"stringArgument":"test"}`),
 			expectedResponseBody:   []byte(`{"stringValue":"test","intValue":1}`),
-			expectedResponseErr:    nil,
-			expectedRespStatusCode: http.StatusOK,
-		},
-		{
-			name:                   "imports plain",
-			method:                 http.MethodPost,
-			uri:                    "/v1/test/imports",
-			requestBody:            []byte(`{}`),
-			expectedResponseBody:   []byte(`{}`),
-			expectedResponseErr:    nil,
-			expectedRespStatusCode: http.StatusOK,
-		},
-		{
-			name:                   "query parameter",
-			method:                 http.MethodPost,
-			uri:                    "/v1/test/imports?val=test",
-			requestBody:            []byte(`{}`),
-			expectedResponseBody:   []byte(`{"val":"test"}`),
 			expectedResponseErr:    nil,
 			expectedRespStatusCode: http.StatusOK,
 		},
@@ -380,12 +384,15 @@ func TestHTTPGoServer(t *testing.T) {
 		body   []byte
 		client = http.Client{}
 		req    *http.Request
+		cancel context.CancelFunc
 	)
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			ctx, cancel = context.WithTimeout(context.Background(), time.Millisecond*500)
+			defer cancel()
 			if req, err = http.NewRequestWithContext(
-				context.Background(),
+				ctx,
 				test.method,
 				"http://"+ln.Addr().String()+test.uri,
 				bytes.NewReader(test.requestBody),
