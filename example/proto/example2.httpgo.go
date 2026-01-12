@@ -41,7 +41,8 @@ func GetServiceName2HTTPGoClient(
 }
 
 func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *SomeCustomMsg) (resp *SomeCustomMsg, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
 	body, err = json.Marshal(request)
@@ -98,7 +99,8 @@ func GetSecondServiceName2HTTPGoClient(
 }
 
 func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *SomeCustomMsg) (resp *SomeCustomMsg, err error) {
-	req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var parameters = []string{
 		"val=%s",

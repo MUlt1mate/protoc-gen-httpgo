@@ -1424,7 +1424,439 @@ func (v *MultipartFormRequest) UnmarshalJSON(data []byte) error {
 func (v *MultipartFormRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon4(l, v)
 }
-func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(in *jlexer.Lexer, out *InputMsgName) {
+func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(in *jlexer.Lexer, out *MultipartFormAllTypes) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "BoolValue":
+			out.BoolValue = bool(in.Bool())
+		case "EnumValue":
+			out.EnumValue = Options(in.Int32())
+		case "Int32Value":
+			out.Int32Value = int32(in.Int32())
+		case "Sint32Value":
+			out.Sint32Value = int32(in.Int32())
+		case "Uint32Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Uint32Value = nil
+			} else {
+				in.Delim('[')
+				if out.Uint32Value == nil {
+					if !in.IsDelim(']') {
+						out.Uint32Value = make([]uint32, 0, 16)
+					} else {
+						out.Uint32Value = []uint32{}
+					}
+				} else {
+					out.Uint32Value = (out.Uint32Value)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v58 uint32
+					v58 = uint32(in.Uint32())
+					out.Uint32Value = append(out.Uint32Value, v58)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "Int64Value":
+			out.Int64Value = int64(in.Int64())
+		case "Sint64Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Sint64Value = nil
+			} else {
+				if out.Sint64Value == nil {
+					out.Sint64Value = new(int64)
+				}
+				*out.Sint64Value = int64(in.Int64())
+			}
+		case "Uint64Value":
+			out.Uint64Value = uint64(in.Uint64())
+		case "Sfixed32Value":
+			out.Sfixed32Value = int32(in.Int32())
+		case "Fixed32Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Fixed32Value = nil
+			} else {
+				in.Delim('[')
+				if out.Fixed32Value == nil {
+					if !in.IsDelim(']') {
+						out.Fixed32Value = make([]uint32, 0, 16)
+					} else {
+						out.Fixed32Value = []uint32{}
+					}
+				} else {
+					out.Fixed32Value = (out.Fixed32Value)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v59 uint32
+					v59 = uint32(in.Uint32())
+					out.Fixed32Value = append(out.Fixed32Value, v59)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "FloatValue":
+			out.FloatValue = float32(in.Float32())
+		case "Sfixed64Value":
+			out.Sfixed64Value = int64(in.Int64())
+		case "Fixed64Value":
+			if in.IsNull() {
+				in.Skip()
+				out.Fixed64Value = nil
+			} else {
+				if out.Fixed64Value == nil {
+					out.Fixed64Value = new(uint64)
+				}
+				*out.Fixed64Value = uint64(in.Uint64())
+			}
+		case "DoubleValue":
+			out.DoubleValue = float64(in.Float64())
+		case "StringValue":
+			out.StringValue = string(in.String())
+		case "BytesValue":
+			if in.IsNull() {
+				in.Skip()
+				out.BytesValue = nil
+			} else {
+				out.BytesValue = in.Bytes()
+			}
+		case "SliceStringValue":
+			if in.IsNull() {
+				in.Skip()
+				out.SliceStringValue = nil
+			} else {
+				in.Delim('[')
+				if out.SliceStringValue == nil {
+					if !in.IsDelim(']') {
+						out.SliceStringValue = make([]string, 0, 4)
+					} else {
+						out.SliceStringValue = []string{}
+					}
+				} else {
+					out.SliceStringValue = (out.SliceStringValue)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v61 string
+					v61 = string(in.String())
+					out.SliceStringValue = append(out.SliceStringValue, v61)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "SliceInt32Value":
+			if in.IsNull() {
+				in.Skip()
+				out.SliceInt32Value = nil
+			} else {
+				in.Delim('[')
+				if out.SliceInt32Value == nil {
+					if !in.IsDelim(']') {
+						out.SliceInt32Value = make([]int32, 0, 16)
+					} else {
+						out.SliceInt32Value = []int32{}
+					}
+				} else {
+					out.SliceInt32Value = (out.SliceInt32Value)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v62 int32
+					v62 = int32(in.Int32())
+					out.SliceInt32Value = append(out.SliceInt32Value, v62)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "document":
+			if in.IsNull() {
+				in.Skip()
+				out.Document = nil
+			} else {
+				if out.Document == nil {
+					out.Document = new(FileEx)
+				}
+				(*out.Document).UnmarshalEasyJSON(in)
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(out *jwriter.Writer, in MultipartFormAllTypes) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if in.BoolValue {
+		const prefix string = ",\"BoolValue\":"
+		first = false
+		out.RawString(prefix[1:])
+		out.Bool(bool(in.BoolValue))
+	}
+	if in.EnumValue != 0 {
+		const prefix string = ",\"EnumValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int32(int32(in.EnumValue))
+	}
+	if in.Int32Value != 0 {
+		const prefix string = ",\"Int32Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int32(int32(in.Int32Value))
+	}
+	if in.Sint32Value != 0 {
+		const prefix string = ",\"Sint32Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int32(int32(in.Sint32Value))
+	}
+	if len(in.Uint32Value) != 0 {
+		const prefix string = ",\"Uint32Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v63, v64 := range in.Uint32Value {
+				if v63 > 0 {
+					out.RawByte(',')
+				}
+				out.Uint32(uint32(v64))
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.Int64Value != 0 {
+		const prefix string = ",\"Int64Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.Int64Value))
+	}
+	if in.Sint64Value != nil {
+		const prefix string = ",\"Sint64Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(*in.Sint64Value))
+	}
+	if in.Uint64Value != 0 {
+		const prefix string = ",\"Uint64Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Uint64(uint64(in.Uint64Value))
+	}
+	if in.Sfixed32Value != 0 {
+		const prefix string = ",\"Sfixed32Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int32(int32(in.Sfixed32Value))
+	}
+	if len(in.Fixed32Value) != 0 {
+		const prefix string = ",\"Fixed32Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v65, v66 := range in.Fixed32Value {
+				if v65 > 0 {
+					out.RawByte(',')
+				}
+				out.Uint32(uint32(v66))
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.FloatValue != 0 {
+		const prefix string = ",\"FloatValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Float32(float32(in.FloatValue))
+	}
+	if in.Sfixed64Value != 0 {
+		const prefix string = ",\"Sfixed64Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int64(int64(in.Sfixed64Value))
+	}
+	if in.Fixed64Value != nil {
+		const prefix string = ",\"Fixed64Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Uint64(uint64(*in.Fixed64Value))
+	}
+	if in.DoubleValue != 0 {
+		const prefix string = ",\"DoubleValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Float64(float64(in.DoubleValue))
+	}
+	if in.StringValue != "" {
+		const prefix string = ",\"StringValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(in.StringValue))
+	}
+	if len(in.BytesValue) != 0 {
+		const prefix string = ",\"BytesValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Base64Bytes(in.BytesValue)
+	}
+	if len(in.SliceStringValue) != 0 {
+		const prefix string = ",\"SliceStringValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v69, v70 := range in.SliceStringValue {
+				if v69 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v70))
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.SliceInt32Value) != 0 {
+		const prefix string = ",\"SliceInt32Value\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v71, v72 := range in.SliceInt32Value {
+				if v71 > 0 {
+					out.RawByte(',')
+				}
+				out.Int32(int32(v72))
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.Document != nil {
+		const prefix string = ",\"document\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		(*in.Document).MarshalEasyJSON(out)
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v MultipartFormAllTypes) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v MultipartFormAllTypes) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *MultipartFormAllTypes) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *MultipartFormAllTypes) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(l, v)
+}
+func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(in *jlexer.Lexer, out *InputMsgName) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1457,7 +1889,7 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(
 		in.Consumed()
 	}
 }
-func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(out *jwriter.Writer, in InputMsgName) {
+func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(out *jwriter.Writer, in InputMsgName) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1483,27 +1915,27 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(
 // MarshalJSON supports json.Marshaler interface
 func (v InputMsgName) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(&w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v InputMsgName) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *InputMsgName) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(&r, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *InputMsgName) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(l, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(l, v)
 }
-func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(in *jlexer.Lexer, out *FileEx) {
+func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(in *jlexer.Lexer, out *FileEx) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1544,9 +1976,9 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v59 string
-					v59 = string(in.String())
-					(out.Headers)[key] = v59
+					var v74 string
+					v74 = string(in.String())
+					(out.Headers)[key] = v74
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -1561,7 +1993,7 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(
 		in.Consumed()
 	}
 }
-func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(out *jwriter.Writer, in FileEx) {
+func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(out *jwriter.Writer, in FileEx) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1591,16 +2023,16 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(
 		}
 		{
 			out.RawByte('{')
-			v62First := true
-			for v62Name, v62Value := range in.Headers {
-				if v62First {
-					v62First = false
+			v77First := true
+			for v77Name, v77Value := range in.Headers {
+				if v77First {
+					v77First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v62Name))
+				out.String(string(v77Name))
 				out.RawByte(':')
-				out.String(string(v62Value))
+				out.String(string(v77Value))
 			}
 			out.RawByte('}')
 		}
@@ -1611,27 +2043,27 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(
 // MarshalJSON supports json.Marshaler interface
 func (v FileEx) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(&w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v FileEx) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *FileEx) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(&r, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *FileEx) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon6(l, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(l, v)
 }
-func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(in *jlexer.Lexer, out *Empty) {
+func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(in *jlexer.Lexer, out *Empty) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1660,7 +2092,7 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(
 		in.Consumed()
 	}
 }
-func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(out *jwriter.Writer, in Empty) {
+func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(out *jwriter.Writer, in Empty) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1670,27 +2102,27 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(
 // MarshalJSON supports json.Marshaler interface
 func (v Empty) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(&w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Empty) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Empty) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(&r, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Empty) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(l, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(l, v)
 }
-func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(in *jlexer.Lexer, out *ArrayItem) {
+func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(in *jlexer.Lexer, out *ArrayItem) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1721,7 +2153,7 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(
 		in.Consumed()
 	}
 }
-func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(out *jwriter.Writer, in ArrayItem) {
+func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(out *jwriter.Writer, in ArrayItem) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1737,27 +2169,27 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(
 // MarshalJSON supports json.Marshaler interface
 func (v ArrayItem) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(&w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v ArrayItem) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *ArrayItem) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(&r, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *ArrayItem) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon8(l, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(l, v)
 }
-func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(in *jlexer.Lexer, out *Array) {
+func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(in *jlexer.Lexer, out *Array) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1792,17 +2224,17 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(
 					out.Items = (out.Items)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v63 *ArrayItem
+					var v78 *ArrayItem
 					if in.IsNull() {
 						in.Skip()
-						v63 = nil
+						v78 = nil
 					} else {
-						if v63 == nil {
-							v63 = new(ArrayItem)
+						if v78 == nil {
+							v78 = new(ArrayItem)
 						}
-						(*v63).UnmarshalEasyJSON(in)
+						(*v78).UnmarshalEasyJSON(in)
 					}
-					out.Items = append(out.Items, v63)
+					out.Items = append(out.Items, v78)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1817,7 +2249,7 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(
 		in.Consumed()
 	}
 }
-func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(out *jwriter.Writer, in Array) {
+func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(out *jwriter.Writer, in Array) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1827,14 +2259,14 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(
 		out.RawString(prefix[1:])
 		{
 			out.RawByte('[')
-			for v64, v65 := range in.Items {
-				if v64 > 0 {
+			for v79, v80 := range in.Items {
+				if v79 > 0 {
 					out.RawByte(',')
 				}
-				if v65 == nil {
+				if v80 == nil {
 					out.RawString("null")
 				} else {
-					(*v65).MarshalEasyJSON(out)
+					(*v80).MarshalEasyJSON(out)
 				}
 			}
 			out.RawByte(']')
@@ -1846,27 +2278,27 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(
 // MarshalJSON supports json.Marshaler interface
 func (v Array) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(&w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Array) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Array) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(&r, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Array) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon9(l, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(l, v)
 }
-func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(in *jlexer.Lexer, out *AllTypesMsg) {
+func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon11(in *jlexer.Lexer, out *AllTypesMsg) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1948,9 +2380,9 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10
 					out.SliceStringValue = (out.SliceStringValue)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v67 string
-					v67 = string(in.String())
-					out.SliceStringValue = append(out.SliceStringValue, v67)
+					var v82 string
+					v82 = string(in.String())
+					out.SliceStringValue = append(out.SliceStringValue, v82)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1971,9 +2403,9 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10
 					out.SliceInt32Value = (out.SliceInt32Value)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v68 int32
-					v68 = int32(in.Int32())
-					out.SliceInt32Value = append(out.SliceInt32Value, v68)
+					var v83 int32
+					v83 = int32(in.Int32())
+					out.SliceInt32Value = append(out.SliceInt32Value, v83)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -1988,7 +2420,7 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10
 		in.Consumed()
 	}
 }
-func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(out *jwriter.Writer, in AllTypesMsg) {
+func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon11(out *jwriter.Writer, in AllTypesMsg) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -2168,11 +2600,11 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10
 		}
 		{
 			out.RawByte('[')
-			for v71, v72 := range in.SliceStringValue {
-				if v71 > 0 {
+			for v86, v87 := range in.SliceStringValue {
+				if v86 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v72))
+				out.String(string(v87))
 			}
 			out.RawByte(']')
 		}
@@ -2187,11 +2619,11 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10
 		}
 		{
 			out.RawByte('[')
-			for v73, v74 := range in.SliceInt32Value {
-				if v73 > 0 {
+			for v88, v89 := range in.SliceInt32Value {
+				if v88 > 0 {
 					out.RawByte(',')
 				}
-				out.Int32(int32(v74))
+				out.Int32(int32(v89))
 			}
 			out.RawByte(']')
 		}
@@ -2202,23 +2634,23 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10
 // MarshalJSON supports json.Marshaler interface
 func (v AllTypesMsg) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(&w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon11(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v AllTypesMsg) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(w, v)
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon11(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *AllTypesMsg) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(&r, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon11(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *AllTypesMsg) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10(l, v)
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon11(l, v)
 }

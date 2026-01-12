@@ -107,4 +107,25 @@ message FileEx {
   map<string, string> headers = 3;
 }
 
-
+message MultipartFormAllTypes {
+  bool BoolValue = 1;
+  options EnumValue = 2;
+  int32 Int32Value = 3;
+  sint32 Sint32Value = 4;
+  repeated uint32 Uint32Value = 5;
+  int64 Int64Value = 6;
+  optional sint64 Sint64Value = 7;
+  uint64 Uint64Value = 8;
+  sfixed32 Sfixed32Value = 9;
+  repeated fixed32 Fixed32Value = 10;
+  float FloatValue = 11;
+  sfixed64 Sfixed64Value = 12;
+  optional fixed64 Fixed64Value = 13;
+  double DoubleValue = 14;
+  string StringValue = 15;
+  bytes BytesValue = 16;
+//  InputMsgName MessageValue = 17;
+  repeated string SliceStringValue = 18;
+  repeated int32 SliceInt32Value = 19;
+  FileEx document = 20;
+}

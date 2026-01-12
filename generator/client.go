@@ -75,12 +75,16 @@ func (g *generator) genClientMethod(
 	case libraryNetHTTP:
 		g.gf.P("	req := &", g.lib.Ident("Request"), "{Header: make(", g.lib.Ident("Header"), ")}")
 	case libraryFastHTTP:
-		g.gf.P("	req := &", g.lib.Ident("Request"), "{}")
+		g.gf.P("	req := ", g.lib.Ident("AcquireRequest"), "()")
+		g.gf.P("	defer ", g.lib.Ident("ReleaseRequest"), "(req)")
 	}
 	g.gf.P("	var queryArgs string")
-	if method.HasBody() {
+	switch {
+	case method.withFiles:
+		g.getMultipartRequestClient(method)
+	case method.HasBody():
 		g.genMarshalRequestStruct()
-	} else {
+	default:
 		if err = g.genQueryRequestParameters(method); err != nil {
 			return err
 		}
@@ -255,6 +259,37 @@ func (g *generator) genMarshalRequestStruct() {
 		g.gf.P("	req.Body = ", ioPackage.Ident("NopCloser"), "(", bytesPackage.Ident("NewBuffer"), "(body))")
 	case libraryFastHTTP:
 		g.gf.P("	req.SetBody(body)")
+	}
+}
+
+func (g *generator) getMultipartRequestClient(method methodParams) {
+	g.gf.P("var requestBody ", bytesPackage.Ident("Buffer"))
+	g.gf.P("writer := ", multipartPackage.Ident("NewWriter"), "(&requestBody)")
+	for _, f := range method.inputFieldList {
+		methodField := method.inputFields[f]
+		if methodField.isFile {
+			g.gf.P("part, err := writer.CreateFormFile(\"", methodField.protoName, "\", request.", methodField.goName, ".Name)")
+			g.gf.P("if err != nil {")
+			g.gf.P("	return nil, fmt.Errorf(\"failed to create form file ", methodField.protoName, ":  %w\", err)")
+			g.gf.P("}")
+			g.gf.P("if _, err = part.Write(request.", methodField.goName, ".File); err != nil {")
+			g.gf.P("	return nil, fmt.Errorf(\"failed to write data to part ", methodField.protoName, ": %w\", err)")
+			g.gf.P("}")
+		} else {
+			g.gf.P("if err = writer.WriteField(\"", methodField.protoName, "\", request.", methodField.goName, "); err != nil {")
+			g.gf.P("	return nil, fmt.Errorf(\"failed to write field ", methodField.protoName, ":  %w\", err)")
+			g.gf.P("}")
+		}
+	}
+	g.gf.P("if err = writer.Close(); err != nil {")
+	g.gf.P("	return nil, fmt.Errorf(\"failed to close writer: %w\", err)")
+	g.gf.P("}")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	req.Body = ", ioPackage.Ident("NopCloser"), "(", bytesPackage.Ident("NewBuffer"), "(requestBody.Bytes()))")
+	case libraryFastHTTP:
+		g.gf.P("req.SetBody(requestBody.Bytes())")
+		g.gf.P("req.Header.SetContentType(writer.FormDataContentType())")
 	}
 }
 
