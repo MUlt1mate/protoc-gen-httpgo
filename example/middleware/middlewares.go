@@ -105,6 +105,7 @@ func HeadersServerMiddleware(
 ) (resp interface{}, err error) {
 	fastCtx, _ := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx)
 	jsonContentType := "application/json"
+	// check doesn't work with multipart form
 	// contentType := string(fastCtx.Request.Header.ContentType())
 	// if contentType != jsonContentType {
 	// 	fastCtx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -189,6 +190,7 @@ func HeadersClientMiddleware(
 	req interface{},
 	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
+	// need to move to generation
 	// jsonContentType := "application/json"
 	// req.(*fasthttp.Request).Header.SetContentType(jsonContentType)
 	resp, err = next(ctx, req)

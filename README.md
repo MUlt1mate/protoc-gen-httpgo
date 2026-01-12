@@ -18,6 +18,7 @@ This is a protoc plugin that generates HTTP server and client code from proto fi
 - Utilizes google.api.http for defining HTTP paths (also can generate it)
 - Supports a wide range of data types in path parameters
 - Supports middlewares
+- Supports multipart form with files
 
 ## Usage
 
@@ -217,13 +218,29 @@ with proto names.
 * /v1/test?value=1 - correct
 * /v1/test?Value=1 - incorrect
 
+#### Files
+
+To send and receive files you need to define file field as a struct with given fields
+
+```protobuf
+message Request {
+  FileStruct document = 1;
+  FileStruct anotherDocument = 2;
+}
+
+message FileStruct {
+  bytes file = 1;
+  string name = 2;
+  map<string, string> headers = 3;
+}
+```
+
 ## TODO
 
 - Improve test cases
 - Implement more web servers
     - gin
     - chi
-- File upload
 - Full support
   for [httprule](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule)
     - response_body supports for client natively, for server only in custom middleware
