@@ -223,20 +223,6 @@ func getFilename(file *protogen.File) string {
 	return strings.ToUpper(fileName[:1]) + fileName[1:]
 }
 
-// getGolangTypeName we have to substitute some of the type names for go compiler
-func (f field) getGolangTypeName() string {
-	switch f.kind {
-	case protoreflect.Fixed64Kind:
-		return protoreflect.Uint64Kind.String()
-	case protoreflect.Sint32Kind, protoreflect.Sfixed32Kind:
-		return protoreflect.Int32Kind.String()
-	case protoreflect.Fixed32Kind:
-		return protoreflect.Uint32Kind.String()
-	}
-
-	return f.kind.String()
-}
-
 func (f field) getVariablePlaceholder() (string, error) {
 	switch f.kind {
 	case protoreflect.StringKind,
