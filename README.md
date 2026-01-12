@@ -221,7 +221,6 @@ with proto names.
 
 - Improve test cases
 - Implement more web servers
-    - native net/http
     - gin
     - chi
 - File upload
@@ -230,8 +229,8 @@ with proto names.
     - response_body supports for client natively, for server only in custom middleware
 - dependabot
 - buf
-- verbose levels
 - benchmark
 - websocket
 - production ready middleware example
 - optionally ignore unknown query parameters
+- check overflow for numeric types after conversion
