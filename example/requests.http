@@ -10,5 +10,5 @@ otherFieldValue
 Content-Disposition: form-data; name="document"; filename="file.txt"
 Content-Type: application/json
 
-< ./example/proto/no_url.proto
+< ./proto/no_url.proto
 --WebAppBoundary--

@@ -159,3 +159,8 @@ func (h *Handler) MultipartForm(ctx context.Context, request *proto.MultipartFor
 	log.Printf("file name %s with length %d, other field: %s", request.Document.Name, len(request.Document.File), request.OtherField)
 	return &proto.Empty{}, nil
 }
+
+func (h *Handler) MultipartFormAllTypes(ctx context.Context, types *proto.MultipartFormAllTypes) (*proto.Empty, error) {
+	// TODO implement me
+	panic("implement me")
+}

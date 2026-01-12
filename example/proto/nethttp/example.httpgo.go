@@ -1841,6 +1841,11 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 			return nil, fmt.Errorf("failed to read file: document: %w", err)
 		}
 	}
+	if values := r.Form["RepeatedStringValue"]; len(values) > 0 {
+		for _, value := range values {
+			arg.RepeatedStringValue = append(arg.RepeatedStringValue, value)
+		}
+	}
 	for key, values := range r.URL.Query() {
 		var value = values[0]
 		switch key {
@@ -1963,6 +1968,8 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 		case "document":
 			err = fmt.Errorf("unsupported type message for query argument document")
 			return
+		case "RepeatedStringValue[]":
+			arg.RepeatedStringValue = append(arg.RepeatedStringValue, value)
 		default:
 			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
@@ -2345,11 +2352,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request
 	var queryArgs string
 	BoolValueStrs := make([]string, len(request.BoolValue))
 	for i, v := range request.BoolValue {
-		if v {
-			BoolValueStrs[i] = "true"
-		} else {
-			BoolValueStrs[i] = "false"
-		}
+		BoolValueStrs[i] = strconv.FormatBool(v)
 	}
 	BoolValueRequest := strings.Join(BoolValueStrs, ",")
 	EnumValueStrs := make([]string, len(request.EnumValue))
@@ -2895,59 +2898,71 @@ func (p *ServiceNameHTTPGoClient) MultipartFormAllTypes(ctx context.Context, req
 	var queryArgs string
 	var requestBody bytes.Buffer
 	writer := multipart.NewWriter(&requestBody)
-	if err = writer.WriteField("BoolValue", request.BoolValue); err != nil {
+	if err = writer.WriteField("BoolValue", strconv.FormatBool(request.BoolValue)); err != nil {
 		return nil, fmt.Errorf("failed to write field BoolValue:  %w", err)
 	}
-	if err = writer.WriteField("EnumValue", request.EnumValue); err != nil {
+	if err = writer.WriteField("EnumValue", strconv.FormatInt(int64(request.EnumValue), 10)); err != nil {
 		return nil, fmt.Errorf("failed to write field EnumValue:  %w", err)
 	}
-	if err = writer.WriteField("Int32Value", request.Int32Value); err != nil {
+	if err = writer.WriteField("Int32Value", strconv.FormatInt(int64(request.Int32Value), 10)); err != nil {
 		return nil, fmt.Errorf("failed to write field Int32Value:  %w", err)
 	}
-	if err = writer.WriteField("Sint32Value", request.Sint32Value); err != nil {
+	if err = writer.WriteField("Sint32Value", strconv.FormatInt(int64(request.Sint32Value), 10)); err != nil {
 		return nil, fmt.Errorf("failed to write field Sint32Value:  %w", err)
 	}
-	if err = writer.WriteField("Uint32Value", request.Uint32Value); err != nil {
-		return nil, fmt.Errorf("failed to write field Uint32Value:  %w", err)
+	for _, value := range request.Uint32Value {
+		if err = writer.WriteField("Uint32Value", strconv.FormatInt(int64(value), 10)); err != nil {
+			return nil, fmt.Errorf("failed to write field Uint32Value:  %w", err)
+		}
 	}
-	if err = writer.WriteField("Int64Value", request.Int64Value); err != nil {
+	if err = writer.WriteField("Int64Value", strconv.FormatInt(request.Int64Value, 10)); err != nil {
 		return nil, fmt.Errorf("failed to write field Int64Value:  %w", err)
 	}
-	if err = writer.WriteField("Sint64Value", request.Sint64Value); err != nil {
-		return nil, fmt.Errorf("failed to write field Sint64Value:  %w", err)
+	if request.Sint64Value != nil {
+		if err = writer.WriteField("Sint64Value", strconv.FormatInt(*request.Sint64Value, 10)); err != nil {
+			return nil, fmt.Errorf("failed to write field Sint64Value:  %w", err)
+		}
 	}
-	if err = writer.WriteField("Uint64Value", request.Uint64Value); err != nil {
+	if err = writer.WriteField("Uint64Value", strconv.FormatUint(request.Uint64Value, 10)); err != nil {
 		return nil, fmt.Errorf("failed to write field Uint64Value:  %w", err)
 	}
-	if err = writer.WriteField("Sfixed32Value", request.Sfixed32Value); err != nil {
+	if err = writer.WriteField("Sfixed32Value", strconv.FormatInt(int64(request.Sfixed32Value), 10)); err != nil {
 		return nil, fmt.Errorf("failed to write field Sfixed32Value:  %w", err)
 	}
-	if err = writer.WriteField("Fixed32Value", request.Fixed32Value); err != nil {
-		return nil, fmt.Errorf("failed to write field Fixed32Value:  %w", err)
+	for _, value := range request.Fixed32Value {
+		if err = writer.WriteField("Fixed32Value", strconv.FormatInt(int64(value), 10)); err != nil {
+			return nil, fmt.Errorf("failed to write field Fixed32Value:  %w", err)
+		}
 	}
-	if err = writer.WriteField("FloatValue", request.FloatValue); err != nil {
+	if err = writer.WriteField("FloatValue", strconv.FormatFloat(float64(request.FloatValue), 'f', -1, 64)); err != nil {
 		return nil, fmt.Errorf("failed to write field FloatValue:  %w", err)
 	}
-	if err = writer.WriteField("Sfixed64Value", request.Sfixed64Value); err != nil {
+	if err = writer.WriteField("Sfixed64Value", strconv.FormatInt(request.Sfixed64Value, 10)); err != nil {
 		return nil, fmt.Errorf("failed to write field Sfixed64Value:  %w", err)
 	}
-	if err = writer.WriteField("Fixed64Value", request.Fixed64Value); err != nil {
-		return nil, fmt.Errorf("failed to write field Fixed64Value:  %w", err)
+	if request.Fixed64Value != nil {
+		if err = writer.WriteField("Fixed64Value", strconv.FormatUint(*request.Fixed64Value, 10)); err != nil {
+			return nil, fmt.Errorf("failed to write field Fixed64Value:  %w", err)
+		}
 	}
-	if err = writer.WriteField("DoubleValue", request.DoubleValue); err != nil {
+	if err = writer.WriteField("DoubleValue", strconv.FormatFloat(request.DoubleValue, 'f', -1, 64)); err != nil {
 		return nil, fmt.Errorf("failed to write field DoubleValue:  %w", err)
 	}
 	if err = writer.WriteField("StringValue", request.StringValue); err != nil {
 		return nil, fmt.Errorf("failed to write field StringValue:  %w", err)
 	}
-	if err = writer.WriteField("BytesValue", request.BytesValue); err != nil {
+	if err = writer.WriteField("BytesValue", string(request.BytesValue)); err != nil {
 		return nil, fmt.Errorf("failed to write field BytesValue:  %w", err)
 	}
-	if err = writer.WriteField("SliceStringValue", request.SliceStringValue); err != nil {
-		return nil, fmt.Errorf("failed to write field SliceStringValue:  %w", err)
+	for _, value := range request.SliceStringValue {
+		if err = writer.WriteField("SliceStringValue", value); err != nil {
+			return nil, fmt.Errorf("failed to write field SliceStringValue:  %w", err)
+		}
 	}
-	if err = writer.WriteField("SliceInt32Value", request.SliceInt32Value); err != nil {
-		return nil, fmt.Errorf("failed to write field SliceInt32Value:  %w", err)
+	for _, value := range request.SliceInt32Value {
+		if err = writer.WriteField("SliceInt32Value", strconv.FormatInt(int64(value), 10)); err != nil {
+			return nil, fmt.Errorf("failed to write field SliceInt32Value:  %w", err)
+		}
 	}
 	part, err := writer.CreateFormFile("document", request.Document.Name)
 	if err != nil {
@@ -2955,6 +2970,11 @@ func (p *ServiceNameHTTPGoClient) MultipartFormAllTypes(ctx context.Context, req
 	}
 	if _, err = part.Write(request.Document.File); err != nil {
 		return nil, fmt.Errorf("failed to write data to part document: %w", err)
+	}
+	for _, value := range request.RepeatedStringValue {
+		if err = writer.WriteField("RepeatedStringValue", value); err != nil {
+			return nil, fmt.Errorf("failed to write field RepeatedStringValue:  %w", err)
+		}
 	}
 	if err = writer.Close(); err != nil {
 		return nil, fmt.Errorf("failed to close writer: %w", err)

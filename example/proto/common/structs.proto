@@ -124,8 +124,9 @@ message MultipartFormAllTypes {
   double DoubleValue = 14;
   string StringValue = 15;
   bytes BytesValue = 16;
-//  InputMsgName MessageValue = 17;
+  //  InputMsgName MessageValue = 17;
   repeated string SliceStringValue = 18;
   repeated int32 SliceInt32Value = 19;
   FileEx document = 20;
+  repeated string RepeatedStringValue = 21;
 }

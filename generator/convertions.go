@@ -227,3 +227,27 @@ func getFieldConversionFuncName(f field) string {
 
 	return f.kind.String()
 }
+
+func (g *generator) convertFuncToString(f field, source string) (string, error) {
+	switch f.kind {
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind:
+		return g.gf.QualifiedGoIdent(strconvPackage.Ident("FormatInt")) + "(int64(" + source + "), 10)", nil
+	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
+		return g.gf.QualifiedGoIdent(strconvPackage.Ident("FormatInt")) + "(" + source + ", 10)", nil
+	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
+		return g.gf.QualifiedGoIdent(strconvPackage.Ident("FormatUint")) + "(" + source + ", 10)", nil
+	case protoreflect.FloatKind:
+		return g.gf.QualifiedGoIdent(strconvPackage.Ident("FormatFloat")) + "(float64(" + source + "), 'f', -1, 64)", nil
+	case protoreflect.DoubleKind:
+		return g.gf.QualifiedGoIdent(strconvPackage.Ident("FormatFloat")) + "(" + source + ", 'f', -1, 64)", nil
+	case protoreflect.BytesKind:
+		return "string(" + source + ")", nil
+	case protoreflect.BoolKind:
+		return g.gf.QualifiedGoIdent(strconvPackage.Ident("FormatBool")) + "(" + source + ")", nil
+	case protoreflect.EnumKind:
+		// Assuming Enum is represented as int
+		return g.gf.QualifiedGoIdent(strconvPackage.Ident("FormatInt")) + "(int64(" + source + "), 10)", nil
+	default:
+		return "", fmt.Errorf(`unsupported type %s for path variable: "%s"`, f.kind, f.goName)
+	}
+}

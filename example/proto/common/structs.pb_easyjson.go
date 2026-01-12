@@ -1594,6 +1594,29 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(
 				}
 				(*out.Document).UnmarshalEasyJSON(in)
 			}
+		case "RepeatedStringValue":
+			if in.IsNull() {
+				in.Skip()
+				out.RepeatedStringValue = nil
+			} else {
+				in.Delim('[')
+				if out.RepeatedStringValue == nil {
+					if !in.IsDelim(']') {
+						out.RepeatedStringValue = make([]string, 0, 4)
+					} else {
+						out.RepeatedStringValue = []string{}
+					}
+				} else {
+					out.RepeatedStringValue = (out.RepeatedStringValue)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v63 string
+					v63 = string(in.String())
+					out.RepeatedStringValue = append(out.RepeatedStringValue, v63)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
 		default:
 			in.SkipRecursive()
 		}
@@ -1654,11 +1677,11 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(
 		}
 		{
 			out.RawByte('[')
-			for v63, v64 := range in.Uint32Value {
-				if v63 > 0 {
+			for v64, v65 := range in.Uint32Value {
+				if v64 > 0 {
 					out.RawByte(',')
 				}
-				out.Uint32(uint32(v64))
+				out.Uint32(uint32(v65))
 			}
 			out.RawByte(']')
 		}
@@ -1713,11 +1736,11 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(
 		}
 		{
 			out.RawByte('[')
-			for v65, v66 := range in.Fixed32Value {
-				if v65 > 0 {
+			for v66, v67 := range in.Fixed32Value {
+				if v66 > 0 {
 					out.RawByte(',')
 				}
-				out.Uint32(uint32(v66))
+				out.Uint32(uint32(v67))
 			}
 			out.RawByte(']')
 		}
@@ -1792,11 +1815,11 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(
 		}
 		{
 			out.RawByte('[')
-			for v69, v70 := range in.SliceStringValue {
-				if v69 > 0 {
+			for v70, v71 := range in.SliceStringValue {
+				if v70 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v70))
+				out.String(string(v71))
 			}
 			out.RawByte(']')
 		}
@@ -1811,11 +1834,11 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(
 		}
 		{
 			out.RawByte('[')
-			for v71, v72 := range in.SliceInt32Value {
-				if v71 > 0 {
+			for v72, v73 := range in.SliceInt32Value {
+				if v72 > 0 {
 					out.RawByte(',')
 				}
-				out.Int32(int32(v72))
+				out.Int32(int32(v73))
 			}
 			out.RawByte(']')
 		}
@@ -1829,6 +1852,25 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon5(
 			out.RawString(prefix)
 		}
 		(*in.Document).MarshalEasyJSON(out)
+	}
+	if len(in.RepeatedStringValue) != 0 {
+		const prefix string = ",\"RepeatedStringValue\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v74, v75 := range in.RepeatedStringValue {
+				if v74 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v75))
+			}
+			out.RawByte(']')
+		}
 	}
 	out.RawByte('}')
 }
@@ -1976,9 +2018,9 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(
 				for !in.IsDelim('}') {
 					key := string(in.String())
 					in.WantColon()
-					var v74 string
-					v74 = string(in.String())
-					(out.Headers)[key] = v74
+					var v77 string
+					v77 = string(in.String())
+					(out.Headers)[key] = v77
 					in.WantComma()
 				}
 				in.Delim('}')
@@ -2023,16 +2065,16 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon7(
 		}
 		{
 			out.RawByte('{')
-			v77First := true
-			for v77Name, v77Value := range in.Headers {
-				if v77First {
-					v77First = false
+			v80First := true
+			for v80Name, v80Value := range in.Headers {
+				if v80First {
+					v80First = false
 				} else {
 					out.RawByte(',')
 				}
-				out.String(string(v77Name))
+				out.String(string(v80Name))
 				out.RawByte(':')
-				out.String(string(v77Value))
+				out.String(string(v80Value))
 			}
 			out.RawByte('}')
 		}
@@ -2224,17 +2266,17 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10
 					out.Items = (out.Items)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v78 *ArrayItem
+					var v81 *ArrayItem
 					if in.IsNull() {
 						in.Skip()
-						v78 = nil
+						v81 = nil
 					} else {
-						if v78 == nil {
-							v78 = new(ArrayItem)
+						if v81 == nil {
+							v81 = new(ArrayItem)
 						}
-						(*v78).UnmarshalEasyJSON(in)
+						(*v81).UnmarshalEasyJSON(in)
 					}
-					out.Items = append(out.Items, v78)
+					out.Items = append(out.Items, v81)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2259,14 +2301,14 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon10
 		out.RawString(prefix[1:])
 		{
 			out.RawByte('[')
-			for v79, v80 := range in.Items {
-				if v79 > 0 {
+			for v82, v83 := range in.Items {
+				if v82 > 0 {
 					out.RawByte(',')
 				}
-				if v80 == nil {
+				if v83 == nil {
 					out.RawString("null")
 				} else {
-					(*v80).MarshalEasyJSON(out)
+					(*v83).MarshalEasyJSON(out)
 				}
 			}
 			out.RawByte(']')
@@ -2380,9 +2422,9 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon11
 					out.SliceStringValue = (out.SliceStringValue)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v82 string
-					v82 = string(in.String())
-					out.SliceStringValue = append(out.SliceStringValue, v82)
+					var v85 string
+					v85 = string(in.String())
+					out.SliceStringValue = append(out.SliceStringValue, v85)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2403,9 +2445,9 @@ func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon11
 					out.SliceInt32Value = (out.SliceInt32Value)[:0]
 				}
 				for !in.IsDelim(']') {
-					var v83 int32
-					v83 = int32(in.Int32())
-					out.SliceInt32Value = append(out.SliceInt32Value, v83)
+					var v86 int32
+					v86 = int32(in.Int32())
+					out.SliceInt32Value = append(out.SliceInt32Value, v86)
 					in.WantComma()
 				}
 				in.Delim(']')
@@ -2600,11 +2642,11 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon11
 		}
 		{
 			out.RawByte('[')
-			for v86, v87 := range in.SliceStringValue {
-				if v86 > 0 {
+			for v89, v90 := range in.SliceStringValue {
+				if v89 > 0 {
 					out.RawByte(',')
 				}
-				out.String(string(v87))
+				out.String(string(v90))
 			}
 			out.RawByte(']')
 		}
@@ -2619,11 +2661,11 @@ func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon11
 		}
 		{
 			out.RawByte('[')
-			for v88, v89 := range in.SliceInt32Value {
-				if v88 > 0 {
+			for v91, v92 := range in.SliceInt32Value {
+				if v91 > 0 {
 					out.RawByte(',')
 				}
-				out.Int32(int32(v89))
+				out.Int32(int32(v92))
 			}
 			out.RawByte(']')
 		}
