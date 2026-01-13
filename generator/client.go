@@ -156,6 +156,9 @@ func (g *generator) getRequestURIAndParams(method methodParams) (requestURI stri
 	var placeholder string
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
 		if f, ok := method.inputFields[match[1]]; ok {
+			if f.optional {
+				return "", nil, fmt.Errorf("path field %s in method %s should not be optional", match[1], method.name)
+			}
 			if placeholder, err = f.getVariablePlaceholder(); err != nil {
 				return "", nil, err
 			}
@@ -307,19 +310,19 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 		parameters, values []string
 		placeholder        string
 	)
-	for _, f := range method.inputFieldList {
-		if _, ok := pathParams[f]; ok {
+	for _, fieldName := range method.inputFieldList {
+		if _, ok := pathParams[fieldName]; ok {
 			continue
 		}
-		methodField := method.inputFields[f]
-		if methodField.cardinality == protoreflect.Repeated {
+		f := method.inputFields[fieldName]
+		if f.cardinality == protoreflect.Repeated || f.optional {
 			continue
 		}
-		if placeholder, err = methodField.getVariablePlaceholder(); err != nil {
+		if placeholder, err = f.getVariablePlaceholder(); err != nil {
 			return err
 		}
-		parameters = append(parameters, methodField.protoName+"="+placeholder)
-		values = append(values, "request."+methodField.goName)
+		parameters = append(parameters, f.protoName+"="+placeholder)
+		values = append(values, "request."+f.goName)
 	}
 	g.gf.P("var parameters = []string{")
 	for _, q := range parameters {
@@ -331,6 +334,22 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 		g.gf.P(q, ",")
 	}
 	g.gf.P("}")
+	for _, fieldName := range method.inputFieldList {
+		if _, ok := pathParams[fieldName]; ok {
+			continue
+		}
+		f := method.inputFields[fieldName]
+		if f.cardinality == protoreflect.Repeated || !f.optional {
+			continue
+		}
+		if placeholder, err = f.getVariablePlaceholder(); err != nil {
+			return err
+		}
+		g.gf.P("if request.", f.goName, " != nil {")
+		g.gf.P("	parameters = append(parameters, \"", f.protoName, "=", placeholder, "\")")
+		g.gf.P("	values = append(values, *request.", f.goName, ")")
+		g.gf.P("}")
+	}
 	for _, f := range method.inputFieldList {
 		if _, ok := pathParams[f]; ok {
 			continue

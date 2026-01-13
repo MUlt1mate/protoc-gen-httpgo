@@ -26,26 +26,7 @@ func (h *Handler) RPCName(_ context.Context, request *proto.InputMsgName) (*prot
 }
 
 func (h *Handler) AllTypesTest(_ context.Context, msg *proto.AllTypesMsg) (*proto.AllTypesMsg, error) {
-	p := &proto.AllTypesMsg{
-		BoolValue:        msg.BoolValue,
-		EnumValue:        msg.EnumValue,
-		Int32Value:       msg.Int32Value,
-		Sint32Value:      msg.Sint32Value,
-		Uint32Value:      msg.Uint32Value,
-		Int64Value:       msg.Int64Value,
-		Sint64Value:      msg.Sint64Value,
-		Uint64Value:      msg.Uint64Value,
-		Sfixed32Value:    msg.Sfixed32Value,
-		Fixed32Value:     msg.Fixed32Value,
-		FloatValue:       msg.FloatValue,
-		Sfixed64Value:    msg.Sfixed64Value,
-		Fixed64Value:     msg.Fixed64Value,
-		DoubleValue:      msg.DoubleValue,
-		StringValue:      msg.StringValue,
-		BytesValue:       msg.BytesValue,
-		SliceStringValue: msg.SliceStringValue,
-	}
-	return p, nil
+	return msg, nil
 }
 
 func (h *Handler) CommonTypes(_ context.Context, _ *anypb.Any) (*emptypb.Empty, error) {
@@ -60,7 +41,7 @@ func (h *Handler) SameInputAndOutput(_ context.Context, req *proto.InputMsgName)
 }
 
 func (h *Handler) Optional(_ context.Context, req *proto.OptionalField) (*proto.OptionalField, error) {
-	return &proto.OptionalField{StringValue: req.StringValue}, nil
+	return req, nil
 }
 
 func (h *Handler) GetMethod(_ context.Context, req *proto.InputMsgName) (*proto.OutputMsgName, error) {
@@ -71,69 +52,15 @@ func (h *Handler) GetMethod(_ context.Context, req *proto.InputMsgName) (*proto.
 }
 
 func (h *Handler) CheckRepeatedPath(_ context.Context, req *proto.RepeatedCheck) (*proto.RepeatedCheck, error) {
-	return &proto.RepeatedCheck{
-		BoolValue:        req.BoolValue,
-		EnumValue:        req.EnumValue,
-		Int32Value:       req.Int32Value,
-		Sint32Value:      req.Sint32Value,
-		Uint32Value:      req.Uint32Value,
-		Int64Value:       req.Int64Value,
-		Sint64Value:      req.Sint64Value,
-		Uint64Value:      req.Uint64Value,
-		Sfixed32Value:    req.Sfixed32Value,
-		Fixed32Value:     req.Fixed32Value,
-		FloatValue:       req.FloatValue,
-		Sfixed64Value:    req.Sfixed64Value,
-		Fixed64Value:     req.Fixed64Value,
-		DoubleValue:      req.DoubleValue,
-		StringValue:      req.StringValue,
-		BytesValue:       req.BytesValue,
-		StringValueQuery: req.StringValueQuery,
-	}, nil
+	return req, nil
 }
 
 func (h *Handler) CheckRepeatedQuery(_ context.Context, req *proto.RepeatedCheck) (*proto.RepeatedCheck, error) {
-	return &proto.RepeatedCheck{
-		BoolValue:        req.BoolValue,
-		EnumValue:        req.EnumValue,
-		Int32Value:       req.Int32Value,
-		Sint32Value:      req.Sint32Value,
-		Uint32Value:      req.Uint32Value,
-		Int64Value:       req.Int64Value,
-		Sint64Value:      req.Sint64Value,
-		Uint64Value:      req.Uint64Value,
-		Sfixed32Value:    req.Sfixed32Value,
-		Fixed32Value:     req.Fixed32Value,
-		FloatValue:       req.FloatValue,
-		Sfixed64Value:    req.Sfixed64Value,
-		Fixed64Value:     req.Fixed64Value,
-		DoubleValue:      req.DoubleValue,
-		StringValue:      req.StringValue,
-		BytesValue:       req.BytesValue,
-		StringValueQuery: req.StringValueQuery,
-	}, nil
+	return req, nil
 }
 
 func (h *Handler) CheckRepeatedPost(_ context.Context, req *proto.RepeatedCheck) (*proto.RepeatedCheck, error) {
-	return &proto.RepeatedCheck{
-		BoolValue:        req.BoolValue,
-		EnumValue:        req.EnumValue,
-		Int32Value:       req.Int32Value,
-		Sint32Value:      req.Sint32Value,
-		Uint32Value:      req.Uint32Value,
-		Int64Value:       req.Int64Value,
-		Sint64Value:      req.Sint64Value,
-		Uint64Value:      req.Uint64Value,
-		Sfixed32Value:    req.Sfixed32Value,
-		Fixed32Value:     req.Fixed32Value,
-		FloatValue:       req.FloatValue,
-		Sfixed64Value:    req.Sfixed64Value,
-		Fixed64Value:     req.Fixed64Value,
-		DoubleValue:      req.DoubleValue,
-		StringValue:      req.StringValue,
-		BytesValue:       req.BytesValue,
-		StringValueQuery: req.StringValueQuery,
-	}, nil
+	return req, nil
 }
 
 func (h *Handler) EmptyGet(_ context.Context, _ *proto.Empty) (*proto.Empty, error) {
@@ -161,6 +88,13 @@ func (h *Handler) MultipartForm(ctx context.Context, request *proto.MultipartFor
 }
 
 func (h *Handler) MultipartFormAllTypes(ctx context.Context, types *proto.MultipartFormAllTypes) (*proto.Empty, error) {
-	// TODO implement me
-	panic("implement me")
+	return &proto.Empty{}, nil
+}
+
+func (h *Handler) AllTextTypesPost(ctx context.Context, msg *proto.AllTextTypesMsg) (*proto.AllTextTypesMsg, error) {
+	return msg, nil
+}
+
+func (h *Handler) AllTextTypesGet(ctx context.Context, msg *proto.AllTextTypesMsg) (*proto.AllTextTypesMsg, error) {
+	return msg, nil
 }

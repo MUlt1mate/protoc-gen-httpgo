@@ -3,27 +3,27 @@
 package proto
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"mime/multipart"
-	"strconv"
-	"strings"
-
-	"github.com/fasthttp/router"
-	"github.com/mailru/easyjson"
-	"github.com/valyala/fasthttp"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/emptypb"
-
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	bytes "bytes"
+	context "context"
+	json "encoding/json"
+	errors "errors"
+	fmt "fmt"
+	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	router "github.com/fasthttp/router"
+	easyjson "github.com/mailru/easyjson"
+	fasthttp "github.com/valyala/fasthttp"
+	anypb "google.golang.org/protobuf/types/known/anypb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	multipart "mime/multipart"
+	strconv "strconv"
+	strings "strings"
 )
 
 type ServiceNameHTTPGoService interface {
 	RPCName(context.Context, *common.InputMsgName) (*common.OutputMsgName, error)
 	AllTypesTest(context.Context, *common.AllTypesMsg) (*common.AllTypesMsg, error)
+	AllTextTypesPost(context.Context, *common.AllTextTypesMsg) (*common.AllTextTypesMsg, error)
+	AllTextTypesGet(context.Context, *common.AllTextTypesMsg) (*common.AllTextTypesMsg, error)
 	CommonTypes(context.Context, *anypb.Any) (*emptypb.Empty, error)
 	SameInputAndOutput(context.Context, *common.InputMsgName) (*common.OutputMsgName, error)
 	Optional(context.Context, *common.OptionalField) (*common.OptionalField, error)
@@ -77,6 +77,44 @@ func RegisterServiceNameHTTPGoServer(
 		ctx.SetUserValue("proto_method", "AllTypesTest")
 		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.AllTypesTest(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx, input)
+			return
+		}
+		_, _ = middleware(ctx, input, handler)
+	})
+
+	r.POST("/v1/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(ctx *fasthttp.RequestCtx) {
+		input, err := buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx)
+		if err != nil {
+			ctx.SetStatusCode(fasthttp.StatusBadRequest)
+			_, _ = ctx.WriteString(err.Error())
+			return
+		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "AllTextTypesPost")
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+			return h.AllTextTypesPost(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx, input)
+			return
+		}
+		_, _ = middleware(ctx, input, handler)
+	})
+
+	r.GET("/v2/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(ctx *fasthttp.RequestCtx) {
+		input, err := buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx)
+		if err != nil {
+			ctx.SetStatusCode(fasthttp.StatusBadRequest)
+			_, _ = ctx.WriteString(err.Error())
+			return
+		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "AllTextTypesGet")
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+			return h.AllTextTypesGet(ctx, input)
 		}
 		if middleware == nil {
 			_, _ = handler(ctx, input)
@@ -680,6 +718,264 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 	}
 	arg.BytesValue = []byte(BytesValueStr)
 
+	return arg, err
+}
+
+func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *fasthttp.RequestCtx) (arg *common.AllTextTypesMsg, err error) {
+	arg = &common.AllTextTypesMsg{}
+	var body = ctx.PostBody()
+	if len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
+		}
+	}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "String":
+			arg.String_ = value
+		case "RepeatedString[]":
+			arg.RepeatedString = append(arg.RepeatedString, value)
+		case "OptionalString":
+			arg.OptionalString = &value
+		case "Bytes":
+			arg.Bytes = []byte(value)
+		case "RepeatedBytes[]":
+			arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(value))
+		case "OptionalBytes":
+			arg.OptionalBytes = []byte(value)
+		case "Enum":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				arg.Enum = common.Options(OptionsValue)
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.Enum = common.Options(intOptionValue)
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+					return
+				}
+			}
+		case "RepeatedEnum[]":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+					return
+				}
+			}
+		case "OptionalEnum":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				OptionalEnum := common.Options(OptionsValue)
+				arg.OptionalEnum = &OptionalEnum
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						OptionalEnum := common.Options(intOptionValue)
+						arg.OptionalEnum = &OptionalEnum
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter OptionalEnum: %w", convErr)
+					return
+				}
+			}
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	String_Str, ok := ctx.UserValue("String").(string)
+	if !ok || len(String_Str) == 0 {
+		return nil, errors.New("empty value for parameter String")
+	}
+	arg.String_ = String_Str
+
+	RepeatedStringStr, ok := ctx.UserValue("RepeatedString").(string)
+	if !ok || len(RepeatedStringStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedString")
+	}
+	arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
+	BytesStr, ok := ctx.UserValue("Bytes").(string)
+	if !ok || len(BytesStr) == 0 {
+		return nil, errors.New("empty value for parameter Bytes")
+	}
+	arg.Bytes = []byte(BytesStr)
+
+	RepeatedBytesStr, ok := ctx.UserValue("RepeatedBytes").(string)
+	if !ok || len(RepeatedBytesStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedBytes")
+	}
+	arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(RepeatedBytesStr))
+	EnumStr, ok := ctx.UserValue("Enum").(string)
+	if !ok || len(EnumStr) == 0 {
+		return nil, errors.New("empty value for parameter Enum")
+	}
+	if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
+		arg.Enum = common.Options(OptionsValue)
+	} else {
+		if intOptionValue, convErr := strconv.ParseInt(EnumStr, 10, 32); convErr == nil {
+			if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+				arg.Enum = common.Options(intOptionValue)
+			}
+		} else {
+			return nil, fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+		}
+	}
+
+	RepeatedEnumStr, ok := ctx.UserValue("RepeatedEnum").(string)
+	if !ok || len(RepeatedEnumStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedEnum")
+	}
+	RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
+	for _, str := range RepeatedEnumStrs {
+		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
+			arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
+		} else {
+			if intOptionValue, convErr := strconv.ParseInt(str, 10, 32); convErr == nil {
+				if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+					arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
+				}
+			} else {
+				return nil, fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+			}
+		}
+	}
+	return arg, err
+}
+
+func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx *fasthttp.RequestCtx) (arg *common.AllTextTypesMsg, err error) {
+	arg = &common.AllTextTypesMsg{}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "String":
+			arg.String_ = value
+		case "RepeatedString[]":
+			arg.RepeatedString = append(arg.RepeatedString, value)
+		case "OptionalString":
+			arg.OptionalString = &value
+		case "Bytes":
+			arg.Bytes = []byte(value)
+		case "RepeatedBytes[]":
+			arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(value))
+		case "OptionalBytes":
+			arg.OptionalBytes = []byte(value)
+		case "Enum":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				arg.Enum = common.Options(OptionsValue)
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.Enum = common.Options(intOptionValue)
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+					return
+				}
+			}
+		case "RepeatedEnum[]":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+					return
+				}
+			}
+		case "OptionalEnum":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				OptionalEnum := common.Options(OptionsValue)
+				arg.OptionalEnum = &OptionalEnum
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						OptionalEnum := common.Options(intOptionValue)
+						arg.OptionalEnum = &OptionalEnum
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter OptionalEnum: %w", convErr)
+					return
+				}
+			}
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	String_Str, ok := ctx.UserValue("String").(string)
+	if !ok || len(String_Str) == 0 {
+		return nil, errors.New("empty value for parameter String")
+	}
+	arg.String_ = String_Str
+
+	RepeatedStringStr, ok := ctx.UserValue("RepeatedString").(string)
+	if !ok || len(RepeatedStringStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedString")
+	}
+	arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
+	BytesStr, ok := ctx.UserValue("Bytes").(string)
+	if !ok || len(BytesStr) == 0 {
+		return nil, errors.New("empty value for parameter Bytes")
+	}
+	arg.Bytes = []byte(BytesStr)
+
+	RepeatedBytesStr, ok := ctx.UserValue("RepeatedBytes").(string)
+	if !ok || len(RepeatedBytesStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedBytes")
+	}
+	arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(RepeatedBytesStr))
+	EnumStr, ok := ctx.UserValue("Enum").(string)
+	if !ok || len(EnumStr) == 0 {
+		return nil, errors.New("empty value for parameter Enum")
+	}
+	if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
+		arg.Enum = common.Options(OptionsValue)
+	} else {
+		if intOptionValue, convErr := strconv.ParseInt(EnumStr, 10, 32); convErr == nil {
+			if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+				arg.Enum = common.Options(intOptionValue)
+			}
+		} else {
+			return nil, fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+		}
+	}
+
+	RepeatedEnumStr, ok := ctx.UserValue("RepeatedEnum").(string)
+	if !ok || len(RepeatedEnumStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedEnum")
+	}
+	RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
+	for _, str := range RepeatedEnumStrs {
+		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
+			arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
+		} else {
+			if intOptionValue, convErr := strconv.ParseInt(str, 10, 32); convErr == nil {
+				if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+					arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
+				}
+			} else {
+				return nil, fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+			}
+		}
+	}
 	return arg, err
 }
 
@@ -2055,6 +2351,127 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *com
 		}
 	}
 	resp = &common.AllTypesMsg{}
+	var respBody = reqResp.(*fasthttp.Response).Body()
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(respBody, resp); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) AllTextTypesPost(ctx context.Context, request *common.AllTextTypesMsg) (resp *common.AllTextTypesMsg, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return nil, err
+	}
+	req.SetBody(body)
+	RepeatedStringRequest := strings.Join(request.RepeatedString, ",")
+	RepeatedBytesStrs := make([]string, len(request.RepeatedBytes))
+	for i, v := range request.RepeatedBytes {
+		RepeatedBytesStrs[i] = string(v)
+	}
+	RepeatedBytesRequest := strings.Join(RepeatedBytesStrs, ",")
+	RepeatedEnumStrs := make([]string, len(request.RepeatedEnum))
+	for i, v := range request.RepeatedEnum {
+		RepeatedEnumStrs[i] = strconv.FormatInt(int64(v), 10)
+	}
+	RepeatedEnumRequest := strings.Join(RepeatedEnumStrs, ",")
+	req.SetRequestURI(fmt.Sprintf("%s/v1/text/%s/%s/%s/%s/%s/%s%s", p.host, request.String_, RepeatedStringRequest, request.Bytes, RepeatedBytesRequest, request.Enum, RepeatedEnumRequest, queryArgs))
+	req.Header.SetMethod("POST")
+	var reqResp interface{}
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesPost")
+	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.AllTextTypesMsg{}
+	var respBody = reqResp.(*fasthttp.Response).Body()
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(respBody, resp); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) AllTextTypesGet(ctx context.Context, request *common.AllTextTypesMsg) (resp *common.AllTextTypesMsg, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	var parameters = []string{}
+	var values = []interface{}{}
+	if request.OptionalString != nil {
+		parameters = append(parameters, "OptionalString=%s")
+		values = append(values, *request.OptionalString)
+	}
+	if request.OptionalBytes != nil {
+		parameters = append(parameters, "OptionalBytes=%s")
+		values = append(values, request.OptionalBytes)
+	}
+	if request.OptionalEnum != nil {
+		parameters = append(parameters, "OptionalEnum=%s")
+		values = append(values, *request.OptionalEnum)
+	}
+	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	RepeatedStringRequest := strings.Join(request.RepeatedString, ",")
+	RepeatedBytesStrs := make([]string, len(request.RepeatedBytes))
+	for i, v := range request.RepeatedBytes {
+		RepeatedBytesStrs[i] = string(v)
+	}
+	RepeatedBytesRequest := strings.Join(RepeatedBytesStrs, ",")
+	RepeatedEnumStrs := make([]string, len(request.RepeatedEnum))
+	for i, v := range request.RepeatedEnum {
+		RepeatedEnumStrs[i] = strconv.FormatInt(int64(v), 10)
+	}
+	RepeatedEnumRequest := strings.Join(RepeatedEnumStrs, ",")
+	req.SetRequestURI(fmt.Sprintf("%s/v2/text/%s/%s/%s/%s/%s/%s%s", p.host, request.String_, RepeatedStringRequest, request.Bytes, RepeatedBytesRequest, request.Enum, RepeatedEnumRequest, queryArgs))
+	req.Header.SetMethod("GET")
+	var reqResp interface{}
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesGet")
+	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.AllTextTypesMsg{}
 	var respBody = reqResp.(*fasthttp.Response).Body()
 	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
 		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {

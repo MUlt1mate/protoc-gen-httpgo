@@ -130,3 +130,15 @@ message MultipartFormAllTypes {
   FileEx document = 20;
   repeated string RepeatedStringValue = 21;
 }
+
+message AllTextTypesMsg {
+  string String = 1;
+  repeated string RepeatedString = 2;
+  optional string OptionalString = 3;
+  bytes Bytes = 4;
+  repeated bytes RepeatedBytes = 5;
+  optional bytes OptionalBytes = 6;
+  options Enum = 7;
+  repeated options RepeatedEnum = 8;
+  optional options OptionalEnum = 9;
+}
