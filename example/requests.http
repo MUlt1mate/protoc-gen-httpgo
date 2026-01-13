@@ -1,0 +1,14 @@
+POST http://localhost:8080/v1/multipart
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="otherField"
+Content-Type: text/plain
+
+otherFieldValue
+--WebAppBoundary
+Content-Disposition: form-data; name="document"; filename="file.txt"
+Content-Type: application/json
+
+< ./proto/no_url.proto
+--WebAppBoundary--

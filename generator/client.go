@@ -75,12 +75,18 @@ func (g *generator) genClientMethod(
 	case libraryNetHTTP:
 		g.gf.P("	req := &", g.lib.Ident("Request"), "{Header: make(", g.lib.Ident("Header"), ")}")
 	case libraryFastHTTP:
-		g.gf.P("	req := &", g.lib.Ident("Request"), "{}")
+		g.gf.P("	req := ", g.lib.Ident("AcquireRequest"), "()")
+		g.gf.P("	defer ", g.lib.Ident("ReleaseRequest"), "(req)")
 	}
 	g.gf.P("	var queryArgs string")
-	if method.HasBody() {
+	switch {
+	case method.withFiles:
+		if err = g.genMultipartRequestClient(method); err != nil {
+			return err
+		}
+	case method.HasBody():
 		g.genMarshalRequestStruct()
-	} else {
+	default:
 		if err = g.genQueryRequestParameters(method); err != nil {
 			return err
 		}
@@ -97,19 +103,19 @@ func (g *generator) genClientMethod(
 	}
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
-		g.gf.P("	u, err := ", urlPackage.Ident("Parse"), "(", fmtPackage.Ident("Sprintf"), "(\"%s"+requestURI+"%s\",p.host"+paramsURI+",queryArgs))")
+		g.gf.P("	u, err := ", urlPackage.Ident("Parse"), "(", fmtPackage.Ident("Sprintf"), "(\"%s", requestURI, "%s\",p.host", paramsURI, ",queryArgs))")
 		g.gf.P("	if err != nil {")
 		g.gf.P("		return nil, err")
 		g.gf.P("	}")
 		g.gf.P("	req.URL = u")
 		g.gf.P("	req.Method = ", g.lib.Ident("Method"+titleString(method.httpMethodName)))
 	case libraryFastHTTP:
-		g.gf.P("	req.SetRequestURI(", fmtPackage.Ident("Sprintf"), "(\"%s"+requestURI+"%s\",p.host"+paramsURI+",queryArgs))")
+		g.gf.P("	req.SetRequestURI(", fmtPackage.Ident("Sprintf"), "(\"%s", requestURI, "%s\",p.host", paramsURI, ",queryArgs))")
 		g.gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
 	}
 	g.gf.P("	var reqResp interface{}")
-	g.gf.P("	ctx = context.WithValue(ctx, \"proto_service\", \"" + srvName + "\")")
-	g.gf.P("	ctx = context.WithValue(ctx, \"proto_method\", \"" + method.name + "\")")
+	g.gf.P("	ctx = context.WithValue(ctx, \"proto_service\", \"", srvName, "\")")
+	g.gf.P("	ctx = context.WithValue(ctx, \"proto_method\", \"", method.name, "\")")
 	g.gf.P("	var handler = func(", g.clientInput, ") (", g.clientOutput, ") {")
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
@@ -169,65 +175,27 @@ func (g *generator) getRequestURIAndParams(method methodParams) (requestURI stri
 }
 
 func (g *generator) genClientRepeatedFieldRequestValues(f field) (err error) {
+	if f.kind == protoreflect.StringKind {
+		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(request.", f.goName, ", \"", pathRepeatedArgDelimiter, "\")")
+		return nil
+	}
+	g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
+	g.gf.P("for i, v := range request.", f.goName, " {")
 	switch f.kind {
-	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind:
-		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
-		g.gf.P("for i, v := range request.", f.goName, " {")
-		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatInt"), "(int64(v), 10)")
-		g.gf.P("}")
-		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
-	case protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind:
-		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
-		g.gf.P("for i, v := range request.", f.goName, " {")
-		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatInt"), "(v, 10)")
-		g.gf.P("}")
-		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
-	case protoreflect.Uint64Kind, protoreflect.Fixed64Kind:
-		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
-		g.gf.P("for i, v := range request.", f.goName, " {")
-		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatUint"), "(v, 10)")
-		g.gf.P("}")
-		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
-	case protoreflect.FloatKind:
-		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
-		g.gf.P("for i, v := range request.", f.goName, " {")
-		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatFloat"), "(float64(v), 'f', -1, 64)")
-		g.gf.P("}")
-		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
-	case protoreflect.DoubleKind:
-		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
-		g.gf.P("for i, v := range request.", f.goName, " {")
-		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatFloat"), "(v, 'f', -1, 64)")
-		g.gf.P("}")
-		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
-	case protoreflect.StringKind:
-		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(request.", f.goName, ", \""+pathRepeatedArgDelimiter+"\")")
-	case protoreflect.BytesKind:
-		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
-		g.gf.P("for i, v := range request.", f.goName, " {")
-		g.gf.P(f.goName, "Strs[i] = string(v)")
-		g.gf.P("}")
-		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
-	case protoreflect.BoolKind:
-		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
-		g.gf.P("for i, v := range request.", f.goName, " {")
-		g.gf.P("if v {")
-		g.gf.P(f.goName, "Strs[i] = \"true\"")
-		g.gf.P("} else {")
-		g.gf.P(f.goName, "Strs[i] = \"false\"")
-		g.gf.P("}")
-		g.gf.P("}")
-		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
-	case protoreflect.EnumKind:
-		g.gf.P(f.goName, "Strs := make([]string, len(request.", f.goName, "))")
-		g.gf.P("for i, v := range request.", f.goName, " {")
-		g.gf.P(f.goName, "Strs[i] = ", strconvPackage.Ident("FormatInt"), "(int64(v), 10)") // Assuming Enum is represented as int
-		g.gf.P("}")
-		g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \""+pathRepeatedArgDelimiter+"\")")
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind,
+		protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind, protoreflect.Uint64Kind, protoreflect.Fixed64Kind,
+		protoreflect.FloatKind, protoreflect.DoubleKind, protoreflect.BytesKind, protoreflect.BoolKind, protoreflect.EnumKind:
+		var convertFunc string
+		if convertFunc, err = g.convertFuncToString(f, "v"); err != nil {
+			return err
+		}
+		g.gf.P(f.goName, "Strs[i] = ", convertFunc)
 	default:
 		err = fmt.Errorf(`unsupported type %s for path variable: "%s"`, f.kind, f.goName)
 		return err
 	}
+	g.gf.P("}")
+	g.gf.P(f.goName, "Request := ", stringsPackage.Ident("Join"), "(", f.goName, "Strs, \"", pathRepeatedArgDelimiter, "\")")
 
 	return nil
 }
@@ -256,6 +224,72 @@ func (g *generator) genMarshalRequestStruct() {
 	case libraryFastHTTP:
 		g.gf.P("	req.SetBody(body)")
 	}
+}
+
+func (g *generator) genMultipartRequestClient(method methodParams) (err error) {
+	g.gf.P("var requestBody ", bytesPackage.Ident("Buffer"))
+	g.gf.P("writer := ", multipartPackage.Ident("NewWriter"), "(&requestBody)")
+	for _, fieldName := range method.inputFieldList {
+		f := method.inputFields[fieldName]
+		if f.isFile {
+			g.gf.P("part, err := writer.CreateFormFile(\"", f.protoName, "\", request.", f.goName, ".Name)")
+			g.gf.P("if err != nil {")
+			g.gf.P("	return nil, fmt.Errorf(\"failed to create form file ", f.protoName, ":  %w\", err)")
+			g.gf.P("}")
+			g.gf.P("if _, err = part.Write(request.", f.goName, ".File); err != nil {")
+			g.gf.P("	return nil, fmt.Errorf(\"failed to write data to part ", f.protoName, ": %w\", err)")
+			g.gf.P("}")
+		} else {
+			if err = g.genMultipartField(f); err != nil {
+				return err
+			}
+		}
+	}
+	g.gf.P("if err = writer.Close(); err != nil {")
+	g.gf.P("	return nil, fmt.Errorf(\"failed to close writer: %w\", err)")
+	g.gf.P("}")
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	req.Body = ", ioPackage.Ident("NopCloser"), "(", bytesPackage.Ident("NewBuffer"), "(requestBody.Bytes()))")
+	case libraryFastHTTP:
+		g.gf.P("req.SetBody(requestBody.Bytes())")
+		g.gf.P("req.Header.SetContentType(writer.FormDataContentType())")
+	}
+	return nil
+}
+
+func (g *generator) genMultipartField(f field) (err error) {
+	var dereference string
+	if f.optional {
+		g.gf.P("if ", "request.", f.goName, " != nil {")
+		dereference = "*"
+	}
+	source := "request." + f.goName
+	if f.cardinality == protoreflect.Repeated {
+		source = "value"
+		g.gf.P("for _, value := range request.", f.goName, " {")
+	}
+	switch f.kind {
+	case protoreflect.StringKind:
+		g.gf.P("if err = writer.WriteField(\"", f.protoName, "\", ", dereference, source, "); err != nil {")
+	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind,
+		protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind, protoreflect.Uint64Kind, protoreflect.Fixed64Kind,
+		protoreflect.FloatKind, protoreflect.DoubleKind, protoreflect.BytesKind, protoreflect.BoolKind, protoreflect.EnumKind:
+		var convertFunc string
+		if convertFunc, err = g.convertFuncToString(f, dereference+source); err != nil {
+			return err
+		}
+		g.gf.P("if err = writer.WriteField(\"", f.protoName, "\", ", convertFunc, "); err != nil {")
+	default:
+		err = fmt.Errorf(`unsupported type %s for path variable: "%s"`, f.kind, f.goName)
+		return err
+	}
+	g.gf.P("	return nil, fmt.Errorf(\"failed to write field ", f.protoName, ":  %w\", err)")
+	g.gf.P("}")
+	if f.optional || f.cardinality == protoreflect.Repeated {
+		g.gf.P("}")
+	}
+	return nil
 }
 
 // genQueryRequestParameters
