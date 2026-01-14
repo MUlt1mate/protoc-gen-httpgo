@@ -1,4 +1,4 @@
-package http
+package nethttp
 
 import (
 	"bytes"

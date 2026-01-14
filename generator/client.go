@@ -107,8 +107,13 @@ func (g *generator) genClientMethod(
 		g.gf.P("	if err != nil {")
 		g.gf.P("		return nil, err")
 		g.gf.P("	}")
+		// query parts won't escape without it
+		g.gf.P("	u.RawQuery = u.Query().Encode()")
 		g.gf.P("	req.URL = u")
 		g.gf.P("	req.Method = ", g.lib.Ident("Method"+titleString(method.httpMethodName)))
+		if method.withFiles {
+			g.gf.P("	req.Header.Set(\"Content-Type\", writer.FormDataContentType())")
+		}
 	case libraryFastHTTP:
 		g.gf.P("	req.SetRequestURI(", fmtPackage.Ident("Sprintf"), "(\"%s", requestURI, "%s\",p.host", paramsURI, ",queryArgs))")
 		g.gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
@@ -155,24 +160,26 @@ func (g *generator) getRequestURIAndParams(method methodParams) (requestURI stri
 	requestURI = method.uri
 	var placeholder string
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
-		if f, ok := method.inputFields[match[1]]; ok {
-			if f.optional {
-				return "", nil, fmt.Errorf("path field %s in method %s should not be optional", match[1], method.name)
-			}
-			if placeholder, err = f.getVariablePlaceholder(); err != nil {
+		f, ok := method.inputFields[match[1]]
+		if !ok {
+			continue
+		}
+		if f.optional {
+			return "", nil, fmt.Errorf("path field %s in method %s should not be optional", match[1], method.name)
+		}
+		if placeholder, err = f.getVariablePlaceholder(); err != nil {
+			return "", nil, err
+		}
+		parameterName := "request." + f.goName
+		if f.cardinality == protoreflect.Repeated {
+			parameterName = f.goName + "Request"
+			placeholder = "%s"
+			if err = g.genClientRepeatedFieldRequestValues(f); err != nil {
 				return "", nil, err
 			}
-			parameterName := "request." + f.goName
-			if f.cardinality == protoreflect.Repeated {
-				parameterName = f.goName + "Request"
-				placeholder = "%s"
-				if err = g.genClientRepeatedFieldRequestValues(f); err != nil {
-					return "", nil, err
-				}
-			}
-			requestURI = strings.ReplaceAll(requestURI, match[0], placeholder)
-			params = append(params, parameterName)
 		}
+		requestURI = strings.ReplaceAll(requestURI, match[0], placeholder)
+		params = append(params, parameterName)
 	}
 	return requestURI, params, nil
 }
@@ -296,8 +303,6 @@ func (g *generator) genMultipartField(f field) (err error) {
 }
 
 // genQueryRequestParameters
-//
-//nolint:prealloc // false positive
 func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 	pathParams := make(map[string]struct{})
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
@@ -306,23 +311,9 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 	if len(pathParams) == len(method.inputFieldList) {
 		return nil
 	}
-	var (
-		parameters, values []string
-		placeholder        string
-	)
-	for _, fieldName := range method.inputFieldList {
-		if _, ok := pathParams[fieldName]; ok {
-			continue
-		}
-		f := method.inputFields[fieldName]
-		if f.cardinality == protoreflect.Repeated || f.optional {
-			continue
-		}
-		if placeholder, err = f.getVariablePlaceholder(); err != nil {
-			return err
-		}
-		parameters = append(parameters, f.protoName+"="+placeholder)
-		values = append(values, "request."+f.goName)
+	var parameters, values []string
+	if parameters, values, err = g.getQuerySimpleParameters(method, pathParams); err != nil {
+		return err
 	}
 	g.gf.P("var parameters = []string{")
 	for _, q := range parameters {
@@ -334,7 +325,44 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 		g.gf.P(q, ",")
 	}
 	g.gf.P("}")
+	if err = g.getQueryOptionalParameters(method, pathParams); err != nil {
+		return err
+	}
+	if err = g.getQueryRepeatedParameters(method, pathParams); err != nil {
+		return err
+	}
+	g.gf.P("queryArgs = ", fmtPackage.Ident("Sprintf"), "(\"?\"+", stringsPackage.Ident("Join"), "(parameters, \"&\"),values...)")
+	if *g.cfg.Library == libraryFastHTTP {
+		g.gf.P("queryArgs = ", stringsPackage.Ident("ReplaceAll"), "(queryArgs, \"[]\", \"%5B%5D\")")
+	}
+	return nil
+}
+
+func (g *generator) getQuerySimpleParameters(method methodParams, pathParams map[string]struct{}) (parameters []string, values []string, err error) {
+	var (
+		placeholder string
+	)
 	for _, fieldName := range method.inputFieldList {
+		if _, ok := pathParams[fieldName]; ok {
+			continue
+		}
+		f := method.inputFields[fieldName]
+		if f.cardinality == protoreflect.Repeated || f.optional {
+			continue
+		}
+		if placeholder, err = f.getVariablePlaceholder(); err != nil {
+			return nil, nil, err
+		}
+		parameters = append(parameters, f.protoName+"="+placeholder)
+		values = append(values, "request."+f.goName)
+	}
+	return parameters, values, nil
+}
+
+func (g *generator) getQueryOptionalParameters(method methodParams, pathParams map[string]struct{}) (err error) {
+	var placeholder string
+	for _, fieldName := range method.inputFieldList {
+		dereference := "*"
 		if _, ok := pathParams[fieldName]; ok {
 			continue
 		}
@@ -345,11 +373,21 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 		if placeholder, err = f.getVariablePlaceholder(); err != nil {
 			return err
 		}
+
+		if f.kind == protoreflect.BytesKind {
+			// no need to dereference for slice
+			dereference = ""
+		}
 		g.gf.P("if request.", f.goName, " != nil {")
 		g.gf.P("	parameters = append(parameters, \"", f.protoName, "=", placeholder, "\")")
-		g.gf.P("	values = append(values, *request.", f.goName, ")")
+		g.gf.P("	values = append(values, ", dereference, "request.", f.goName, ")")
 		g.gf.P("}")
 	}
+	return nil
+}
+
+func (g *generator) getQueryRepeatedParameters(method methodParams, pathParams map[string]struct{}) (err error) {
+	var placeholder string
 	for _, f := range method.inputFieldList {
 		if _, ok := pathParams[f]; ok {
 			continue
@@ -362,12 +400,11 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 			return err
 		}
 		uriName := methodField.protoName + "[]"
-		g.gf.P("for _,v:= range request.", methodField.goName, " {")
+		g.gf.P("for _,v := range request.", methodField.goName, " {")
 		g.gf.P("	parameters = append(parameters, \"", uriName, "=", placeholder, "\")")
 		g.gf.P("	values = append(values, v)")
 		g.gf.P("}")
 	}
-	g.gf.P("queryArgs=", fmtPackage.Ident("Sprintf"), "(\"?\"+", stringsPackage.Ident("Join"), "(parameters, \"&\"),values...)")
 	return nil
 }
 

@@ -5,6 +5,8 @@ import (
 	"errors"
 	"log"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/types/known/anypb"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -83,18 +85,42 @@ func (h *Handler) MultipartForm(ctx context.Context, request *proto.MultipartFor
 	if request == nil || request.Document == nil {
 		return nil, errors.New("empty request")
 	}
-	log.Printf("file name %s with length %d, other field: %s", request.Document.Name, len(request.Document.File), request.OtherField)
+	if diff := cmp.Diff(
+		&MultipartFormRequestMsg,
+		request,
+		cmpopts.IgnoreUnexported(MultipartFormRequestMsg, proto.FileEx{}),
+		cmpopts.IgnoreFields(proto.FileEx{}, "Headers"),
+	); diff != "" {
+		log.Println(diff)
+	}
 	return &proto.Empty{}, nil
 }
 
-func (h *Handler) MultipartFormAllTypes(ctx context.Context, types *proto.MultipartFormAllTypes) (*proto.Empty, error) {
+func (h *Handler) MultipartFormAllTypes(ctx context.Context, request *proto.MultipartFormAllTypes) (*proto.Empty, error) {
+	if request == nil || request.Document == nil {
+		return nil, errors.New("empty request")
+	}
+	if diff := cmp.Diff(
+		&MultipartFormRequestAllTypesMsg,
+		request,
+		cmpopts.IgnoreUnexported(MultipartFormRequestAllTypesMsg, proto.FileEx{}),
+		cmpopts.IgnoreFields(proto.FileEx{}, "Headers"),
+	); diff != "" {
+		log.Println(diff)
+	}
 	return &proto.Empty{}, nil
 }
 
 func (h *Handler) AllTextTypesPost(ctx context.Context, msg *proto.AllTextTypesMsg) (*proto.AllTextTypesMsg, error) {
+	if diff := cmp.Diff(&AllTextTypesMsg, msg, cmpopts.IgnoreUnexported(AllTextTypesMsg)); diff != "" {
+		log.Println(diff)
+	}
 	return msg, nil
 }
 
 func (h *Handler) AllTextTypesGet(ctx context.Context, msg *proto.AllTextTypesMsg) (*proto.AllTextTypesMsg, error) {
+	if diff := cmp.Diff(&AllTextTypesMsg, msg, cmpopts.IgnoreUnexported(AllTextTypesMsg)); diff != "" {
+		log.Println(diff)
+	}
 	return msg, nil
 }

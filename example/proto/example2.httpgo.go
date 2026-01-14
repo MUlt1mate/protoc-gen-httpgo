@@ -111,6 +111,7 @@ func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *S
 		request.Option,
 	}
 	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/imports%s", p.host, queryArgs))
 	req.Header.SetMethod("GET")
 	var reqResp interface{}

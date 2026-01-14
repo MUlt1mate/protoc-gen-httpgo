@@ -161,7 +161,7 @@ func (g *generator) genServerMethodQueryParams(method methodParams) (err error) 
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
 		g.gf.P("for key, values := range r.URL.Query() {")
-		g.gf.P("	var value = values[0]")
+		g.gf.P("	for _, value := range values {")
 	case libraryFastHTTP:
 		g.gf.P("ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {")
 		g.gf.P("	var key = string(keyB)")
@@ -179,6 +179,7 @@ func (g *generator) genServerMethodQueryParams(method methodParams) (err error) 
 	g.gf.P("	}")
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
+		g.gf.P("}")
 		g.gf.P("}")
 	case libraryFastHTTP:
 		g.gf.P("})")
@@ -214,6 +215,19 @@ func (g *generator) genBuildPathArgument(
 	default:
 		return fmt.Errorf("unsupported type %s for path variable", f.kind.String())
 	}
+	if *g.cfg.Library == libraryFastHTTP {
+		switch f.kind {
+		case protoreflect.StringKind:
+			g.gf.P("if arg.", f.goName, ", err = ", urlPackage.Ident("PathUnescape"), "(arg.", f.goName, "); err != nil {")
+			g.gf.P("	return nil, fmt.Errorf(\"PathUnescape failed for field ", f.protoName, ": %w\", err)")
+			g.gf.P("}")
+		case protoreflect.BytesKind:
+			g.gf.P("if ", f.goName, "Str, err = ", urlPackage.Ident("PathUnescape"), "(string(arg.", f.goName, ")); err != nil {")
+			g.gf.P("	return nil, fmt.Errorf(\"PathUnescape failed for field ", f.protoName, ": %w\", err)")
+			g.gf.P("}")
+			g.gf.P("arg.", f.goName, " = []byte(", f.goName, "Str)")
+		}
+	}
 	g.gf.P()
 	return nil
 }
@@ -224,6 +238,8 @@ func (g *generator) genRepeatedPathArgCheck(f field) (err error) {
 		protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind, protoreflect.Uint64Kind, protoreflect.Fixed64Kind,
 		protoreflect.DoubleKind, protoreflect.FloatKind, protoreflect.BoolKind, protoreflect.EnumKind:
 		g.gf.P(f.goName, "Strs := ", stringsPackage.Ident("Split"), "(", f.goName, "Str, \""+pathRepeatedArgDelimiter+"\")")
+		// allocate space and override values if it was passed in a body or other way
+		g.gf.P("arg.", f.goName, " = make([]", getFieldConversionFuncName(f), ", 0, len(", f.goName, "Strs))")
 		g.gf.P("for _, str := range ", f.goName, "Strs {")
 		if err = g.genFieldConvertor(f, "str", true, "nil, ", false); err != nil {
 			return err
@@ -235,13 +251,36 @@ func (g *generator) genRepeatedPathArgCheck(f field) (err error) {
 			return err
 		}
 	case protoreflect.BytesKind:
-		if err = g.genFieldConvertor(f, f.goName+"Str", true, "", false); err != nil {
+		g.gf.P(f.goName, "Strs := ", stringsPackage.Ident("Split"), "(", f.goName, "Str, \""+pathRepeatedArgDelimiter+"\")")
+		// allocate space and override values if it was passed in a body or other way
+		g.gf.P("arg.", f.goName, " = make([][]byte, 0, len(", f.goName, "Strs))")
+		g.gf.P("for _, str := range ", f.goName, "Strs {")
+		if err = g.genFieldConvertor(f, "str", true, "", false); err != nil {
 			return err
 		}
+		g.gf.P("}")
 	default:
 		g.gf.P("err = ", fmtPackage.Ident("Errorf"), "(\"unsupported type repeated ", f.kind.String(), " for path argument ", f.goName, "\")")
 		g.gf.P("return nil, err")
 	}
+	if *g.cfg.Library == libraryFastHTTP {
+		switch f.kind {
+		case protoreflect.StringKind:
+			g.gf.P("for i, value := range arg.", f.goName, " {")
+			g.gf.P("	if arg.", f.goName, "[i], err = ", urlPackage.Ident("PathUnescape"), "(value); err != nil {")
+			g.gf.P("		return nil, fmt.Errorf(\"PathUnescape failed for field ", f.protoName, ": %w\", err)")
+			g.gf.P("	}")
+			g.gf.P("}")
+		case protoreflect.BytesKind:
+			g.gf.P("for i, value := range arg.", f.goName, " {")
+			g.gf.P("	if ", f.goName, "Str, err = ", urlPackage.Ident("PathUnescape"), "(string(value)); err != nil {")
+			g.gf.P("		return nil, fmt.Errorf(\"PathUnescape failed for field ", f.protoName, ": %w\", err)")
+			g.gf.P("	}")
+			g.gf.P("	arg.", f.goName, "[i] = []byte(", f.goName, "Str)")
+			g.gf.P("}")
+		}
+	}
+	g.gf.P()
 	return nil
 }
 

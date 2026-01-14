@@ -62,6 +62,8 @@ linters:
       settings:
         shadow:
           strict: true
+      disable:
+        - copylocks # disabled for simple diff check
   exclusions:
     generated: lax
     presets:
