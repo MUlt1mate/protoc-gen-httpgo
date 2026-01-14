@@ -213,7 +213,7 @@ func fieldNeedToBeConverted(f field) bool {
 }
 
 // getFieldConversionFuncName we have to substitute some of the type names for go compiler
-func getFieldConversionFuncName(f field) string {
+func getFieldConversionFuncName(f field) any {
 	switch f.kind {
 	case protoreflect.Fixed64Kind:
 		return protoreflect.Uint64Kind.String()
@@ -221,8 +221,14 @@ func getFieldConversionFuncName(f field) string {
 		return protoreflect.Int32Kind.String()
 	case protoreflect.Fixed32Kind:
 		return protoreflect.Uint32Kind.String()
+	case protoreflect.Sfixed64Kind, protoreflect.Sint64Kind:
+		return protoreflect.Int64Kind.String()
 	case protoreflect.FloatKind:
 		return "float32"
+	case protoreflect.DoubleKind:
+		return "float64"
+	case protoreflect.EnumKind:
+		return f.enumName
 	}
 
 	return f.kind.String()
@@ -245,8 +251,7 @@ func (g *generator) convertFuncToString(f field, source string) (string, error) 
 	case protoreflect.BoolKind:
 		return g.gf.QualifiedGoIdent(strconvPackage.Ident("FormatBool")) + "(" + source + ")", nil
 	case protoreflect.EnumKind:
-		// Assuming Enum is represented as int
-		return g.gf.QualifiedGoIdent(strconvPackage.Ident("FormatInt")) + "(int64(" + source + "), 10)", nil
+		return source + ".String()", nil
 	default:
 		return "", fmt.Errorf(`unsupported type %s for path variable: "%s"`, f.kind, f.goName)
 	}

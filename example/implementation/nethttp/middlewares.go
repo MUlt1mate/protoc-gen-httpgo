@@ -1,4 +1,4 @@
-package http
+package nethttp
 
 import (
 	"bytes"
@@ -28,7 +28,7 @@ type (
 )
 
 var (
-	serviceName = "example"
+	serviceName = "nethttp example"
 
 	errRequestFailed = errors.New("api request failed")
 	errTimeoutBody   = `{"error":"timeout"}`
@@ -53,9 +53,9 @@ func LoggerServerMiddleware(
 	ctx context.Context, arg interface{},
 	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
-	log.Println(serviceName, "server request", arg)
+	log.Printf("%s: server request %s", serviceName, arg)
 	resp, err = next(ctx, arg)
-	log.Println(serviceName, "server response", resp)
+	log.Printf("%s: server response %s", serviceName, resp)
 	return resp, err
 }
 
@@ -85,14 +85,14 @@ func HeadersServerMiddleware(
 	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
 	writer, _ := ctx.Value("writer").(http.ResponseWriter)
-	request, _ := ctx.Value("request").(*http.Request)
-	jsonContentType := "application/json"
-	contentType := request.Header.Get("Content-Type")
-	if contentType != jsonContentType {
-		writer.WriteHeader(http.StatusBadRequest)
-		return nil, errors.New("incorrect content type")
-	}
-	writer.Header().Add("Content-Type", jsonContentType)
+	// request, _ := ctx.Value("request").(*http.Request)
+	// jsonContentType := "application/json"
+	// contentType := request.Header.Get("Content-Type")
+	// if contentType != jsonContentType {
+	// 	writer.WriteHeader(http.StatusBadRequest)
+	// 	return nil, errors.New("incorrect content type")
+	// }
+	// writer.Header().Add("Content-Type", jsonContentType)
 	resp, err = next(ctx, arg)
 	if err == nil {
 		writer.WriteHeader(http.StatusOK)
@@ -152,7 +152,7 @@ func LoggerClientMiddleware(
 	req interface{},
 	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
-	log.Printf("%s: client sending request with path %s", serviceName, req.(*http.Request).RequestURI)
+	log.Printf("%s: client sending request with path %s", serviceName, req.(*http.Request).URL.String())
 	resp, err = next(ctx, req)
 	if err != nil {
 		log.Printf("%s: client got response with error %s", serviceName, err.Error())
@@ -177,12 +177,12 @@ func HeadersClientMiddleware(
 	req interface{},
 	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
-	jsonContentType := "application/json"
-	req.(*http.Request).Header.Set("Content-Type", jsonContentType)
+	// jsonContentType := "application/json"
+	// req.(*http.Request).Header.Set("Content-Type", jsonContentType)
 	resp, err = next(ctx, req)
-	if err == nil && resp.(*http.Response).Header.Get("Content-Type") != jsonContentType {
-		err = fmt.Errorf("incorrect response content type %s", resp.(*http.Response).Header.Get("Content-Type"))
-	}
+	// if err == nil && resp.(*http.Response).Header.Get("Content-Type") != jsonContentType {
+	// err = fmt.Errorf("incorrect response content type %s", resp.(*http.Response).Header.Get("Content-Type"))
+	// }
 	return resp, err
 }
 

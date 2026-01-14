@@ -84,11 +84,6 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
-    rules:
-      - linters:
-          - goconst
-        path: generator/server.go # lots of false positives
-        text: make it a constant
     paths:
       - third_party$
       - builtin$

@@ -3,27 +3,28 @@
 package proto
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"errors"
-	"fmt"
-	"mime/multipart"
-	"strconv"
-	"strings"
-
-	"github.com/fasthttp/router"
-	"github.com/mailru/easyjson"
-	"github.com/valyala/fasthttp"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/emptypb"
-
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	bytes "bytes"
+	context "context"
+	json "encoding/json"
+	errors "errors"
+	fmt "fmt"
+	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	router "github.com/fasthttp/router"
+	easyjson "github.com/mailru/easyjson"
+	fasthttp "github.com/valyala/fasthttp"
+	anypb "google.golang.org/protobuf/types/known/anypb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	multipart "mime/multipart"
+	url "net/url"
+	strconv "strconv"
+	strings "strings"
 )
 
 type ServiceNameHTTPGoService interface {
 	RPCName(context.Context, *common.InputMsgName) (*common.OutputMsgName, error)
 	AllTypesTest(context.Context, *common.AllTypesMsg) (*common.AllTypesMsg, error)
+	AllTextTypesPost(context.Context, *common.AllTextTypesMsg) (*common.AllTextTypesMsg, error)
+	AllTextTypesGet(context.Context, *common.AllTextTypesMsg) (*common.AllTextTypesMsg, error)
 	CommonTypes(context.Context, *anypb.Any) (*emptypb.Empty, error)
 	SameInputAndOutput(context.Context, *common.InputMsgName) (*common.OutputMsgName, error)
 	Optional(context.Context, *common.OptionalField) (*common.OptionalField, error)
@@ -77,6 +78,44 @@ func RegisterServiceNameHTTPGoServer(
 		ctx.SetUserValue("proto_method", "AllTypesTest")
 		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
 			return h.AllTypesTest(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx, input)
+			return
+		}
+		_, _ = middleware(ctx, input, handler)
+	})
+
+	r.POST("/v1/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(ctx *fasthttp.RequestCtx) {
+		input, err := buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx)
+		if err != nil {
+			ctx.SetStatusCode(fasthttp.StatusBadRequest)
+			_, _ = ctx.WriteString(err.Error())
+			return
+		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "AllTextTypesPost")
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+			return h.AllTextTypesPost(ctx, input)
+		}
+		if middleware == nil {
+			_, _ = handler(ctx, input)
+			return
+		}
+		_, _ = middleware(ctx, input, handler)
+	})
+
+	r.GET("/v2/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(ctx *fasthttp.RequestCtx) {
+		input, err := buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx)
+		if err != nil {
+			ctx.SetStatusCode(fasthttp.StatusBadRequest)
+			_, _ = ctx.WriteString(err.Error())
+			return
+		}
+		ctx.SetUserValue("proto_service", "ServiceName")
+		ctx.SetUserValue("proto_method", "AllTextTypesGet")
+		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+			return h.AllTextTypesGet(ctx, input)
 		}
 		if middleware == nil {
 			_, _ = handler(ctx, input)
@@ -372,6 +411,9 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 		return nil, errors.New("empty value for parameter stringArgument")
 	}
 	arg.StringArgument = StringArgumentStr
+	if arg.StringArgument, err = url.PathUnescape(arg.StringArgument); err != nil {
+		return nil, fmt.Errorf("PathUnescape failed for field stringArgument: %w", err)
+	}
 
 	Int64ArgumentStr, ok := ctx.UserValue("int64Argument").(string)
 	if !ok || len(Int64ArgumentStr) == 0 {
@@ -673,12 +715,329 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		return nil, errors.New("empty value for parameter StringValue")
 	}
 	arg.StringValue = StringValueStr
+	if arg.StringValue, err = url.PathUnescape(arg.StringValue); err != nil {
+		return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+	}
 
 	BytesValueStr, ok := ctx.UserValue("BytesValue").(string)
 	if !ok || len(BytesValueStr) == 0 {
 		return nil, errors.New("empty value for parameter BytesValue")
 	}
 	arg.BytesValue = []byte(BytesValueStr)
+	if BytesValueStr, err = url.PathUnescape(string(arg.BytesValue)); err != nil {
+		return nil, fmt.Errorf("PathUnescape failed for field BytesValue: %w", err)
+	}
+	arg.BytesValue = []byte(BytesValueStr)
+
+	return arg, err
+}
+
+func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *fasthttp.RequestCtx) (arg *common.AllTextTypesMsg, err error) {
+	arg = &common.AllTextTypesMsg{}
+	var body = ctx.PostBody()
+	if len(body) > 0 {
+		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
+			if err = easyjson.Unmarshal(body, argEJ); err != nil {
+				return nil, err
+			}
+		} else {
+			if err = json.Unmarshal(body, arg); err != nil {
+				return nil, err
+			}
+		}
+	}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "String":
+			arg.String_ = value
+		case "RepeatedString[]":
+			arg.RepeatedString = append(arg.RepeatedString, value)
+		case "OptionalString":
+			arg.OptionalString = &value
+		case "Bytes":
+			arg.Bytes = []byte(value)
+		case "RepeatedBytes[]":
+			arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(value))
+		case "OptionalBytes":
+			arg.OptionalBytes = []byte(value)
+		case "Enum":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				arg.Enum = common.Options(OptionsValue)
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.Enum = common.Options(intOptionValue)
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+					return
+				}
+			}
+		case "RepeatedEnum[]":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+					return
+				}
+			}
+		case "OptionalEnum":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				OptionalEnum := common.Options(OptionsValue)
+				arg.OptionalEnum = &OptionalEnum
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						OptionalEnum := common.Options(intOptionValue)
+						arg.OptionalEnum = &OptionalEnum
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter OptionalEnum: %w", convErr)
+					return
+				}
+			}
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	String_Str, ok := ctx.UserValue("String").(string)
+	if !ok || len(String_Str) == 0 {
+		return nil, errors.New("empty value for parameter String")
+	}
+	arg.String_ = String_Str
+	if arg.String_, err = url.PathUnescape(arg.String_); err != nil {
+		return nil, fmt.Errorf("PathUnescape failed for field String: %w", err)
+	}
+
+	RepeatedStringStr, ok := ctx.UserValue("RepeatedString").(string)
+	if !ok || len(RepeatedStringStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedString")
+	}
+	arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
+	for i, value := range arg.RepeatedString {
+		if arg.RepeatedString[i], err = url.PathUnescape(value); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field RepeatedString: %w", err)
+		}
+	}
+
+	BytesStr, ok := ctx.UserValue("Bytes").(string)
+	if !ok || len(BytesStr) == 0 {
+		return nil, errors.New("empty value for parameter Bytes")
+	}
+	arg.Bytes = []byte(BytesStr)
+	if BytesStr, err = url.PathUnescape(string(arg.Bytes)); err != nil {
+		return nil, fmt.Errorf("PathUnescape failed for field Bytes: %w", err)
+	}
+	arg.Bytes = []byte(BytesStr)
+
+	RepeatedBytesStr, ok := ctx.UserValue("RepeatedBytes").(string)
+	if !ok || len(RepeatedBytesStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedBytes")
+	}
+	RepeatedBytesStrs := strings.Split(RepeatedBytesStr, ",")
+	arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
+	for _, str := range RepeatedBytesStrs {
+		arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(str))
+	}
+	for i, value := range arg.RepeatedBytes {
+		if RepeatedBytesStr, err = url.PathUnescape(string(value)); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field RepeatedBytes: %w", err)
+		}
+		arg.RepeatedBytes[i] = []byte(RepeatedBytesStr)
+	}
+
+	EnumStr, ok := ctx.UserValue("Enum").(string)
+	if !ok || len(EnumStr) == 0 {
+		return nil, errors.New("empty value for parameter Enum")
+	}
+	if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
+		arg.Enum = common.Options(OptionsValue)
+	} else {
+		if intOptionValue, convErr := strconv.ParseInt(EnumStr, 10, 32); convErr == nil {
+			if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+				arg.Enum = common.Options(intOptionValue)
+			}
+		} else {
+			return nil, fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+		}
+	}
+
+	RepeatedEnumStr, ok := ctx.UserValue("RepeatedEnum").(string)
+	if !ok || len(RepeatedEnumStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedEnum")
+	}
+	RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
+	arg.RepeatedEnum = make([]common.Options, 0, len(RepeatedEnumStrs))
+	for _, str := range RepeatedEnumStrs {
+		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
+			arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
+		} else {
+			if intOptionValue, convErr := strconv.ParseInt(str, 10, 32); convErr == nil {
+				if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+					arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
+				}
+			} else {
+				return nil, fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+			}
+		}
+	}
+
+	return arg, err
+}
+
+func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx *fasthttp.RequestCtx) (arg *common.AllTextTypesMsg, err error) {
+	arg = &common.AllTextTypesMsg{}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "String":
+			arg.String_ = value
+		case "RepeatedString[]":
+			arg.RepeatedString = append(arg.RepeatedString, value)
+		case "OptionalString":
+			arg.OptionalString = &value
+		case "Bytes":
+			arg.Bytes = []byte(value)
+		case "RepeatedBytes[]":
+			arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(value))
+		case "OptionalBytes":
+			arg.OptionalBytes = []byte(value)
+		case "Enum":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				arg.Enum = common.Options(OptionsValue)
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.Enum = common.Options(intOptionValue)
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+					return
+				}
+			}
+		case "RepeatedEnum[]":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+					return
+				}
+			}
+		case "OptionalEnum":
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(value)]; optValueOk {
+				OptionalEnum := common.Options(OptionsValue)
+				arg.OptionalEnum = &OptionalEnum
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						OptionalEnum := common.Options(intOptionValue)
+						arg.OptionalEnum = &OptionalEnum
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter OptionalEnum: %w", convErr)
+					return
+				}
+			}
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	String_Str, ok := ctx.UserValue("String").(string)
+	if !ok || len(String_Str) == 0 {
+		return nil, errors.New("empty value for parameter String")
+	}
+	arg.String_ = String_Str
+	if arg.String_, err = url.PathUnescape(arg.String_); err != nil {
+		return nil, fmt.Errorf("PathUnescape failed for field String: %w", err)
+	}
+
+	RepeatedStringStr, ok := ctx.UserValue("RepeatedString").(string)
+	if !ok || len(RepeatedStringStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedString")
+	}
+	arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
+	for i, value := range arg.RepeatedString {
+		if arg.RepeatedString[i], err = url.PathUnescape(value); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field RepeatedString: %w", err)
+		}
+	}
+
+	BytesStr, ok := ctx.UserValue("Bytes").(string)
+	if !ok || len(BytesStr) == 0 {
+		return nil, errors.New("empty value for parameter Bytes")
+	}
+	arg.Bytes = []byte(BytesStr)
+	if BytesStr, err = url.PathUnescape(string(arg.Bytes)); err != nil {
+		return nil, fmt.Errorf("PathUnescape failed for field Bytes: %w", err)
+	}
+	arg.Bytes = []byte(BytesStr)
+
+	RepeatedBytesStr, ok := ctx.UserValue("RepeatedBytes").(string)
+	if !ok || len(RepeatedBytesStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedBytes")
+	}
+	RepeatedBytesStrs := strings.Split(RepeatedBytesStr, ",")
+	arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
+	for _, str := range RepeatedBytesStrs {
+		arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(str))
+	}
+	for i, value := range arg.RepeatedBytes {
+		if RepeatedBytesStr, err = url.PathUnescape(string(value)); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field RepeatedBytes: %w", err)
+		}
+		arg.RepeatedBytes[i] = []byte(RepeatedBytesStr)
+	}
+
+	EnumStr, ok := ctx.UserValue("Enum").(string)
+	if !ok || len(EnumStr) == 0 {
+		return nil, errors.New("empty value for parameter Enum")
+	}
+	if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
+		arg.Enum = common.Options(OptionsValue)
+	} else {
+		if intOptionValue, convErr := strconv.ParseInt(EnumStr, 10, 32); convErr == nil {
+			if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+				arg.Enum = common.Options(intOptionValue)
+			}
+		} else {
+			return nil, fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+		}
+	}
+
+	RepeatedEnumStr, ok := ctx.UserValue("RepeatedEnum").(string)
+	if !ok || len(RepeatedEnumStr) == 0 {
+		return nil, errors.New("empty value for parameter RepeatedEnum")
+	}
+	RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
+	arg.RepeatedEnum = make([]common.Options, 0, len(RepeatedEnumStrs))
+	for _, str := range RepeatedEnumStrs {
+		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
+			arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
+		} else {
+			if intOptionValue, convErr := strconv.ParseInt(str, 10, 32); convErr == nil {
+				if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+					arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
+				}
+			} else {
+				return nil, fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+			}
+		}
+	}
 
 	return arg, err
 }
@@ -749,6 +1108,9 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 		return nil, errors.New("empty value for parameter stringArgument")
 	}
 	arg.StringArgument = StringArgumentStr
+	if arg.StringArgument, err = url.PathUnescape(arg.StringArgument); err != nil {
+		return nil, fmt.Errorf("PathUnescape failed for field stringArgument: %w", err)
+	}
 
 	return arg, err
 }
@@ -1054,6 +1416,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		return nil, errors.New("empty value for parameter BoolValue")
 	}
 	BoolValueStrs := strings.Split(BoolValueStr, ",")
+	arg.BoolValue = make([]bool, 0, len(BoolValueStrs))
 	for _, str := range BoolValueStrs {
 		switch str {
 		case "true", "t", "1":
@@ -1064,11 +1427,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 			return nil, fmt.Errorf("unknown bool string value %s", str)
 		}
 	}
+
 	EnumValueStr, ok := ctx.UserValue("EnumValue").(string)
 	if !ok || len(EnumValueStr) == 0 {
 		return nil, errors.New("empty value for parameter EnumValue")
 	}
 	EnumValueStrs := strings.Split(EnumValueStr, ",")
+	arg.EnumValue = make([]common.Options, 0, len(EnumValueStrs))
 	for _, str := range EnumValueStrs {
 		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
 			arg.EnumValue = append(arg.EnumValue, common.Options(OptionsValue))
@@ -1082,11 +1447,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 			}
 		}
 	}
+
 	Int32ValueStr, ok := ctx.UserValue("Int32Value").(string)
 	if !ok || len(Int32ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Int32Value")
 	}
 	Int32ValueStrs := strings.Split(Int32ValueStr, ",")
+	arg.Int32Value = make([]int32, 0, len(Int32ValueStrs))
 	for _, str := range Int32ValueStrs {
 		Int32Value, convErr := strconv.ParseInt(str, 10, 32)
 		if convErr != nil {
@@ -1094,11 +1461,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.Int32Value = append(arg.Int32Value, int32(Int32Value))
 	}
+
 	Sint32ValueStr, ok := ctx.UserValue("Sint32Value").(string)
 	if !ok || len(Sint32ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Sint32Value")
 	}
 	Sint32ValueStrs := strings.Split(Sint32ValueStr, ",")
+	arg.Sint32Value = make([]int32, 0, len(Sint32ValueStrs))
 	for _, str := range Sint32ValueStrs {
 		Sint32Value, convErr := strconv.ParseInt(str, 10, 32)
 		if convErr != nil {
@@ -1106,11 +1475,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.Sint32Value = append(arg.Sint32Value, int32(Sint32Value))
 	}
+
 	Uint32ValueStr, ok := ctx.UserValue("Uint32Value").(string)
 	if !ok || len(Uint32ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Uint32Value")
 	}
 	Uint32ValueStrs := strings.Split(Uint32ValueStr, ",")
+	arg.Uint32Value = make([]uint32, 0, len(Uint32ValueStrs))
 	for _, str := range Uint32ValueStrs {
 		Uint32Value, convErr := strconv.ParseUint(str, 10, 32)
 		if convErr != nil {
@@ -1118,11 +1489,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.Uint32Value = append(arg.Uint32Value, uint32(Uint32Value))
 	}
+
 	Int64ValueStr, ok := ctx.UserValue("Int64Value").(string)
 	if !ok || len(Int64ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Int64Value")
 	}
 	Int64ValueStrs := strings.Split(Int64ValueStr, ",")
+	arg.Int64Value = make([]int64, 0, len(Int64ValueStrs))
 	for _, str := range Int64ValueStrs {
 		Int64Value, convErr := strconv.ParseInt(str, 10, 64)
 		if convErr != nil {
@@ -1130,11 +1503,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.Int64Value = append(arg.Int64Value, Int64Value)
 	}
+
 	Sint64ValueStr, ok := ctx.UserValue("Sint64Value").(string)
 	if !ok || len(Sint64ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Sint64Value")
 	}
 	Sint64ValueStrs := strings.Split(Sint64ValueStr, ",")
+	arg.Sint64Value = make([]int64, 0, len(Sint64ValueStrs))
 	for _, str := range Sint64ValueStrs {
 		Sint64Value, convErr := strconv.ParseInt(str, 10, 64)
 		if convErr != nil {
@@ -1142,11 +1517,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.Sint64Value = append(arg.Sint64Value, Sint64Value)
 	}
+
 	Uint64ValueStr, ok := ctx.UserValue("Uint64Value").(string)
 	if !ok || len(Uint64ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Uint64Value")
 	}
 	Uint64ValueStrs := strings.Split(Uint64ValueStr, ",")
+	arg.Uint64Value = make([]uint64, 0, len(Uint64ValueStrs))
 	for _, str := range Uint64ValueStrs {
 		Uint64Value, convErr := strconv.ParseUint(str, 10, 64)
 		if convErr != nil {
@@ -1154,11 +1531,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.Uint64Value = append(arg.Uint64Value, Uint64Value)
 	}
+
 	Sfixed32ValueStr, ok := ctx.UserValue("Sfixed32Value").(string)
 	if !ok || len(Sfixed32ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Sfixed32Value")
 	}
 	Sfixed32ValueStrs := strings.Split(Sfixed32ValueStr, ",")
+	arg.Sfixed32Value = make([]int32, 0, len(Sfixed32ValueStrs))
 	for _, str := range Sfixed32ValueStrs {
 		Sfixed32Value, convErr := strconv.ParseInt(str, 10, 32)
 		if convErr != nil {
@@ -1166,11 +1545,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.Sfixed32Value = append(arg.Sfixed32Value, int32(Sfixed32Value))
 	}
+
 	Fixed32ValueStr, ok := ctx.UserValue("Fixed32Value").(string)
 	if !ok || len(Fixed32ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Fixed32Value")
 	}
 	Fixed32ValueStrs := strings.Split(Fixed32ValueStr, ",")
+	arg.Fixed32Value = make([]uint32, 0, len(Fixed32ValueStrs))
 	for _, str := range Fixed32ValueStrs {
 		Fixed32Value, convErr := strconv.ParseUint(str, 10, 32)
 		if convErr != nil {
@@ -1178,11 +1559,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.Fixed32Value = append(arg.Fixed32Value, uint32(Fixed32Value))
 	}
+
 	FloatValueStr, ok := ctx.UserValue("FloatValue").(string)
 	if !ok || len(FloatValueStr) == 0 {
 		return nil, errors.New("empty value for parameter FloatValue")
 	}
 	FloatValueStrs := strings.Split(FloatValueStr, ",")
+	arg.FloatValue = make([]float32, 0, len(FloatValueStrs))
 	for _, str := range FloatValueStrs {
 		FloatValue, convErr := strconv.ParseFloat(str, 32)
 		if convErr != nil {
@@ -1190,11 +1573,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.FloatValue = append(arg.FloatValue, float32(FloatValue))
 	}
+
 	Sfixed64ValueStr, ok := ctx.UserValue("Sfixed64Value").(string)
 	if !ok || len(Sfixed64ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Sfixed64Value")
 	}
 	Sfixed64ValueStrs := strings.Split(Sfixed64ValueStr, ",")
+	arg.Sfixed64Value = make([]int64, 0, len(Sfixed64ValueStrs))
 	for _, str := range Sfixed64ValueStrs {
 		Sfixed64Value, convErr := strconv.ParseInt(str, 10, 64)
 		if convErr != nil {
@@ -1202,11 +1587,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.Sfixed64Value = append(arg.Sfixed64Value, Sfixed64Value)
 	}
+
 	Fixed64ValueStr, ok := ctx.UserValue("Fixed64Value").(string)
 	if !ok || len(Fixed64ValueStr) == 0 {
 		return nil, errors.New("empty value for parameter Fixed64Value")
 	}
 	Fixed64ValueStrs := strings.Split(Fixed64ValueStr, ",")
+	arg.Fixed64Value = make([]uint64, 0, len(Fixed64ValueStrs))
 	for _, str := range Fixed64ValueStrs {
 		Fixed64Value, convErr := strconv.ParseUint(str, 10, 64)
 		if convErr != nil {
@@ -1214,11 +1601,13 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.Fixed64Value = append(arg.Fixed64Value, Fixed64Value)
 	}
+
 	DoubleValueStr, ok := ctx.UserValue("DoubleValue").(string)
 	if !ok || len(DoubleValueStr) == 0 {
 		return nil, errors.New("empty value for parameter DoubleValue")
 	}
 	DoubleValueStrs := strings.Split(DoubleValueStr, ",")
+	arg.DoubleValue = make([]float64, 0, len(DoubleValueStrs))
 	for _, str := range DoubleValueStrs {
 		DoubleValue, convErr := strconv.ParseFloat(str, 64)
 		if convErr != nil {
@@ -1226,21 +1615,45 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 		arg.DoubleValue = append(arg.DoubleValue, DoubleValue)
 	}
+
 	StringValueStr, ok := ctx.UserValue("StringValue").(string)
 	if !ok || len(StringValueStr) == 0 {
 		return nil, errors.New("empty value for parameter StringValue")
 	}
 	arg.StringValue = strings.Split(StringValueStr, ",")
+	for i, value := range arg.StringValue {
+		if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+		}
+	}
+
 	BytesValueStr, ok := ctx.UserValue("BytesValue").(string)
 	if !ok || len(BytesValueStr) == 0 {
 		return nil, errors.New("empty value for parameter BytesValue")
 	}
-	arg.BytesValue = append(arg.BytesValue, []byte(BytesValueStr))
+	BytesValueStrs := strings.Split(BytesValueStr, ",")
+	arg.BytesValue = make([][]byte, 0, len(BytesValueStrs))
+	for _, str := range BytesValueStrs {
+		arg.BytesValue = append(arg.BytesValue, []byte(str))
+	}
+	for i, value := range arg.BytesValue {
+		if BytesValueStr, err = url.PathUnescape(string(value)); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field BytesValue: %w", err)
+		}
+		arg.BytesValue[i] = []byte(BytesValueStr)
+	}
+
 	StringValueQueryStr, ok := ctx.UserValue("StringValueQuery").(string)
 	if !ok || len(StringValueQueryStr) == 0 {
 		return nil, errors.New("empty value for parameter StringValueQuery")
 	}
 	arg.StringValueQuery = strings.Split(StringValueQueryStr, ",")
+	for i, value := range arg.StringValueQuery {
+		if arg.StringValueQuery[i], err = url.PathUnescape(value); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field StringValueQuery: %w", err)
+		}
+	}
+
 	return arg, err
 }
 
@@ -1373,6 +1786,12 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.Reques
 		return nil, errors.New("empty value for parameter StringValue")
 	}
 	arg.StringValue = strings.Split(StringValueStr, ",")
+	for i, value := range arg.StringValue {
+		if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+		}
+	}
+
 	return arg, err
 }
 
@@ -1517,6 +1936,12 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.Request
 		return nil, errors.New("empty value for parameter StringValue")
 	}
 	arg.StringValue = strings.Split(StringValueStr, ",")
+	for i, value := range arg.StringValue {
+		if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+		}
+	}
+
 	return arg, err
 }
 
@@ -1753,9 +2178,7 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 		arg.BytesValue = []byte(values[0])
 	}
 	if values, ok := body.Value["SliceStringValue"]; ok && len(values) > 0 {
-		for _, value := range values {
-			arg.SliceStringValue = append(arg.SliceStringValue, value)
-		}
+		arg.SliceStringValue = append(arg.SliceStringValue, values...)
 	}
 	if values, ok := body.Value["SliceInt32Value"]; ok && len(values) > 0 {
 		for _, value := range values {
@@ -1786,9 +2209,7 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 		}
 	}
 	if values, ok := body.Value["RepeatedStringValue"]; ok && len(values) > 0 {
-		for _, value := range values {
-			arg.RepeatedStringValue = append(arg.RepeatedStringValue, value)
-		}
+		arg.RepeatedStringValue = append(arg.RepeatedStringValue, values...)
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
 		var key = string(keyB)
@@ -2068,6 +2489,128 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *com
 	return resp, err
 }
 
+func (p *ServiceNameHTTPGoClient) AllTextTypesPost(ctx context.Context, request *common.AllTextTypesMsg) (resp *common.AllTextTypesMsg, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	var body []byte
+	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
+		body, err = easyjson.Marshal(rqEJ)
+	} else {
+		body, err = json.Marshal(request)
+	}
+	if err != nil {
+		return nil, err
+	}
+	req.SetBody(body)
+	RepeatedStringRequest := strings.Join(request.RepeatedString, ",")
+	RepeatedBytesStrs := make([]string, len(request.RepeatedBytes))
+	for i, v := range request.RepeatedBytes {
+		RepeatedBytesStrs[i] = string(v)
+	}
+	RepeatedBytesRequest := strings.Join(RepeatedBytesStrs, ",")
+	RepeatedEnumStrs := make([]string, len(request.RepeatedEnum))
+	for i, v := range request.RepeatedEnum {
+		RepeatedEnumStrs[i] = v.String()
+	}
+	RepeatedEnumRequest := strings.Join(RepeatedEnumStrs, ",")
+	req.SetRequestURI(fmt.Sprintf("%s/v1/text/%s/%s/%s/%s/%s/%s%s", p.host, request.String_, RepeatedStringRequest, request.Bytes, RepeatedBytesRequest, request.Enum, RepeatedEnumRequest, queryArgs))
+	req.Header.SetMethod("POST")
+	var reqResp interface{}
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesPost")
+	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.AllTextTypesMsg{}
+	var respBody = reqResp.(*fasthttp.Response).Body()
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(respBody, resp); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) AllTextTypesGet(ctx context.Context, request *common.AllTextTypesMsg) (resp *common.AllTextTypesMsg, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	var parameters = []string{}
+	var values = []interface{}{}
+	if request.OptionalString != nil {
+		parameters = append(parameters, "OptionalString=%s")
+		values = append(values, *request.OptionalString)
+	}
+	if request.OptionalBytes != nil {
+		parameters = append(parameters, "OptionalBytes=%s")
+		values = append(values, request.OptionalBytes)
+	}
+	if request.OptionalEnum != nil {
+		parameters = append(parameters, "OptionalEnum=%s")
+		values = append(values, *request.OptionalEnum)
+	}
+	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
+	RepeatedStringRequest := strings.Join(request.RepeatedString, ",")
+	RepeatedBytesStrs := make([]string, len(request.RepeatedBytes))
+	for i, v := range request.RepeatedBytes {
+		RepeatedBytesStrs[i] = string(v)
+	}
+	RepeatedBytesRequest := strings.Join(RepeatedBytesStrs, ",")
+	RepeatedEnumStrs := make([]string, len(request.RepeatedEnum))
+	for i, v := range request.RepeatedEnum {
+		RepeatedEnumStrs[i] = v.String()
+	}
+	RepeatedEnumRequest := strings.Join(RepeatedEnumStrs, ",")
+	req.SetRequestURI(fmt.Sprintf("%s/v2/text/%s/%s/%s/%s/%s/%s%s", p.host, request.String_, RepeatedStringRequest, request.Bytes, RepeatedBytesRequest, request.Enum, RepeatedEnumRequest, queryArgs))
+	req.Header.SetMethod("GET")
+	var reqResp interface{}
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesGet")
+	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.AllTextTypesMsg{}
+	var respBody = reqResp.(*fasthttp.Response).Body()
+	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
+		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
+			return nil, err
+		}
+	} else {
+		if err = json.Unmarshal(respBody, resp); err != nil {
+			return nil, err
+		}
+	}
+	return resp, err
+}
+
 func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anypb.Any) (resp *emptypb.Empty, err error) {
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
@@ -2223,6 +2766,7 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *common
 		request.StringArgument,
 	}
 	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/get%s", p.host, queryArgs))
 	req.Header.SetMethod("GET")
 	var reqResp interface{}
@@ -2267,7 +2811,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request
 	BoolValueRequest := strings.Join(BoolValueStrs, ",")
 	EnumValueStrs := make([]string, len(request.EnumValue))
 	for i, v := range request.EnumValue {
-		EnumValueStrs[i] = strconv.FormatInt(int64(v), 10)
+		EnumValueStrs[i] = v.String()
 	}
 	EnumValueRequest := strings.Join(EnumValueStrs, ",")
 	Int32ValueStrs := make([]string, len(request.Int32Value))
@@ -2441,6 +2985,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, reques
 		values = append(values, v)
 	}
 	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
 	StringValueRequest := strings.Join(request.StringValue, ",")
 	req.SetRequestURI(fmt.Sprintf("%s/v1/repeated/%s%s", p.host, StringValueRequest, queryArgs))
 	req.Header.SetMethod("GET")
@@ -2764,7 +3309,7 @@ func (p *ServiceNameHTTPGoClient) MultipartFormAllTypes(ctx context.Context, req
 	if err = writer.WriteField("BoolValue", strconv.FormatBool(request.BoolValue)); err != nil {
 		return nil, fmt.Errorf("failed to write field BoolValue:  %w", err)
 	}
-	if err = writer.WriteField("EnumValue", strconv.FormatInt(int64(request.EnumValue), 10)); err != nil {
+	if err = writer.WriteField("EnumValue", request.EnumValue.String()); err != nil {
 		return nil, fmt.Errorf("failed to write field EnumValue:  %w", err)
 	}
 	if err = writer.WriteField("Int32Value", strconv.FormatInt(int64(request.Int32Value), 10)); err != nil {

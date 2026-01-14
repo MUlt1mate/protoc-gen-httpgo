@@ -2696,3 +2696,287 @@ func (v *AllTypesMsg) UnmarshalJSON(data []byte) error {
 func (v *AllTypesMsg) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon11(l, v)
 }
+func easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon12(in *jlexer.Lexer, out *AllTextTypesMsg) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "String":
+			out.String_ = string(in.String())
+		case "RepeatedString":
+			if in.IsNull() {
+				in.Skip()
+				out.RepeatedString = nil
+			} else {
+				in.Delim('[')
+				if out.RepeatedString == nil {
+					if !in.IsDelim(']') {
+						out.RepeatedString = make([]string, 0, 4)
+					} else {
+						out.RepeatedString = []string{}
+					}
+				} else {
+					out.RepeatedString = (out.RepeatedString)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v93 string
+					v93 = string(in.String())
+					out.RepeatedString = append(out.RepeatedString, v93)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "OptionalString":
+			if in.IsNull() {
+				in.Skip()
+				out.OptionalString = nil
+			} else {
+				if out.OptionalString == nil {
+					out.OptionalString = new(string)
+				}
+				*out.OptionalString = string(in.String())
+			}
+		case "Bytes":
+			if in.IsNull() {
+				in.Skip()
+				out.Bytes = nil
+			} else {
+				out.Bytes = in.Bytes()
+			}
+		case "RepeatedBytes":
+			if in.IsNull() {
+				in.Skip()
+				out.RepeatedBytes = nil
+			} else {
+				in.Delim('[')
+				if out.RepeatedBytes == nil {
+					if !in.IsDelim(']') {
+						out.RepeatedBytes = make([][]uint8, 0, 2)
+					} else {
+						out.RepeatedBytes = [][]uint8{}
+					}
+				} else {
+					out.RepeatedBytes = (out.RepeatedBytes)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v95 []uint8
+					if in.IsNull() {
+						in.Skip()
+						v95 = nil
+					} else {
+						v95 = in.Bytes()
+					}
+					out.RepeatedBytes = append(out.RepeatedBytes, v95)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "OptionalBytes":
+			if in.IsNull() {
+				in.Skip()
+				out.OptionalBytes = nil
+			} else {
+				out.OptionalBytes = in.Bytes()
+			}
+		case "Enum":
+			out.Enum = Options(in.Int32())
+		case "RepeatedEnum":
+			if in.IsNull() {
+				in.Skip()
+				out.RepeatedEnum = nil
+			} else {
+				in.Delim('[')
+				if out.RepeatedEnum == nil {
+					if !in.IsDelim(']') {
+						out.RepeatedEnum = make([]Options, 0, 16)
+					} else {
+						out.RepeatedEnum = []Options{}
+					}
+				} else {
+					out.RepeatedEnum = (out.RepeatedEnum)[:0]
+				}
+				for !in.IsDelim(']') {
+					var v98 Options
+					v98 = Options(in.Int32())
+					out.RepeatedEnum = append(out.RepeatedEnum, v98)
+					in.WantComma()
+				}
+				in.Delim(']')
+			}
+		case "OptionalEnum":
+			if in.IsNull() {
+				in.Skip()
+				out.OptionalEnum = nil
+			} else {
+				if out.OptionalEnum == nil {
+					out.OptionalEnum = new(Options)
+				}
+				*out.OptionalEnum = Options(in.Int32())
+			}
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon12(out *jwriter.Writer, in AllTextTypesMsg) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	if in.String_ != "" {
+		const prefix string = ",\"String\":"
+		first = false
+		out.RawString(prefix[1:])
+		out.String(string(in.String_))
+	}
+	if len(in.RepeatedString) != 0 {
+		const prefix string = ",\"RepeatedString\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v99, v100 := range in.RepeatedString {
+				if v99 > 0 {
+					out.RawByte(',')
+				}
+				out.String(string(v100))
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.OptionalString != nil {
+		const prefix string = ",\"OptionalString\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.String(string(*in.OptionalString))
+	}
+	if len(in.Bytes) != 0 {
+		const prefix string = ",\"Bytes\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Base64Bytes(in.Bytes)
+	}
+	if len(in.RepeatedBytes) != 0 {
+		const prefix string = ",\"RepeatedBytes\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v103, v104 := range in.RepeatedBytes {
+				if v103 > 0 {
+					out.RawByte(',')
+				}
+				out.Base64Bytes(v104)
+			}
+			out.RawByte(']')
+		}
+	}
+	if len(in.OptionalBytes) != 0 {
+		const prefix string = ",\"OptionalBytes\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Base64Bytes(in.OptionalBytes)
+	}
+	if in.Enum != 0 {
+		const prefix string = ",\"Enum\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int32(int32(in.Enum))
+	}
+	if len(in.RepeatedEnum) != 0 {
+		const prefix string = ",\"RepeatedEnum\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		{
+			out.RawByte('[')
+			for v109, v110 := range in.RepeatedEnum {
+				if v109 > 0 {
+					out.RawByte(',')
+				}
+				out.Int32(int32(v110))
+			}
+			out.RawByte(']')
+		}
+	}
+	if in.OptionalEnum != nil {
+		const prefix string = ",\"OptionalEnum\":"
+		if first {
+			first = false
+			out.RawString(prefix[1:])
+		} else {
+			out.RawString(prefix)
+		}
+		out.Int32(int32(*in.OptionalEnum))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v AllTextTypesMsg) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon12(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v AllTextTypesMsg) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjsonEb321a1aEncodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon12(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *AllTextTypesMsg) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon12(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *AllTextTypesMsg) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjsonEb321a1aDecodeGithubComMUlt1mateProtocGenHttpgoExampleProtoCommon12(l, v)
+}

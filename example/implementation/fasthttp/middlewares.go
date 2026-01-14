@@ -1,4 +1,4 @@
-package middleware
+package fasthttp
 
 import (
 	"context"
@@ -28,7 +28,7 @@ type (
 )
 
 var (
-	serviceName = "example"
+	serviceName = "fasthttp example"
 
 	errRequestFailed = errors.New("api request failed")
 	errTimeoutBody   = `{"error":"timeout"}`
@@ -72,9 +72,9 @@ func LoggerServerMiddleware(
 	ctx context.Context, arg interface{},
 	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
 ) (resp interface{}, err error) {
-	log.Println(serviceName, "server request", arg)
+	log.Printf("%s: server request %s", serviceName, arg)
 	resp, err = next(ctx, arg)
-	log.Println(serviceName, "server response", resp)
+	log.Printf("%s: server response %s", serviceName, resp)
 	return resp, err
 }
 

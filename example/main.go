@@ -2,87 +2,139 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
 	"github.com/fasthttp/router"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/valyala/fasthttp"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/middleware"
+	fasthttpimpl "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/fasthttp"
+	nethttpimpl "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/nethttp"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 	fasthttpproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
+	httpproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/nethttp"
+)
+
+const (
+	fasthttpAddr = "localhost:8080"
+	nethttpAddr  = "localhost:8081"
 )
 
 var (
-	serverMiddlewares = middleware.ServerMiddlewares
-	clientMiddlewares = middleware.ClientMiddlewares
+	fastClient    httpproto.ServiceNameHTTPGoService
+	nethttpClient httpproto.ServiceNameHTTPGoService
 )
 
 func main() {
-	_ = serverExample(context.TODO())
-	time.Sleep(time.Millisecond * 500)
-	_ = clientExample(context.TODO())
-	f := make(chan bool)
-	<-f
+	log.SetFlags(log.Lshortfile)
+	var (
+		err error
+		ctx = context.TODO()
+	)
+	if err = serverInit(ctx); err != nil {
+		log.Fatal(err)
+	}
+	if err = clientInit(ctx); err != nil {
+		log.Fatal(err)
+	}
+
+	time.Sleep(time.Millisecond * 100)
+
+	if err = clientRunRequests(ctx, fastClient); err != nil {
+		log.Fatal(err)
+	}
+	if err = clientRunRequests(ctx, nethttpClient); err != nil {
+		log.Fatal(err)
+	}
+
+	// f := make(chan bool)
+	// <-f
 }
 
-func serverExample(ctx context.Context) (err error) {
+func serverInit(ctx context.Context) (err error) {
 	var (
 		handler fasthttpproto.ServiceNameHTTPGoService = &implementation.Handler{}
 		r                                              = router.New()
 		rHttp                                          = http.NewServeMux()
 	)
-	if err = fasthttpproto.RegisterServiceNameHTTPGoServer(ctx, r, handler, serverMiddlewares); err != nil {
+	if err = fasthttpproto.RegisterServiceNameHTTPGoServer(ctx, r, handler, fasthttpimpl.ServerMiddlewares); err != nil {
+		return err
+	}
+	if err = httpproto.RegisterServiceNameHTTPGoServer(ctx, rHttp, handler, nethttpimpl.ServerMiddlewares); err != nil {
 		return err
 	}
 
 	go func() {
-		_ = fasthttp.ListenAndServe(":8080", r.Handler)
-		_ = http.ListenAndServe(":8081", rHttp)
+		if err = fasthttp.ListenAndServe(fasthttpAddr, r.Handler); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	go func() {
+		if err = http.ListenAndServe(nethttpAddr, rHttp); err != nil {
+			log.Fatal(err)
+		}
 	}()
 	return nil
 }
 
-func clientExample(ctx context.Context) (err error) {
-	var (
-		fastClient              *fasthttpproto.ServiceNameHTTPGoClient
-		fasthttpClientTransport = &fasthttp.Client{}
-		fasthttpHost            = "http://localhost:8080"
-		// httpClient              *httpproto.ServiceNameHTTPGoClient
-		// httpClientTransport     = &http.Client{}
-		// httpHost                = "http://localhost:8081"
-	)
-	if fastClient, err = fasthttpproto.GetServiceNameHTTPGoClient(ctx, fasthttpClientTransport, fasthttpHost, clientMiddlewares); err != nil {
+func clientInit(ctx context.Context) (err error) {
+	var fasthttpClientTransport = &fasthttp.Client{}
+	if fastClient, err = fasthttpproto.GetServiceNameHTTPGoClient(
+		ctx,
+		fasthttpClientTransport,
+		"http://"+fasthttpAddr,
+		fasthttpimpl.ClientMiddlewares,
+	); err != nil {
 		return err
 	}
-	// if httpClient, err = httpproto.GetServiceNameHTTPGoClient(ctx, httpClientTransport, httpHost, clientMiddlewares); err != nil {
-	// 	return err
-	// }
-	// sending our request
-	_, _ = fastClient.RPCName(context.Background(), &common.InputMsgName{Int64Argument: 999, StringArgument: "rand"})
-	_, _ = fastClient.AllTypesTest(context.Background(), &common.AllTypesMsg{
-		SliceStringValue: []string{"a", "b"},
-		BytesValue:       []byte("hello world"),
-		StringValue:      "hello world",
-	})
-	// _, _ = httpClient.RPCName(context.Background(), &common.InputMsgName{Int64Argument: 999, StringArgument: "rand"})
-	// _, _ = httpClient.AllTypesTest(context.Background(), &common.AllTypesMsg{
-	// 	SliceStringValue: []string{"a", "b"},
-	// 	BytesValue:       []byte("hello world"),
-	// 	StringValue:      "hello world",
-	// })
 
-	_, err = fastClient.MultipartForm(context.Background(), &common.MultipartFormRequest{
-		Document: &common.FileEx{
-			File: []byte(`file content`),
-			Name: "file.exe",
-		},
-		OtherField: "otherField",
-	})
-	if err != nil {
-		log.Println(err)
+	var httpClientTransport = &http.Client{}
+	if nethttpClient, err = httpproto.GetServiceNameHTTPGoClient(
+		ctx,
+		httpClientTransport,
+		"http://"+nethttpAddr,
+		nethttpimpl.ClientMiddlewares,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoService) (err error) {
+	if _, err = client.RPCName(ctx, &common.InputMsgName{Int64Argument: 999, StringArgument: "rand"}); err != nil {
+		return fmt.Errorf("RPCName failed: %w", err)
+	}
+	var allTypesResp *common.AllTypesMsg
+	if allTypesResp, err = client.AllTypesTest(ctx, &implementation.AllTypesMsg); err != nil {
+		return fmt.Errorf("AllTypesTest failed: %w", err)
+	}
+	if diff := cmp.Diff(&implementation.AllTypesMsg, allTypesResp, cmpopts.IgnoreUnexported(implementation.AllTypesMsg)); diff != "" {
+		log.Println(diff)
+	}
+	if _, err = client.MultipartForm(ctx, &implementation.MultipartFormRequestMsg); err != nil {
+		return fmt.Errorf("MultipartForm failed: %w", err)
+	}
+	if _, err = client.MultipartFormAllTypes(ctx, &implementation.MultipartFormRequestAllTypesMsg); err != nil {
+		return fmt.Errorf("MultipartFormAllTypes failed: %w", err)
+	}
+
+	var allTextTypesResp *common.AllTextTypesMsg
+	if allTextTypesResp, err = client.AllTextTypesGet(ctx, &implementation.AllTextTypesMsg); err != nil {
+		return fmt.Errorf("AllTextTypesGet failed: %w", err)
+	}
+	if diff := cmp.Diff(&implementation.AllTextTypesMsg, allTextTypesResp, cmpopts.IgnoreUnexported(implementation.AllTextTypesMsg)); diff != "" {
+		log.Println(diff)
+	}
+	if allTextTypesResp, err = client.AllTextTypesPost(ctx, &implementation.AllTextTypesMsg); err != nil {
+		return fmt.Errorf("AllTextTypesPost failed: %w", err)
+	}
+	if diff := cmp.Diff(&implementation.AllTextTypesMsg, allTextTypesResp, cmpopts.IgnoreUnexported(implementation.AllTextTypesMsg)); diff != "" {
+		log.Println(diff)
 	}
 	return nil
 }

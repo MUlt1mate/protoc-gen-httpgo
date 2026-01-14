@@ -19,6 +19,16 @@ service ServiceName {
       post: "/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}"
     };
   }
+  rpc AllTextTypesPost (common.AllTextTypesMsg) returns (common.AllTextTypesMsg) {
+    option (google.api.http) = {
+      post: "/v1/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}"
+    };
+  }
+  rpc AllTextTypesGet (common.AllTextTypesMsg) returns (common.AllTextTypesMsg) {
+    option (google.api.http) = {
+      get: "/v2/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}"
+    };
+  }
   rpc CommonTypes (google.protobuf.Any) returns (google.protobuf.Empty) {
     option (google.api.http) = {
       post: "/v1/test/commonTypes"
