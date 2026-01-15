@@ -35,6 +35,7 @@ type (
 		serverInput     string
 		serverOutput    string
 		lib             protogen.GoImportPath
+		marshaller      protogen.GoImportPath
 	}
 
 	serviceParams struct {
@@ -107,6 +108,12 @@ func newGenerator(
 		g.lib = fasthttpPackage
 	default:
 		return g, errors.New("unsupported library type: " + *cfg.Library)
+	}
+	switch *cfg.Marshaller {
+	case marshallerProtoJSON:
+		g.marshaller = protojsonPackage
+	default:
+		g.marshaller = jsonPackage
 	}
 	g.initTemplates(gf)
 	g.fillServices(file)

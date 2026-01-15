@@ -4,9 +4,9 @@ package proto
 
 import (
 	context "context"
-	json "encoding/json"
 	fmt "fmt"
 	fasthttp "github.com/valyala/fasthttp"
+	protojson "google.golang.org/protobuf/encoding/protojson"
 	strings "strings"
 )
 
@@ -45,7 +45,7 @@ func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *SomeCus
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
-	body, err = json.Marshal(request)
+	body, err = protojson.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *SomeCus
 	}
 	resp = &SomeCustomMsg{}
 	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
+	err = protojson.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -133,7 +133,7 @@ func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *S
 	}
 	resp = &SomeCustomMsg{}
 	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
+	err = protojson.Unmarshal(respBody, resp)
 	return resp, err
 }
 

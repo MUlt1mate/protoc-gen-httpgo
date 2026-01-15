@@ -2124,9 +2124,7 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 		arg.BytesValue = []byte(values[0])
 	}
 	if values := r.Form["SliceStringValue"]; len(values) > 0 {
-		for _, value := range values {
-			arg.SliceStringValue = append(arg.SliceStringValue, value)
-		}
+		arg.SliceStringValue = append(arg.SliceStringValue, values...)
 	}
 	if values := r.Form["SliceInt32Value"]; len(values) > 0 {
 		for _, value := range values {
@@ -2153,9 +2151,7 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 		}
 	}
 	if values := r.Form["RepeatedStringValue"]; len(values) > 0 {
-		for _, value := range values {
-			arg.RepeatedStringValue = append(arg.RepeatedStringValue, value)
-		}
+		arg.RepeatedStringValue = append(arg.RepeatedStringValue, values...)
 	}
 	for key, values := range r.URL.Query() {
 		for _, value := range values {

@@ -114,12 +114,11 @@ func (g *generator) genClientMethod(
 		if method.withFiles {
 			g.gf.P("	req.Header.Set(\"Content-Type\", writer.FormDataContentType())")
 		}
-		g.gf.P("	var reqResp *", httpPackage.Ident("Response"))
 	case libraryFastHTTP:
 		g.gf.P("	req.SetRequestURI(", fmtPackage.Ident("Sprintf"), "(\"%s", requestURI, "%s\",p.host", paramsURI, ",queryArgs))")
 		g.gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
-		g.gf.P("	var reqResp *", fasthttpPackage.Ident("Response"))
 	}
+	g.gf.P("	var reqResp *", g.lib.Ident("Response"))
 	g.gf.P("	ctx = context.WithValue(ctx, \"proto_service\", \"", srvName, "\")")
 	g.gf.P("	ctx = context.WithValue(ctx, \"proto_method\", \"", method.name, "\")")
 	g.gf.P("	var handler = func(", g.clientInput, ") (", g.clientOutput, ") {")
@@ -210,12 +209,7 @@ func (g *generator) genClientRepeatedFieldRequestValues(f field) (err error) {
 // genMarshalRequestStruct generates marshalling from struct to []byte for request
 func (g *generator) genMarshalRequestStruct() {
 	g.gf.P("	var body []byte")
-	switch *g.cfg.Marshaller {
-	case marshallerProtoJSON:
-		g.gf.P("	body, err = ", protojsonPackage.Ident("Marshal"), "(request)")
-	default:
-		g.gf.P("	body, err = ", jsonPackage.Ident("Marshal"), "(request)")
-	}
+	g.gf.P("	body, err = ", g.marshaller.Ident("Marshal"), "(request)")
 	g.gf.P("	if err != nil {")
 	g.gf.P("		return nil, err")
 	g.gf.P("	}")
@@ -422,12 +416,7 @@ func (g *generator) genUnmarshalResponseStruct(method methodParams) error {
 		respStruct = "resp." + respField.goName
 		respStructPointer = "&" + respStruct
 	}
-	switch *g.cfg.Marshaller {
-	case marshallerProtoJSON:
-		g.gf.P("	err = ", protojsonPackage.Ident("Unmarshal"), "(respBody, ", respStructPointer, ")")
-	default:
-		g.gf.P("	err = ", jsonPackage.Ident("Unmarshal"), "(respBody, ", respStructPointer, ")")
-	}
+	g.gf.P("	err = ", g.marshaller.Ident("Unmarshal"), "(respBody, ", respStructPointer, ")")
 	return nil
 }
 

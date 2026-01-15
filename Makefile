@@ -32,7 +32,7 @@ test:    			## run tests
 lint:        		## lint code https://golangci-lint.run/welcome/install/
 	@printf "\033[34mLinting code...\033[0m %s\n"
 	@golangci-lint run --fix
-	@(cd ./example && golangci-lint run --fix)
+	@(cd ./example && golangci-lint run)
 
 format:				## format code
 	@printf "\033[36mFormatting code...\033[0m\n"
