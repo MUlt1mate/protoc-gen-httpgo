@@ -10,7 +10,6 @@ import (
 	fmt "fmt"
 	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 	router "github.com/fasthttp/router"
-	easyjson "github.com/mailru/easyjson"
 	fasthttp "github.com/valyala/fasthttp"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -44,7 +43,7 @@ func RegisterServiceNameHTTPGoServer(
 	_ context.Context,
 	r *router.Router,
 	h ServiceNameHTTPGoService,
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
+	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 ) error {
 	var middleware = chainServerMiddlewaresExample(middlewares)
 
@@ -57,7 +56,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "RPCName")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.RPCName(ctx, input)
 		}
 		if middleware == nil {
@@ -76,7 +75,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "AllTypesTest")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTypesTest(ctx, input)
 		}
 		if middleware == nil {
@@ -95,7 +94,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "AllTextTypesPost")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTextTypesPost(ctx, input)
 		}
 		if middleware == nil {
@@ -114,7 +113,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "AllTextTypesGet")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTextTypesGet(ctx, input)
 		}
 		if middleware == nil {
@@ -133,7 +132,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "CommonTypes")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CommonTypes(ctx, input)
 		}
 		if middleware == nil {
@@ -153,7 +152,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "SameInputAndOutput")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.SameInputAndOutput(ctx, input)
 		}
 		if middleware == nil {
@@ -172,7 +171,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "Optional")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.Optional(ctx, input)
 		}
 		if middleware == nil {
@@ -191,7 +190,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "GetMethod")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.GetMethod(ctx, input)
 		}
 		if middleware == nil {
@@ -210,7 +209,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "CheckRepeatedPath")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CheckRepeatedPath(ctx, input)
 		}
 		if middleware == nil {
@@ -229,7 +228,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "CheckRepeatedQuery")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CheckRepeatedQuery(ctx, input)
 		}
 		if middleware == nil {
@@ -248,7 +247,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "CheckRepeatedPost")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CheckRepeatedPost(ctx, input)
 		}
 		if middleware == nil {
@@ -267,7 +266,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "EmptyGet")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.EmptyGet(ctx, input)
 		}
 		if middleware == nil {
@@ -286,7 +285,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "EmptyPost")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.EmptyPost(ctx, input)
 		}
 		if middleware == nil {
@@ -305,7 +304,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "TopLevelArray")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.TopLevelArray(ctx, input)
 		}
 		if middleware == nil {
@@ -324,7 +323,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "OnlyStructInGet")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.OnlyStructInGet(ctx, input)
 		}
 		if middleware == nil {
@@ -343,7 +342,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "MultipartForm")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.MultipartForm(ctx, input)
 		}
 		if middleware == nil {
@@ -362,7 +361,7 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "ServiceName")
 		ctx.SetUserValue("proto_method", "MultipartFormAllTypes")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.MultipartFormAllTypes(ctx, input)
 		}
 		if middleware == nil {
@@ -379,14 +378,8 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 	arg = &common.InputMsgName{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
@@ -431,14 +424,8 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 	arg = &common.AllTypesMsg{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
@@ -736,14 +723,8 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *fasthttp.Reques
 	arg = &common.AllTextTypesMsg{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
@@ -1046,14 +1027,8 @@ func buildExampleServiceNameCommonTypesAny(ctx *fasthttp.RequestCtx) (arg *anypb
 	arg = &anypb.Any{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
@@ -1076,14 +1051,8 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 	arg = &common.InputMsgName{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
@@ -1119,14 +1088,8 @@ func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg
 	arg = &common.OptionalField{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
@@ -1799,14 +1762,8 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.Request
 	arg = &common.RepeatedCheck{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
@@ -1954,14 +1911,8 @@ func buildExampleServiceNameEmptyPostEmpty(ctx *fasthttp.RequestCtx) (arg *commo
 	arg = &common.Empty{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
 		}
 	}
 	return arg, err
@@ -1971,14 +1922,8 @@ func buildExampleServiceNameTopLevelArrayEmpty(ctx *fasthttp.RequestCtx) (arg *c
 	arg = &common.Empty{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
 		}
 	}
 	return arg, err
@@ -1988,14 +1933,8 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx *fasthttp.RequestCtx) 
 	arg = &common.OnlyStruct{}
 	var body = ctx.PostBody()
 	if len(body) > 0 {
-		if argEJ, ok := interface{}(arg).(easyjson.Unmarshaler); ok {
-			if err = easyjson.Unmarshal(body, argEJ); err != nil {
-				return nil, err
-			}
-		} else {
-			if err = json.Unmarshal(body, arg); err != nil {
-				return nil, err
-			}
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
 		}
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
@@ -2345,29 +2284,29 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 }
 
 func chainServerMiddlewaresExample(
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
-) func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
+	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
+) func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
 	switch len(middlewares) {
 	case 0:
 		return nil
 	case 1:
 		return middlewares[0]
 	default:
-		return func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
+		return func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
 			return middlewares[0](ctx, req, getChainServerMiddlewareHandlerExample(middlewares, 0, handler))
 		}
 	}
 }
 
 func getChainServerMiddlewareHandlerExample(
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
+	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 	curr int,
-	finalHandler func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	finalHandler func(ctx context.Context, req any) (resp any, err error),
+) func(ctx context.Context, req any) (resp any, err error) {
 	if curr == len(middlewares)-1 {
 		return finalHandler
 	}
-	return func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	return func(ctx context.Context, req any) (resp any, err error) {
 		return middlewares[curr+1](ctx, req, getChainServerMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
 	}
 }
@@ -2377,15 +2316,15 @@ var _ ServiceNameHTTPGoService = &ServiceNameHTTPGoClient{}
 type ServiceNameHTTPGoClient struct {
 	cl          *fasthttp.Client
 	host        string
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error)
-	middleware  func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error)
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error)
+	middleware  func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error)
 }
 
 func GetServiceNameHTTPGoClient(
 	_ context.Context,
 	cl *fasthttp.Client,
 	host string,
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
 ) (*ServiceNameHTTPGoClient, error) {
 	return &ServiceNameHTTPGoClient{
 		cl:          cl,
@@ -2400,23 +2339,19 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *common.I
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 	req.SetBody(body)
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/%s/%d%s", p.host, request.StringArgument, request.Int64Argument, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "RPCName")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -2429,16 +2364,8 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *common.I
 		}
 	}
 	resp = &common.OutputMsgName{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -2447,23 +2374,19 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *com
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 	req.SetBody(body)
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/%t/%s/%d/%d/%d/%d/%d/%d/%d/%d/%f/%d/%d/%f/%s/%s%s", p.host, request.BoolValue, request.EnumValue, request.Int32Value, request.Sint32Value, request.Uint32Value, request.Int64Value, request.Sint64Value, request.Uint64Value, request.Sfixed32Value, request.Fixed32Value, request.FloatValue, request.Sfixed64Value, request.Fixed64Value, request.DoubleValue, request.StringValue, request.BytesValue, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "AllTypesTest")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -2476,16 +2399,8 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *com
 		}
 	}
 	resp = &common.AllTypesMsg{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -2494,11 +2409,7 @@ func (p *ServiceNameHTTPGoClient) AllTextTypesPost(ctx context.Context, request 
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
@@ -2516,12 +2427,12 @@ func (p *ServiceNameHTTPGoClient) AllTextTypesPost(ctx context.Context, request 
 	RepeatedEnumRequest := strings.Join(RepeatedEnumStrs, ",")
 	req.SetRequestURI(fmt.Sprintf("%s/v1/text/%s/%s/%s/%s/%s/%s%s", p.host, request.String_, RepeatedStringRequest, request.Bytes, RepeatedBytesRequest, request.Enum, RepeatedEnumRequest, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesPost")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -2534,16 +2445,8 @@ func (p *ServiceNameHTTPGoClient) AllTextTypesPost(ctx context.Context, request 
 		}
 	}
 	resp = &common.AllTextTypesMsg{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -2552,7 +2455,7 @@ func (p *ServiceNameHTTPGoClient) AllTextTypesGet(ctx context.Context, request *
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var parameters = []string{}
-	var values = []interface{}{}
+	var values = []any{}
 	if request.OptionalString != nil {
 		parameters = append(parameters, "OptionalString=%s")
 		values = append(values, *request.OptionalString)
@@ -2580,12 +2483,12 @@ func (p *ServiceNameHTTPGoClient) AllTextTypesGet(ctx context.Context, request *
 	RepeatedEnumRequest := strings.Join(RepeatedEnumStrs, ",")
 	req.SetRequestURI(fmt.Sprintf("%s/v2/text/%s/%s/%s/%s/%s/%s%s", p.host, request.String_, RepeatedStringRequest, request.Bytes, RepeatedBytesRequest, request.Enum, RepeatedEnumRequest, queryArgs))
 	req.Header.SetMethod("GET")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesGet")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -2598,16 +2501,8 @@ func (p *ServiceNameHTTPGoClient) AllTextTypesGet(ctx context.Context, request *
 		}
 	}
 	resp = &common.AllTextTypesMsg{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -2616,23 +2511,19 @@ func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anyp
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 	req.SetBody(body)
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/commonTypes%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "CommonTypes")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -2645,16 +2536,8 @@ func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anyp
 		}
 	}
 	resp = &emptypb.Empty{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -2664,23 +2547,19 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 	req.SetBody(body)
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/%s%s", p.host, request.StringArgument, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "SameInputAndOutput")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -2693,16 +2572,8 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 		}
 	}
 	resp = &common.OutputMsgName{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -2711,23 +2582,19 @@ func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *common.
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 	req.SetBody(body)
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/optional%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "Optional")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -2740,16 +2607,8 @@ func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *common.
 		}
 	}
 	resp = &common.OptionalField{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -2761,7 +2620,7 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *common
 		"int64Argument=%d",
 		"stringArgument=%s",
 	}
-	var values = []interface{}{
+	var values = []any{
 		request.Int64Argument,
 		request.StringArgument,
 	}
@@ -2769,12 +2628,12 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *common
 	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/get%s", p.host, queryArgs))
 	req.Header.SetMethod("GET")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "GetMethod")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -2787,16 +2646,8 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *common
 		}
 	}
 	resp = &common.OutputMsgName{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -2883,12 +2734,12 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request
 	StringValueQueryRequest := strings.Join(request.StringValueQuery, ",")
 	req.SetRequestURI(fmt.Sprintf("%s/v1/repeated/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s%s", p.host, BoolValueRequest, EnumValueRequest, Int32ValueRequest, Sint32ValueRequest, Uint32ValueRequest, Int64ValueRequest, Sint64ValueRequest, Uint64ValueRequest, Sfixed32ValueRequest, Fixed32ValueRequest, FloatValueRequest, Sfixed64ValueRequest, Fixed64ValueRequest, DoubleValueRequest, StringValueRequest, BytesValueRequest, StringValueQueryRequest, queryArgs))
 	req.Header.SetMethod("GET")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPath")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -2901,16 +2752,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request
 		}
 	}
 	resp = &common.RepeatedCheck{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -2919,7 +2762,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, reques
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var parameters = []string{}
-	var values = []interface{}{}
+	var values = []any{}
 	for _, v := range request.BoolValue {
 		parameters = append(parameters, "BoolValue[]=%t")
 		values = append(values, v)
@@ -2989,12 +2832,12 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, reques
 	StringValueRequest := strings.Join(request.StringValue, ",")
 	req.SetRequestURI(fmt.Sprintf("%s/v1/repeated/%s%s", p.host, StringValueRequest, queryArgs))
 	req.Header.SetMethod("GET")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedQuery")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -3007,16 +2850,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, reques
 		}
 	}
 	resp = &common.RepeatedCheck{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -3025,11 +2860,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
@@ -3037,12 +2868,12 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request
 	StringValueRequest := strings.Join(request.StringValue, ",")
 	req.SetRequestURI(fmt.Sprintf("%s/v1/repeated/%s%s", p.host, StringValueRequest, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPost")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -3055,16 +2886,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request
 		}
 	}
 	resp = &common.RepeatedCheck{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -3074,12 +2897,12 @@ func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *common.
 	var queryArgs string
 	req.SetRequestURI(fmt.Sprintf("%s/v1/emptyGet%s", p.host, queryArgs))
 	req.Header.SetMethod("GET")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "EmptyGet")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -3092,16 +2915,8 @@ func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *common.
 		}
 	}
 	resp = &common.Empty{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -3110,23 +2925,19 @@ func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *common
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 	req.SetBody(body)
 	req.SetRequestURI(fmt.Sprintf("%s/v1/emptyPost%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "EmptyPost")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -3139,16 +2950,8 @@ func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *common
 		}
 	}
 	resp = &common.Empty{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -3157,23 +2960,19 @@ func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *co
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 	req.SetBody(body)
 	req.SetRequestURI(fmt.Sprintf("%s/v1/array%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "TopLevelArray")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -3186,16 +2985,8 @@ func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *co
 		}
 	}
 	resp = &common.Array{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp.Items).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, &resp.Items); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, &resp.Items)
 	return resp, err
 }
 
@@ -3204,23 +2995,19 @@ func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
 	var body []byte
-	if rqEJ, ok := interface{}(request).(easyjson.Marshaler); ok {
-		body, err = easyjson.Marshal(rqEJ)
-	} else {
-		body, err = json.Marshal(request)
-	}
+	body, err = json.Marshal(request)
 	if err != nil {
 		return nil, err
 	}
 	req.SetBody(body)
 	req.SetRequestURI(fmt.Sprintf("%s/v1/onlyStruct%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -3233,16 +3020,8 @@ func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *
 		}
 	}
 	resp = &common.Empty{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -3269,12 +3048,12 @@ func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *co
 	req.Header.SetContentType(writer.FormDataContentType())
 	req.SetRequestURI(fmt.Sprintf("%s/v1/multipart%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -3287,16 +3066,8 @@ func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *co
 		}
 	}
 	resp = &common.Empty{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
@@ -3391,12 +3162,12 @@ func (p *ServiceNameHTTPGoClient) MultipartFormAllTypes(ctx context.Context, req
 	req.Header.SetContentType(writer.FormDataContentType())
 	req.SetRequestURI(fmt.Sprintf("%s/v1/multipartall%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "MultipartFormAllTypes")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -3409,43 +3180,35 @@ func (p *ServiceNameHTTPGoClient) MultipartFormAllTypes(ctx context.Context, req
 		}
 	}
 	resp = &common.Empty{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
-	if respEJ, ok := interface{}(resp).(easyjson.Unmarshaler); ok {
-		if err = easyjson.Unmarshal(respBody, respEJ); err != nil {
-			return nil, err
-		}
-	} else {
-		if err = json.Unmarshal(respBody, resp); err != nil {
-			return nil, err
-		}
-	}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
 func chainClientMiddlewaresExample(
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
-) func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
+) func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error) {
 	switch len(middlewares) {
 	case 0:
 		return nil
 	case 1:
 		return middlewares[0]
 	default:
-		return func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
+		return func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error) {
 			return middlewares[0](ctx, req, getChainClientMiddlewareHandlerExample(middlewares, 0, handler))
 		}
 	}
 }
 
 func getChainClientMiddlewareHandlerExample(
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
 	curr int,
-	finalHandler func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	finalHandler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
+) func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 	if curr == len(middlewares)-1 {
 		return finalHandler
 	}
-	return func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	return func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		return middlewares[curr+1](ctx, req, getChainClientMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
 	}
 }

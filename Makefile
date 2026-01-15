@@ -32,7 +32,7 @@ test:    			## run tests
 lint:        		## lint code https://golangci-lint.run/welcome/install/
 	@printf "\033[34mLinting code...\033[0m %s\n"
 	@golangci-lint run --fix
-	@(cd ./example && golangci-lint run --fix)
+	@(cd ./example && golangci-lint run)
 
 format:				## format code
 	@printf "\033[36mFormatting code...\033[0m\n"
@@ -50,7 +50,6 @@ debug: ## go install github.com/lyft/protoc-gen-star/protoc-gen-debug@latest
 
 installdeps:
 	@go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
-	@go install github.com/mailru/easyjson/...@v0.9.0
 	@mkdir ${GOWORKPATH}/bin/ -p
 	@wget -q https://github.com/protocolbuffers/protobuf/releases/download/v31.1/protoc-31.1-linux-x86_64.zip -P .  \
              && unzip ./protoc-31.1-linux-x86_64.zip -d ./protoc  \

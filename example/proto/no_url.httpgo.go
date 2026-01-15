@@ -19,7 +19,7 @@ func RegisterNoURLHTTPGoServer(
 	_ context.Context,
 	r *router.Router,
 	h NoURLHTTPGoService,
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
+	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 ) error {
 	var middleware = chainServerMiddlewaresNourl(middlewares)
 
@@ -32,7 +32,7 @@ func RegisterNoURLHTTPGoServer(
 		}
 		ctx.SetUserValue("proto_service", "NoURL")
 		ctx.SetUserValue("proto_method", "MethodWithoutURLAnnotation")
-		handler := func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.MethodWithoutURLAnnotation(ctx, input)
 		}
 		if middleware == nil {
@@ -57,29 +57,29 @@ func buildNourlNoURLMethodWithoutURLAnnotationEmpty(ctx *fasthttp.RequestCtx) (a
 }
 
 func chainServerMiddlewaresNourl(
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
-) func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
+	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
+) func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
 	switch len(middlewares) {
 	case 0:
 		return nil
 	case 1:
 		return middlewares[0]
 	default:
-		return func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
+		return func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
 			return middlewares[0](ctx, req, getChainServerMiddlewareHandlerNourl(middlewares, 0, handler))
 		}
 	}
 }
 
 func getChainServerMiddlewareHandlerNourl(
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
+	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 	curr int,
-	finalHandler func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	finalHandler func(ctx context.Context, req any) (resp any, err error),
+) func(ctx context.Context, req any) (resp any, err error) {
 	if curr == len(middlewares)-1 {
 		return finalHandler
 	}
-	return func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	return func(ctx context.Context, req any) (resp any, err error) {
 		return middlewares[curr+1](ctx, req, getChainServerMiddlewareHandlerNourl(middlewares, curr+1, finalHandler))
 	}
 }
@@ -89,15 +89,15 @@ var _ NoURLHTTPGoService = &NoURLHTTPGoClient{}
 type NoURLHTTPGoClient struct {
 	cl          *fasthttp.Client
 	host        string
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error)
-	middleware  func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error)
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error)
+	middleware  func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error)
 }
 
 func GetNoURLHTTPGoClient(
 	_ context.Context,
 	cl *fasthttp.Client,
 	host string,
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
 ) (*NoURLHTTPGoClient, error) {
 	return &NoURLHTTPGoClient{
 		cl:          cl,
@@ -119,12 +119,12 @@ func (p *NoURLHTTPGoClient) MethodWithoutURLAnnotation(ctx context.Context, requ
 	req.SetBody(body)
 	req.SetRequestURI(fmt.Sprintf("%s/NoURL/MethodWithoutURLAnnotation%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
-	var reqResp interface{}
+	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "NoURL")
 	ctx = context.WithValue(ctx, "proto_method", "MethodWithoutURLAnnotation")
-	var handler = func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
-		err = p.cl.Do(req.(*fasthttp.Request), resp.(*fasthttp.Response))
+		err = p.cl.Do(req, resp)
 		return resp, err
 	}
 	if p.middleware == nil {
@@ -137,35 +137,35 @@ func (p *NoURLHTTPGoClient) MethodWithoutURLAnnotation(ctx context.Context, requ
 		}
 	}
 	resp = &emptypb.Empty{}
-	var respBody = reqResp.(*fasthttp.Response).Body()
+	var respBody = reqResp.Body()
 	err = json.Unmarshal(respBody, resp)
 	return resp, err
 }
 
 func chainClientMiddlewaresNourl(
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
-) func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
+) func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error) {
 	switch len(middlewares) {
 	case 0:
 		return nil
 	case 1:
 		return middlewares[0]
 	default:
-		return func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error) {
+		return func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error) {
 			return middlewares[0](ctx, req, getChainClientMiddlewareHandlerNourl(middlewares, 0, handler))
 		}
 	}
 }
 
 func getChainClientMiddlewareHandlerNourl(
-	middlewares []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error),
+	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
 	curr int,
-	finalHandler func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	finalHandler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
+) func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 	if curr == len(middlewares)-1 {
 		return finalHandler
 	}
-	return func(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	return func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		return middlewares[curr+1](ctx, req, getChainClientMiddlewareHandlerNourl(middlewares, curr+1, finalHandler))
 	}
 }

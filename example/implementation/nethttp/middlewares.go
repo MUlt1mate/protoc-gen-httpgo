@@ -10,8 +10,6 @@ import (
 	"log"
 	"net/http"
 	"time"
-
-	"github.com/mailru/easyjson"
 )
 
 const (
@@ -34,14 +32,14 @@ var (
 	errTimeoutBody   = `{"error":"timeout"}`
 )
 
-var ServerMiddlewares = []func(ctx context.Context, arg interface{}, handler func(ctx context.Context, arg interface{}) (resp interface{}, err error)) (resp interface{}, err error){
+var ServerMiddlewares = []func(ctx context.Context, arg any, handler func(ctx context.Context, arg any) (resp any, err error)) (resp any, err error){
 	LoggerServerMiddleware,
 	ResponseServerMiddleware,
 	HeadersServerMiddleware,
 	TimeoutServerMiddleware,
 	ValidationServerMiddleware,
 }
-var ClientMiddlewares = []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error){
+var ClientMiddlewares = []func(ctx context.Context, req *http.Request, handler func(ctx context.Context, req *http.Request) (resp *http.Response, err error)) (resp *http.Response, err error){
 	LoggerClientMiddleware,
 	HeadersClientMiddleware,
 	ErrorClientMiddleware,
@@ -50,9 +48,9 @@ var ClientMiddlewares = []func(ctx context.Context, req interface{}, handler fun
 
 // LoggerServerMiddleware logs request and response for server
 func LoggerServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	ctx context.Context, arg any,
+	next func(ctx context.Context, arg any) (resp any, err error),
+) (resp any, err error) {
 	log.Printf("%s: server request %s", serviceName, arg)
 	resp, err = next(ctx, arg)
 	log.Printf("%s: server response %s", serviceName, resp)
@@ -61,19 +59,15 @@ func LoggerServerMiddleware(
 
 // ResponseServerMiddleware formats response for server
 func ResponseServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	ctx context.Context, arg any,
+	next func(ctx context.Context, arg any) (resp any, err error),
+) (resp any, err error) {
 	var responseBody []byte
 	resp, err = next(ctx, arg)
 	if err != nil {
 		resp = respError{Error: err.Error()}
 	}
-	if ejMarsh, ok := resp.(easyjson.Marshaler); ok {
-		responseBody, _ = easyjson.Marshal(ejMarsh)
-	} else {
-		responseBody, _ = json.Marshal(resp)
-	}
+	responseBody, _ = json.Marshal(resp)
 	writer, _ := ctx.Value("writer").(http.ResponseWriter)
 	_, _ = writer.Write(responseBody)
 	return resp, err
@@ -81,9 +75,9 @@ func ResponseServerMiddleware(
 
 // HeadersServerMiddleware checks and sets headers for server
 func HeadersServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	ctx context.Context, arg any,
+	next func(ctx context.Context, arg any) (resp any, err error),
+) (resp any, err error) {
 	writer, _ := ctx.Value("writer").(http.ResponseWriter)
 	// request, _ := ctx.Value("request").(*http.Request)
 	// jsonContentType := "application/json"
@@ -105,9 +99,9 @@ func HeadersServerMiddleware(
 
 // TimeoutServerMiddleware sets timeout for request
 func TimeoutServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	ctx context.Context, arg any,
+	next func(ctx context.Context, arg any) (resp any, err error),
+) (resp any, err error) {
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithTimeout(ctx, serverExecutionTimeout)
 	defer cancel()
@@ -131,9 +125,9 @@ func TimeoutServerMiddleware(
 
 // ValidationServerMiddleware validates request
 func ValidationServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	ctx context.Context, arg any,
+	next func(ctx context.Context, arg any) (resp any, err error),
+) (resp any, err error) {
 	if validatorArg, ok := arg.(validator); ok {
 		if err = validatorArg.Validate(); err != nil {
 			writer, _ := ctx.Value("writer").(http.ResponseWriter)
@@ -149,24 +143,23 @@ func ValidationServerMiddleware(
 // LoggerClientMiddleware logs request and response for client
 func LoggerClientMiddleware(
 	ctx context.Context,
-	req interface{},
-	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
-	log.Printf("%s: client sending request with path %s", serviceName, req.(*http.Request).URL.String())
+	req *http.Request,
+	next func(ctx context.Context, req *http.Request) (resp *http.Response, err error),
+) (resp *http.Response, err error) {
+	log.Printf("%s: client sending request with path %s", serviceName, req.URL.String())
 	resp, err = next(ctx, req)
 	if err != nil {
 		log.Printf("%s: client got response with error %s", serviceName, err.Error())
 		return resp, err
 	}
 	if resp != nil {
-		respTyped := resp.(*http.Response)
 		var body []byte
-		if body, err = io.ReadAll(respTyped.Body); err != nil {
+		if body, err = io.ReadAll(resp.Body); err != nil {
 			return resp, err
 		}
 		// Replace the body with a new reader after reading from the original
-		respTyped.Body = io.NopCloser(bytes.NewBuffer(body))
-		log.Printf("%s: client got response with code %d, body %s", serviceName, respTyped.StatusCode, string(body))
+		resp.Body = io.NopCloser(bytes.NewBuffer(body))
+		log.Printf("%s: client got response with code %d, body %s", serviceName, resp.StatusCode, string(body))
 	}
 	return resp, err
 }
@@ -174,9 +167,9 @@ func LoggerClientMiddleware(
 // HeadersClientMiddleware checks and sets headers for client
 func HeadersClientMiddleware(
 	ctx context.Context,
-	req interface{},
-	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	req *http.Request,
+	next func(ctx context.Context, req *http.Request) (resp *http.Response, err error),
+) (resp *http.Response, err error) {
 	// jsonContentType := "application/json"
 	// req.(*http.Request).Header.Set("Content-Type", jsonContentType)
 	resp, err = next(ctx, req)
@@ -189,12 +182,12 @@ func HeadersClientMiddleware(
 // ErrorClientMiddleware checks http response code for error
 func ErrorClientMiddleware(
 	ctx context.Context,
-	req interface{},
-	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	req *http.Request,
+	next func(ctx context.Context, req *http.Request) (resp *http.Response, err error),
+) (resp *http.Response, err error) {
 	resp, err = next(ctx, req)
-	if err == nil && resp.(*http.Response).StatusCode > http.StatusBadRequest {
-		return resp, fmt.Errorf("%w, code: %d", errRequestFailed, resp.(*http.Response).StatusCode)
+	if err == nil && resp.StatusCode > http.StatusBadRequest {
+		return resp, fmt.Errorf("%w, code: %d", errRequestFailed, resp.StatusCode)
 	}
 	return resp, err
 }
@@ -202,12 +195,12 @@ func ErrorClientMiddleware(
 // TimeoutClientMiddleware sets timeout for request
 func TimeoutClientMiddleware(
 	ctx context.Context,
-	req interface{},
-	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	req *http.Request,
+	next func(ctx context.Context, req *http.Request) (resp *http.Response, err error),
+) (resp *http.Response, err error) {
 	ctx, cancelFunc := context.WithTimeout(ctx, time.Second*1)
 	defer cancelFunc()
-	req = req.(*http.Request).WithContext(ctx)
+	req = req.WithContext(ctx)
 	resp, err = next(ctx, req)
 	return resp, err
 }
