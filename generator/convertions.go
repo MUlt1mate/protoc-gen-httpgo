@@ -80,36 +80,36 @@ func (g *generator) genNumericFieldConvertor(
 		return fmt.Errorf("unexpected type %s for numeric field ", f.kind)
 	}
 	g.gf.P("if ", errorVar, " != nil {")
-	errValues := []interface{}{fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", ", errorVar, ")"}
+	errValues := []any{fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", ", errorVar, ")"}
 	if nakedReturn {
-		g.gf.P(append([]interface{}{"	err = "}, errValues...)...)
+		g.gf.P(append([]any{"	err = "}, errValues...)...)
 		g.gf.P("	return")
 	} else {
-		g.gf.P(append([]interface{}{"	return ", returnPrefix}, errValues...)...)
+		g.gf.P(append([]any{"	return ", returnPrefix}, errValues...)...)
 	}
 	g.gf.P("}")
 	if shortConversion {
 		return nil
 	}
-	var nextValues []interface{}
+	var nextValues []any
 	if fieldNeedToBeConverted(f) {
-		nextValues = []interface{}{getFieldConversionFuncName(f), "(", f.goName, ")"}
+		nextValues = []any{getFieldConversionFuncName(f), "(", f.goName, ")"}
 	} else {
-		nextValues = []interface{}{f.goName}
+		nextValues = []any{f.goName}
 	}
 	if repeatedDestination {
 		nextValues = append(nextValues, ")")
-		g.gf.P(append([]interface{}{destination, " = append(", destination, ", "}, nextValues...)...)
+		g.gf.P(append([]any{destination, " = append(", destination, ", "}, nextValues...)...)
 	} else {
 		var reference string
 		if f.optional {
 			reference = "&"
 		}
 		if f.optional && fieldNeedToBeConverted(f) {
-			g.gf.P(append([]interface{}{f.goName, "Value := "}, nextValues...)...)
-			nextValues = []interface{}{f.goName, "Value"}
+			g.gf.P(append([]any{f.goName, "Value := "}, nextValues...)...)
+			nextValues = []any{f.goName, "Value"}
 		}
-		g.gf.P(append([]interface{}{destination, " = ", reference}, nextValues...)...)
+		g.gf.P(append([]any{destination, " = ", reference}, nextValues...)...)
 	}
 	return nil
 }
@@ -146,12 +146,12 @@ func (g *generator) genBoolFieldConvertor(
 		}
 	}
 	g.gf.P("default:")
-	errValues := []interface{}{fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", ", source, ")"}
+	errValues := []any{fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", ", source, ")"}
 	if nakedReturn {
-		g.gf.P(append([]interface{}{"	err = "}, errValues...)...)
+		g.gf.P(append([]any{"	err = "}, errValues...)...)
 		g.gf.P("	return")
 	} else {
-		g.gf.P(append([]interface{}{"	return ", returnPrefix}, errValues...)...)
+		g.gf.P(append([]any{"	return ", returnPrefix}, errValues...)...)
 	}
 	g.gf.P("}")
 }
@@ -190,12 +190,12 @@ func (g *generator) genEnumFieldConverter(
 	}
 	g.gf.P("		}")
 	g.gf.P("	} else {")
-	errValues := []interface{}{fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)"}
+	errValues := []any{fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)"}
 	if nakedReturn {
-		g.gf.P(append([]interface{}{"		err = "}, errValues...)...)
+		g.gf.P(append([]any{"		err = "}, errValues...)...)
 		g.gf.P("		return")
 	} else {
-		g.gf.P(append([]interface{}{"		return ", returnPrefix}, errValues...)...)
+		g.gf.P(append([]any{"		return ", returnPrefix}, errValues...)...)
 	}
 	g.gf.P("	}")
 	g.gf.P("}")

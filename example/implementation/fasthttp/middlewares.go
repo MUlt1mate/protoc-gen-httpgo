@@ -8,7 +8,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/mailru/easyjson"
 	"github.com/valyala/fasthttp"
 )
 
@@ -34,7 +33,7 @@ var (
 	errTimeoutBody   = `{"error":"timeout"}`
 )
 
-var ServerMiddlewares = []func(ctx context.Context, arg interface{}, handler func(ctx context.Context, arg interface{}) (resp interface{}, err error)) (resp interface{}, err error){
+var ServerMiddlewares = []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error){
 	ContextServerMiddleware,
 	LoggerServerMiddleware,
 	ResponseServerMiddleware,
@@ -42,7 +41,7 @@ var ServerMiddlewares = []func(ctx context.Context, arg interface{}, handler fun
 	TimeoutServerMiddleware,
 	ValidationServerMiddleware,
 }
-var ClientMiddlewares = []func(ctx context.Context, req interface{}, handler func(ctx context.Context, req interface{}) (resp interface{}, err error)) (resp interface{}, err error){
+var ClientMiddlewares = []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error){
 	LoggerClientMiddleware,
 	HeadersClientMiddleware,
 	ErrorClientMiddleware,
@@ -52,9 +51,9 @@ var ClientMiddlewares = []func(ctx context.Context, req interface{}, handler fun
 // ContextServerMiddleware wraps fasthttp.RequestCtx from original ctx for further usage
 // This middleware should be executed first
 func ContextServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	ctx context.Context, req any,
+	next func(ctx context.Context, req any) (resp any, err error),
+) (resp any, err error) {
 	if fastCtx, ok := ctx.(*fasthttp.RequestCtx); ok {
 		// wrap fasthttp.RequestCtx from original ctx for further usage
 		// Calls of ctx.Value will eventually call *fasthttp.RequestCtx.Value
@@ -64,35 +63,31 @@ func ContextServerMiddleware(
 		// Fail instantly, so we can resolve this quick during development
 		panic(fmt.Sprintf("incorrect ctx type, expected *fasthttp.RequestCtx, got %T", ctx))
 	}
-	return next(ctx, arg)
+	return next(ctx, req)
 }
 
 // LoggerServerMiddleware logs request and response for server
 func LoggerServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
-	log.Printf("%s: server request %s", serviceName, arg)
-	resp, err = next(ctx, arg)
+	ctx context.Context, req any,
+	next func(ctx context.Context, req any) (resp any, err error),
+) (resp any, err error) {
+	log.Printf("%s: server request %s", serviceName, req)
+	resp, err = next(ctx, req)
 	log.Printf("%s: server response %s", serviceName, resp)
 	return resp, err
 }
 
 // ResponseServerMiddleware formats response for server
 func ResponseServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	ctx context.Context, req any,
+	next func(ctx context.Context, req any) (resp any, err error),
+) (resp any, err error) {
 	var responseBody []byte
-	resp, err = next(ctx, arg)
+	resp, err = next(ctx, req)
 	if err != nil {
 		resp = respError{Error: err.Error()}
 	}
-	if ejMarsh, ok := resp.(easyjson.Marshaler); ok {
-		responseBody, _ = easyjson.Marshal(ejMarsh)
-	} else {
-		responseBody, _ = json.Marshal(resp)
-	}
+	responseBody, _ = json.Marshal(resp)
 	fastCtx, _ := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx)
 	_, _ = fastCtx.Write(responseBody)
 	return resp, err
@@ -100,9 +95,9 @@ func ResponseServerMiddleware(
 
 // HeadersServerMiddleware checks and sets headers for server
 func HeadersServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	ctx context.Context, req any,
+	next func(ctx context.Context, req any) (resp any, err error),
+) (resp any, err error) {
 	fastCtx, _ := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx)
 	jsonContentType := "application/json"
 	// check doesn't work with multipart form
@@ -112,7 +107,7 @@ func HeadersServerMiddleware(
 	// 	return nil, errors.New("incorrect content type")
 	// }
 	fastCtx.SetContentType(jsonContentType)
-	resp, err = next(ctx, arg)
+	resp, err = next(ctx, req)
 	if err == nil {
 		fastCtx.SetStatusCode(fasthttp.StatusOK)
 	} else {
@@ -124,15 +119,15 @@ func HeadersServerMiddleware(
 
 // TimeoutServerMiddleware sets timeout for request
 func TimeoutServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	ctx context.Context, req any,
+	next func(ctx context.Context, req any) (resp any, err error),
+) (resp any, err error) {
 	var cancel context.CancelFunc
 	ctx, cancel = context.WithTimeout(ctx, serverExecutionTimeout)
 	defer cancel()
 	var done = make(chan struct{})
 	go func() {
-		resp, err = next(ctx, arg)
+		resp, err = next(ctx, req)
 		done <- struct{}{}
 	}()
 
@@ -150,10 +145,10 @@ func TimeoutServerMiddleware(
 
 // ValidationServerMiddleware validates request
 func ValidationServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
-	if validatorArg, ok := arg.(validator); ok {
+	ctx context.Context, req any,
+	next func(ctx context.Context, req any) (resp any, err error),
+) (resp any, err error) {
+	if validatorArg, ok := req.(validator); ok {
 		if err = validatorArg.Validate(); err != nil {
 			fastCtx, _ := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx)
 			fastCtx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -162,24 +157,23 @@ func ValidationServerMiddleware(
 			return nil, err
 		}
 	}
-	return next(ctx, arg)
+	return next(ctx, req)
 }
 
 // LoggerClientMiddleware logs request and response for client
 func LoggerClientMiddleware(
 	ctx context.Context,
-	req interface{},
-	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
-	log.Printf("%s: client sending request with path %s", serviceName, req.(*fasthttp.Request).RequestURI())
+	req *fasthttp.Request,
+	next func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
+) (resp *fasthttp.Response, err error) {
+	log.Printf("%s: client sending request with path %s", serviceName, req.RequestURI())
 	resp, err = next(ctx, req)
 	if err != nil {
 		log.Printf("%s: client got response with error %s", serviceName, err.Error())
 		return resp, err
 	}
 	if resp != nil {
-		respTyped := resp.(*fasthttp.Response)
-		log.Printf("%s: client got response with code %d, body %s", serviceName, respTyped.StatusCode(), string(respTyped.Body()))
+		log.Printf("%s: client got response with code %d, body %s", serviceName, resp.StatusCode(), string(resp.Body()))
 	}
 	return resp, err
 }
@@ -187,9 +181,9 @@ func LoggerClientMiddleware(
 // HeadersClientMiddleware checks and sets headers for client
 func HeadersClientMiddleware(
 	ctx context.Context,
-	req interface{},
-	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	req *fasthttp.Request,
+	next func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
+) (resp *fasthttp.Response, err error) {
 	// need to move to generation
 	// jsonContentType := "application/json"
 	// req.(*fasthttp.Request).Header.SetContentType(jsonContentType)
@@ -203,12 +197,12 @@ func HeadersClientMiddleware(
 // ErrorClientMiddleware checks http response code for error
 func ErrorClientMiddleware(
 	ctx context.Context,
-	req interface{},
-	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	req *fasthttp.Request,
+	next func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
+) (resp *fasthttp.Response, err error) {
 	resp, err = next(ctx, req)
-	if err == nil && resp.(*fasthttp.Response).StatusCode() > fasthttp.StatusBadRequest {
-		return resp, fmt.Errorf("%w, code: %d", errRequestFailed, resp.(*fasthttp.Response).StatusCode())
+	if err == nil && resp.StatusCode() > fasthttp.StatusBadRequest {
+		return resp, fmt.Errorf("%w, code: %d", errRequestFailed, resp.StatusCode())
 	}
 	return resp, err
 }
@@ -216,10 +210,10 @@ func ErrorClientMiddleware(
 // TimeoutClientMiddleware sets timeout for request
 func TimeoutClientMiddleware(
 	ctx context.Context,
-	req interface{},
-	next func(ctx context.Context, req interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
-	req.(*fasthttp.Request).SetTimeout(time.Second * 1)
+	req *fasthttp.Request,
+	next func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
+) (resp *fasthttp.Response, err error) {
+	req.SetTimeout(time.Second * 1)
 	resp, err = next(ctx, req)
 	return resp, err
 }

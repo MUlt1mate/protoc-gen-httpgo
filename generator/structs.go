@@ -13,7 +13,6 @@ import (
 )
 
 const (
-	marshallerEasyJSON       = "easyjson"
 	marshallerProtoJSON      = "protojson"
 	onlyServer               = "server"
 	onlyClient               = "client"
@@ -76,7 +75,6 @@ type (
 		Only               *string
 		AutoURI            *bool
 		BodylessMethodsStr *string
-		ContextStruct      *string
 		Library            *string
 	}
 )
@@ -210,20 +208,11 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 }
 
 // initTemplates fill predefined templates
-// we have to convert to strings here, because we can't pass other types like slices to protogen.P()
 func (g *generator) initTemplates(gf *protogen.GeneratedFile) {
-	if g.cfg.ContextStruct != nil && *g.cfg.ContextStruct == "native" {
-		g.serverInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req interface{}"
-		g.clientInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req interface{}"
-		g.clientOutput = "resp interface{}, err error"
-	} else {
-		// this is default behavior for backward compatibility
-		g.serverInput = "ctx *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("RequestCtx")) + ", req interface{}"
-		g.clientInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Request"))
-		g.clientOutput = "resp *" + gf.QualifiedGoIdent(fasthttpPackage.Ident("Response")) + ", err error"
-	}
-
-	g.serverOutput = "resp interface{}, err error"
+	g.serverInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req any"
+	g.serverOutput = "resp any, err error"
+	g.clientInput = "ctx " + gf.QualifiedGoIdent(contextPackage.Ident("Context")) + ", req *" + gf.QualifiedGoIdent(g.lib.Ident("Request"))
+	g.clientOutput = "resp *" + gf.QualifiedGoIdent(g.lib.Ident("Response")) + ", err error"
 }
 
 // getFilename returns capitalized filename for generated method naming

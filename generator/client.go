@@ -114,25 +114,22 @@ func (g *generator) genClientMethod(
 		if method.withFiles {
 			g.gf.P("	req.Header.Set(\"Content-Type\", writer.FormDataContentType())")
 		}
+		g.gf.P("	var reqResp *", httpPackage.Ident("Response"))
 	case libraryFastHTTP:
 		g.gf.P("	req.SetRequestURI(", fmtPackage.Ident("Sprintf"), "(\"%s", requestURI, "%s\",p.host", paramsURI, ",queryArgs))")
 		g.gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
+		g.gf.P("	var reqResp *", fasthttpPackage.Ident("Response"))
 	}
-	g.gf.P("	var reqResp interface{}")
 	g.gf.P("	ctx = context.WithValue(ctx, \"proto_service\", \"", srvName, "\")")
 	g.gf.P("	ctx = context.WithValue(ctx, \"proto_method\", \"", method.name, "\")")
 	g.gf.P("	var handler = func(", g.clientInput, ") (", g.clientOutput, ") {")
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
-		g.gf.P("		resp, err = p.cl.Do(req.(*", g.lib.Ident("Request"), "))")
+		g.gf.P("		resp, err = p.cl.Do(req)")
 		g.gf.P("		return resp, err")
 	case libraryFastHTTP:
 		g.gf.P("		resp = &", g.lib.Ident("Response"), "{}")
-		if g.cfg.ContextStruct != nil && *g.cfg.ContextStruct == "native" {
-			g.gf.P("		err = p.cl.Do(req.(*", g.lib.Ident("Request"), "), resp.(*", g.lib.Ident("Response"), "))")
-		} else {
-			g.gf.P("		err = p.cl.Do(req, resp)")
-		}
+		g.gf.P("		err = p.cl.Do(req, resp)")
 		g.gf.P("		return resp, err")
 	}
 	g.gf.P("	}")
@@ -214,12 +211,6 @@ func (g *generator) genClientRepeatedFieldRequestValues(f field) (err error) {
 func (g *generator) genMarshalRequestStruct() {
 	g.gf.P("	var body []byte")
 	switch *g.cfg.Marshaller {
-	case marshallerEasyJSON:
-		g.gf.P("	if rqEJ, ok := interface{}(request).(", easyjsonPackage.Ident("Marshaler"), "); ok {")
-		g.gf.P("		body, err = ", easyjsonPackage.Ident("Marshal"), "(rqEJ)")
-		g.gf.P("	} else {")
-		g.gf.P("		body, err = ", jsonPackage.Ident("Marshal"), "(request)")
-		g.gf.P("	}")
 	case marshallerProtoJSON:
 		g.gf.P("	body, err = ", protojsonPackage.Ident("Marshal"), "(request)")
 	default:
@@ -320,7 +311,7 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 		g.gf.P("\"", q, "\",")
 	}
 	g.gf.P("}")
-	g.gf.P("var values = []interface{}{")
+	g.gf.P("var values = []any{")
 	for _, q := range values {
 		g.gf.P(q, ",")
 	}
@@ -415,12 +406,12 @@ func (g *generator) genUnmarshalResponseStruct(method methodParams) error {
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
 		g.gf.P("	var respBody []byte")
-		g.gf.P("	if respBody, err = ", ioPackage.Ident("ReadAll"), "(reqResp.(*", g.lib.Ident("Response"), ").Body); err != nil {")
+		g.gf.P("	if respBody, err = ", ioPackage.Ident("ReadAll"), "(reqResp.Body); err != nil {")
 		g.gf.P("		return nil, err")
 		g.gf.P("	}")
-		g.gf.P("	_ = reqResp.(*", g.lib.Ident("Response"), ").Body.Close()")
+		g.gf.P("	_ = reqResp.Body.Close()")
 	case libraryFastHTTP:
-		g.gf.P("	var respBody = reqResp.(*", g.lib.Ident("Response"), ").Body()")
+		g.gf.P("	var respBody = reqResp.Body()")
 	}
 
 	if method.responseBody != "" {
@@ -432,16 +423,6 @@ func (g *generator) genUnmarshalResponseStruct(method methodParams) error {
 		respStructPointer = "&" + respStruct
 	}
 	switch *g.cfg.Marshaller {
-	case marshallerEasyJSON:
-		g.gf.P("	if respEJ, ok := interface{}(", respStruct, ").(", easyjsonPackage.Ident("Unmarshaler"), "); ok {")
-		g.gf.P("		if err = ", easyjsonPackage.Ident("Unmarshal"), "(respBody, respEJ); err != nil {")
-		g.gf.P("			return nil, err")
-		g.gf.P("		}")
-		g.gf.P("	} else {")
-		g.gf.P("		if err = ", jsonPackage.Ident("Unmarshal"), "(respBody, ", respStructPointer, "); err != nil {")
-		g.gf.P("			return nil, err")
-		g.gf.P("		}")
-		g.gf.P("	}")
 	case marshallerProtoJSON:
 		g.gf.P("	err = ", protojsonPackage.Ident("Unmarshal"), "(respBody, ", respStructPointer, ")")
 	default:

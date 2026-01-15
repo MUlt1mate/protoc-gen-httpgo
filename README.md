@@ -12,7 +12,6 @@ This is a protoc plugin that generates HTTP server and client code from proto fi
     - Supports [fasthttp](https://github.com/valyala/fasthttp)
 - Provides multiple options for Marshaling/Unmarshaling:
     - Uses the native `encoding/json` by default
-    - Optional usage of [easyjson](https://github.com/mailru/easyjson) for performance
     - Optional usage of [protojson](https://pkg.go.dev/google.golang.org/protobuf/encoding/protojson) for better
       protocol buffer support
 - Utilizes google.api.http for defining HTTP paths (also can generate it)
@@ -52,7 +51,7 @@ message TestMessage {
 ### Generation
 
 ```bash  
-protoc -I=. --httpgo_out=paths=source_relative,context=native:. example/proto/example.proto
+protoc -I=. --httpgo_out=paths=source_relative:. example/proto/example.proto
 ```  
 
 #### Parameters
@@ -60,17 +59,16 @@ protoc -I=. --httpgo_out=paths=source_relative,context=native:. example/proto/ex
 | Name            | Values                  | Description                                                                                                      |
 |-----------------|-------------------------|------------------------------------------------------------------------------------------------------------------|
 | paths           | source_relative, import | Inherited from protogen, see [docs](https://protobuf.dev/reference/go/go-generated/#invocation) for more details |
-| marshaller      | easyjson, protojson     | Specifies the data marshaling/unmarshaling package. Uses `encoding/json` by default.                             |
+| marshaller      | json, protojson         | Specifies the data marshaling/unmarshaling package. Uses `encoding/json` by default.                             |
 | only            | server, client          | Use to generate either the server or client code exclusively                                                     |
 | autoURI         | false, true             | Create method URI if annotation is missing.                                                                      |
 | bodylessMethods | GET;DELETE              | List of semicolon separated http methods that should not have a body.                                            |
-| context         | native, fasthttp        | Type of ctx struct in server middlewares. fasthttp is default for backward compatibility. native is recommended  |
 | library         | nethttp, fasthttp       | Server library                                                                                                   |
 
 Example of parameters usage:
 
 ```bash
-protoc -I=. --httpgo_out=paths=source_relative,marshaller=easyjson,only=server,autoURI=true,context=native,library=fasthttp:. example/proto/example.proto
+protoc -I=. --httpgo_out=paths=source_relative,only=server,autoURI=true,library=fasthttp:. example/proto/example.proto
 ```
 
 The plugin will create an example.httpgo.go file with the following:
@@ -155,7 +153,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-var ServerMiddlewares = []func(ctx context.Context, arg interface{}, handler func(ctx context.Context, arg interface{}) (resp interface{}, err error)) (resp interface{}, err error){
+var ServerMiddlewares = []func(ctx context.Context, arg any, handler func(ctx context.Context, arg any) (resp any, err error)) (resp any, err error){
 	LoggerServerMiddleware,
 }
 var ClientMiddlewares = []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error){
@@ -163,9 +161,9 @@ var ClientMiddlewares = []func(ctx context.Context, req *fasthttp.Request, handl
 }
 
 func LoggerServerMiddleware(
-	ctx context.Context, arg interface{},
-	next func(ctx context.Context, arg interface{}) (resp interface{}, err error),
-) (resp interface{}, err error) {
+	ctx context.Context, arg any,
+	next func(ctx context.Context, arg any) (resp any, err error),
+) (resp any, err error) {
 	log.Println("server request", arg)
 	resp, err = next(ctx, arg)
 	log.Println("server response", resp)
@@ -237,7 +235,6 @@ message FileStruct {
 
 ## TODO
 
-- Improve test cases
 - Implement more web servers
     - gin
     - chi

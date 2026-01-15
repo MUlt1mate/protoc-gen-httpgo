@@ -36,7 +36,7 @@ func run() error {
 		return err
 	}
 	cfg := generator.Config{
-		Marshaller: ptr("easyjson"),
+		Marshaller: ptr("json"),
 		Only:       ptr(""),
 		AutoURI:    ptr(false),
 	}

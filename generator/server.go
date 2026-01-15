@@ -329,16 +329,6 @@ func (g *generator) genUnmarshalRequestStruct() {
 	}
 	g.gf.P("	if len(body) > 0 { ")
 	switch *g.cfg.Marshaller {
-	case marshallerEasyJSON:
-		g.gf.P("		if argEJ, ok := interface{}(arg).(", easyjsonPackage.Ident("Unmarshaler"), "); ok {")
-		g.gf.P("			if err = ", easyjsonPackage.Ident("Unmarshal"), "(body, argEJ); err != nil {")
-		g.gf.P("				return nil, err")
-		g.gf.P("			}")
-		g.gf.P("		} else {")
-		g.gf.P("			if err = ", jsonPackage.Ident("Unmarshal"), "(body, arg); err != nil {")
-		g.gf.P("				return nil, err")
-		g.gf.P("			}")
-		g.gf.P("		}")
 	case marshallerProtoJSON:
 		g.gf.P("		if err = ", protojsonPackage.Ident("Unmarshal"), "(body, arg); err != nil {")
 		g.gf.P("			return nil, err")
@@ -391,7 +381,7 @@ func (g *generator) genMultipartServerRequestField(methodField field) {
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
 		g.gf.P("f, fh, err := r.FormFile(\"", methodField.protoName, "\")")
-		g.gf.P("if err == nil && !errors.Is(err, http.ErrMissingFile) {")
+		g.gf.P("if err == nil && !errors.Is(err, ", httpPackage.Ident("ErrMissingFile"), ") {")
 		g.gf.P("	arg.", methodField.goName, " = &", methodField.fileStructIdent(), "{")
 		g.gf.P("		File:    make([]byte, fh.Size),")
 		g.gf.P("		Name:    fh.Filename,")
