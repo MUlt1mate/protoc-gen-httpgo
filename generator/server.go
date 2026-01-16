@@ -129,6 +129,15 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 	}
 	g.gf.P("	})")
 	g.gf.P()
+	if method.rule != nil && len(method.rule.AdditionalBindings) > 0 {
+		// this will duplicate whole method. can be optimized
+		for _, binding := range method.rule.AdditionalBindings {
+			copiedMethod := method
+			copiedMethod.httpMethodName, copiedMethod.uri = getRuleMethodAndURI(binding)
+			copiedMethod.rule.AdditionalBindings = nil // bug перетираем по ссылке
+			g.genMethodDeclaration(serviceName, copiedMethod)
+		}
+	}
 }
 
 // getBuildMethodInputName creates name for function that builds method request
@@ -151,23 +160,48 @@ func (g *generator) genBuildRequestMethod(serviceName string, method methodParam
 			return err
 		}
 	} else if method.HasBody() {
-		g.genUnmarshalRequestStruct()
+		if err = g.genUnmarshalRequestStruct(method); err != nil {
+			return err
+		}
 	}
 	if err = g.genServerMethodQueryParams(method); err != nil {
 		return err
 	}
 
-	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
-		if f, ok := method.inputFields[match[1]]; ok {
-			if err = g.genBuildPathArgument(f); err != nil {
-				return err
-			}
+	var allGeneratedFields = make(map[string]struct{})
+	if err = g.genMethodPathArguments(method, allGeneratedFields); err != nil {
+		return err
+	}
+	if method.rule != nil && len(method.rule.AdditionalBindings) > 0 {
+		for _, binding := range method.rule.AdditionalBindings {
+			copiedMethod := method
+			copiedMethod.httpMethodName, copiedMethod.uri = getRuleMethodAndURI(binding)
+		}
+		if err = g.genMethodPathArguments(method, allGeneratedFields); err != nil {
+			return err
 		}
 	}
 
 	g.gf.P("	return arg, err")
 	g.gf.P("}")
 	g.gf.P()
+	return nil
+}
+
+func (g *generator) genMethodPathArguments(method methodParams, generatedFields map[string]struct{}) (err error) {
+	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
+		if _, ok := generatedFields[match[1]]; ok {
+			continue
+		}
+		if f, ok := method.inputFields[match[1]]; ok {
+			if err = g.genBuildPathArgument(f); err != nil {
+				return err
+			}
+			generatedFields[match[1]] = struct{}{}
+		} else {
+			return fmt.Errorf("path argument %s found in uri, but not found in method %s argument fields", match[1], method.name)
+		}
+	}
 	return nil
 }
 
@@ -333,7 +367,7 @@ func (g *generator) genChainServerMiddlewares() {
 }
 
 // genUnmarshalRequestStruct generates unmarshalling from []byte to struct for request
-func (g *generator) genUnmarshalRequestStruct() {
+func (g *generator) genUnmarshalRequestStruct(method methodParams) (err error) {
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
 		g.gf.P("	var body []byte")
@@ -344,11 +378,20 @@ func (g *generator) genUnmarshalRequestStruct() {
 	case libraryFastHTTP:
 		g.gf.P("	var body = ctx.PostBody()")
 	}
+	destination := "arg"
+	if method.rule != nil && method.rule.Body != "" && method.rule.Body != "*" {
+		f, ok := method.inputFields[method.rule.Body]
+		if !ok {
+			return fmt.Errorf("field %s set as body value, but not found in method %s argument fields", method.rule.Body, method.name)
+		}
+		destination = "arg." + f.goName
+	}
 	g.gf.P("	if len(body) > 0 { ")
-	g.gf.P("		if err = ", g.marshaller.Ident("Unmarshal"), "(body, arg); err != nil {")
+	g.gf.P("		if err = ", g.marshaller.Ident("Unmarshal"), "(body, ", destination, "); err != nil {")
 	g.gf.P("			return nil, err")
 	g.gf.P("		}")
 	g.gf.P("	}")
+	return nil
 }
 
 func (g *generator) genMultipartRequestServer(method methodParams) (err error) {

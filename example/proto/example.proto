@@ -115,4 +115,14 @@ service ServiceName {
       get: "/v1/maxquery"
     };
   }
+  rpc HttpRule (common.StructWithSub) returns (common.StructWithSub) {
+    option (google.api.http) = {
+      post: "/v1/httprule/{textValue}"
+      body: "sub"
+      response_body: ""
+      additional_bindings {
+        post: "/v2/httprule/{numeric}"
+      }
+    };
+  }
 }

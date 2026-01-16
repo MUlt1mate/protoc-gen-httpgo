@@ -39,6 +39,7 @@ type ServiceNameHTTPGoService interface {
 	MultipartFormAllTypes(context.Context, *common.MultipartFormAllTypes) (*common.Empty, error)
 	AllTypesMaxTest(context.Context, *common.AllNumberTypesMsg) (*common.AllNumberTypesMsg, error)
 	AllTypesMaxQueryTest(context.Context, *common.AllNumberTypesMsg) (*common.AllNumberTypesMsg, error)
+	HttpRule(context.Context, *common.StructWithSub) (*common.StructWithSub, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -514,6 +515,56 @@ func RegisterServiceNameHTTPGoServer(
 		ctx := context.WithValue(fastctx, "request", fastctx)
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTypesMaxQueryTest(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
+	})
+
+	r.POST("/v1/httprule/{textValue}", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExampleServiceNameHttpRuleStructWithSub(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "ServiceName")
+		fastctx.SetUserValue("proto_method", "HttpRule")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.HttpRule(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
+	})
+
+	r.POST("/v2/httprule/{numeric}", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExampleServiceNameHttpRuleStructWithSub(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "ServiceName")
+		fastctx.SetUserValue("proto_method", "HttpRule")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.HttpRule(ctx, input)
 		}
 		var resp any
 		if middleware == nil {
@@ -2678,6 +2729,46 @@ func buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(ctx *fasthttp.
 	return arg, err
 }
 
+func buildExampleServiceNameHttpRuleStructWithSub(ctx *fasthttp.RequestCtx) (arg *common.StructWithSub, err error) {
+	arg = &common.StructWithSub{}
+	var body = ctx.PostBody()
+	if len(body) > 0 {
+		if err = json.Unmarshal(body, arg.Sub); err != nil {
+			return nil, err
+		}
+	}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "textValue":
+			arg.TextValue = value
+		case "numeric":
+			arg.Numeric, err = strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				err = fmt.Errorf("conversion failed for parameter numeric: %w", err)
+				return
+			}
+		case "sub":
+			err = fmt.Errorf("unsupported type message for query argument sub")
+			return
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	TextValueStr, ok := ctx.UserValue("textValue").(string)
+	if !ok || len(TextValueStr) == 0 {
+		return nil, errors.New("empty value for parameter textValue")
+	}
+	arg.TextValue = TextValueStr
+	if arg.TextValue, err = url.PathUnescape(arg.TextValue); err != nil {
+		return nil, fmt.Errorf("PathUnescape failed for field textValue: %w", err)
+	}
+
+	return arg, err
+}
+
 func chainServerMiddlewaresExample(
 	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 ) func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
@@ -3717,6 +3808,43 @@ func (p *ServiceNameHTTPGoClient) AllTypesMaxQueryTest(ctx context.Context, requ
 		}
 	}
 	resp = &common.AllNumberTypesMsg{}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) HttpRule(ctx context.Context, request *common.StructWithSub) (resp *common.StructWithSub, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	var body []byte
+	body, err = json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	req.SetBody(body)
+	req.SetRequestURI(fmt.Sprintf("%s/v1/httprule/%s%s", p.host, request.TextValue, queryArgs))
+	req.Header.SetMethod("POST")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "HttpRule")
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req, resp)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.StructWithSub{}
 	var respBody = reqResp.Body()
 	err = json.Unmarshal(respBody, resp)
 	return resp, err

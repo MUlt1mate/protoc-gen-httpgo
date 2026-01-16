@@ -44,6 +44,7 @@ type (
 	}
 
 	methodParams struct {
+		rule           *annotations.HttpRule
 		inputFields    map[string]field
 		outputFields   map[string]field
 		inputMsgName   protogen.GoIdent
@@ -274,8 +275,8 @@ func (g *generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceNam
 		return m, errors.New("empty option")
 	}
 
-	httpRule, ok := proto.GetExtension(options, annotations.E_Http).(*annotations.HttpRule)
-	if !ok && !*g.cfg.AutoURI {
+	httpRule, _ := proto.GetExtension(options, annotations.E_Http).(*annotations.HttpRule)
+	if httpRule == nil && !*g.cfg.AutoURI {
 		return m, errors.New("empty rule")
 	}
 
@@ -287,38 +288,31 @@ func (g *generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceNam
 		}, nil
 	}
 
-	switch httpRule.GetPattern().(type) {
-	case *annotations.HttpRule_Get:
-		m = methodParams{
-			httpMethodName: "GET",
-			uri:            httpRule.GetGet(),
-		}
-	case *annotations.HttpRule_Put:
-		m = methodParams{
-			httpMethodName: "PUT",
-			uri:            httpRule.GetPut(),
-		}
-	case *annotations.HttpRule_Post:
-		m = methodParams{
-			httpMethodName: "POST",
-			uri:            httpRule.GetPost(),
-		}
-	case *annotations.HttpRule_Delete:
-		m = methodParams{
-			httpMethodName: "DELETE",
-			uri:            httpRule.GetDelete(),
-		}
-	case *annotations.HttpRule_Patch:
-		m = methodParams{
-			httpMethodName: "PATCH",
-			uri:            httpRule.GetPatch(),
-		}
-	default:
-		return m, fmt.Errorf("unknown method type %T", httpRule.GetPattern())
-	}
+	m.rule = httpRule
+	m.httpMethodName, m.uri = getRuleMethodAndURI(httpRule)
 	m.hasBody = g.MethodShouldHasBody(m.httpMethodName)
 	m.responseBody = httpRule.GetResponseBody()
 	return m, nil
+}
+
+func getRuleMethodAndURI(httpRule *annotations.HttpRule) (string, string) {
+	switch httpRule.GetPattern().(type) {
+	case *annotations.HttpRule_Get:
+		return "GET", httpRule.GetGet()
+	case *annotations.HttpRule_Put:
+		return "PUT", httpRule.GetPut()
+	case *annotations.HttpRule_Post:
+		return "POST", httpRule.GetPost()
+	case *annotations.HttpRule_Delete:
+		return "DELETE", httpRule.GetDelete()
+	case *annotations.HttpRule_Patch:
+		return "PATCH", httpRule.GetPatch()
+	case *annotations.HttpRule_Custom:
+		return httpRule.GetCustom().Kind, httpRule.GetCustom().Path
+	default:
+		// doesn't return error here, because it won't compile with other value anyway
+		return "", ""
+	}
 }
 
 // HasBody checks if method may have a body

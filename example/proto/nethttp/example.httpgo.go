@@ -40,6 +40,7 @@ type ServiceNameHTTPGoService interface {
 	MultipartFormAllTypes(context.Context, *common.MultipartFormAllTypes) (*common.Empty, error)
 	AllTypesMaxTest(context.Context, *common.AllNumberTypesMsg) (*common.AllNumberTypesMsg, error)
 	AllTypesMaxQueryTest(context.Context, *common.AllNumberTypesMsg) (*common.AllNumberTypesMsg, error)
+	HttpRule(context.Context, *common.StructWithSub) (*common.StructWithSub, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -553,6 +554,60 @@ func RegisterServiceNameHTTPGoServer(
 		ctx = context.WithValue(ctx, "request", r)
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTypesMaxQueryTest(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
+	})
+
+	r.HandleFunc("POST /v1/httprule/{textValue}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameHttpRuleStructWithSub(r)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
+			return
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "HttpRule")
+		ctx = context.WithValue(ctx, "writer", w)
+		ctx = context.WithValue(ctx, "request", r)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.HttpRule(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
+	})
+
+	r.HandleFunc("POST /v2/httprule/{numeric}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameHttpRuleStructWithSub(r)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
+			return
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "HttpRule")
+		ctx = context.WithValue(ctx, "writer", w)
+		ctx = context.WithValue(ctx, "request", r)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.HttpRule(ctx, input)
 		}
 		var resp any
 		if middleware == nil {
@@ -2668,6 +2723,47 @@ func buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(r *http.Reques
 	return arg, err
 }
 
+func buildExampleServiceNameHttpRuleStructWithSub(r *http.Request) (arg *common.StructWithSub, err error) {
+	arg = &common.StructWithSub{}
+	var body []byte
+	if body, err = io.ReadAll(r.Body); err != nil {
+		return nil, err
+	}
+	_ = r.Body.Close()
+	if len(body) > 0 {
+		if err = json.Unmarshal(body, arg.Sub); err != nil {
+			return nil, err
+		}
+	}
+	for key, values := range r.URL.Query() {
+		for _, value := range values {
+			switch key {
+			case "textValue":
+				arg.TextValue = value
+			case "numeric":
+				arg.Numeric, err = strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter numeric: %w", err)
+					return
+				}
+			case "sub":
+				err = fmt.Errorf("unsupported type message for query argument sub")
+				return
+			default:
+				err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+				return
+			}
+		}
+	}
+	TextValueStr := r.PathValue("textValue")
+	if len(TextValueStr) == 0 {
+		return nil, errors.New("empty value for parameter textValue")
+	}
+	arg.TextValue = TextValueStr
+
+	return arg, err
+}
+
 func chainServerMiddlewaresExample(
 	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 ) func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
@@ -3831,6 +3927,50 @@ func (p *ServiceNameHTTPGoClient) AllTypesMaxQueryTest(ctx context.Context, requ
 		}
 	}
 	resp = &common.AllNumberTypesMsg{}
+	var respBody []byte
+	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
+		return nil, err
+	}
+	_ = reqResp.Body.Close()
+	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) HttpRule(ctx context.Context, request *common.StructWithSub) (resp *common.StructWithSub, err error) {
+	req := &http.Request{Header: make(http.Header)}
+	var queryArgs string
+	var body []byte
+	body, err = json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	req.Body = io.NopCloser(bytes.NewBuffer(body))
+	u, err := url.Parse(fmt.Sprintf("%s/v1/httprule/%s%s", p.host, request.TextValue, queryArgs))
+	if err != nil {
+		return nil, err
+	}
+	u.RawQuery = u.Query().Encode()
+	req.URL = u
+	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *http.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "HttpRule")
+	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
+		resp, err = p.cl.Do(req)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.StructWithSub{}
 	var respBody []byte
 	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
 		return nil, err

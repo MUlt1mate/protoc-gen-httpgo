@@ -157,3 +157,14 @@ message AllTextTypesMsg {
   repeated options RepeatedEnum = 8;
   optional options OptionalEnum = 9;
 }
+
+message SubStruct {
+  string textValue = 1;
+  int64 numeric = 2;
+}
+
+message StructWithSub {
+  string textValue = 1;
+  int64 numeric = 2;
+  SubStruct sub = 3;
+}
