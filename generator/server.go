@@ -80,10 +80,12 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
 		g.gf.P("	r.HandleFunc( \"", method.httpMethodName, " ", method.uri, "\", func(w ", g.lib.Ident("ResponseWriter"), ", r *", g.lib.Ident("Request"), ") { ")
+		g.gf.P("		w.Header().Set(\"Content-Type\", \"application/json\")")
 		g.gf.P("		input, err := build", g.getBuildMethodInputName(serviceName, method), "(r)")
 		g.gf.P("		if err != nil {")
 		g.gf.P("			w.WriteHeader(", g.lib.Ident("StatusBadRequest"), ")")
-		g.gf.P("			_, _ = w.Write([]byte(err.Error()))")
+		g.gf.P("			respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
+		g.gf.P("			_, _ = w.Write(respJson)")
 		g.gf.P("			return")
 		g.gf.P("		}")
 		g.gf.P("		ctx := r.Context()")
@@ -92,24 +94,39 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		g.gf.P("		ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"writer\", w)")
 		g.gf.P("		ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"request\", r)")
 	case libraryFastHTTP:
-		g.gf.P("	r.", method.httpMethodName, "( \"", method.uri, "\", func(ctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
-		g.gf.P("		input, err := build", g.getBuildMethodInputName(serviceName, method), "(ctx)")
+		g.gf.P("	r.", method.httpMethodName, "( \"", method.uri, "\", func(fastctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
+		g.gf.P("		fastctx.Response.Header.SetContentType(\"application/json\")")
+		g.gf.P("		input, err := build", g.getBuildMethodInputName(serviceName, method), "(fastctx)")
 		g.gf.P("		if err != nil {")
-		g.gf.P("			ctx.SetStatusCode(", fasthttpPackage.Ident("StatusBadRequest"), ")")
-		g.gf.P("			_, _ = ctx.WriteString(err.Error())")
+		g.gf.P("			fastctx.SetStatusCode(", fasthttpPackage.Ident("StatusBadRequest"), ")")
+		g.gf.P("			respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
+		g.gf.P("			_, _ = fastctx.Write(respJson)")
 		g.gf.P("			return")
 		g.gf.P("		}")
-		g.gf.P("		ctx.SetUserValue(\"proto_service\", \"" + serviceName + "\")")
-		g.gf.P("		ctx.SetUserValue(\"proto_method\", \"" + method.name + "\")")
+		g.gf.P("		fastctx.SetUserValue(\"proto_service\", \"" + serviceName + "\")")
+		g.gf.P("		fastctx.SetUserValue(\"proto_method\", \"" + method.name + "\")")
+		// wrap fasthttp.RequestCtx further usage
+		// Call of ctx.Value will eventually call *fasthttp.RequestCtx.Value
+		g.gf.P("		ctx := context.WithValue(fastctx, \"request\", fastctx)")
 	}
 	g.gf.P("		handler := func(", g.serverInput, ") (", g.serverOutput, ") {")
 	g.gf.P("			return h.", method.name, "(ctx, input)")
 	g.gf.P("		}")
+	g.gf.P("		var resp any")
 	g.gf.P("		if middleware == nil {")
-	g.gf.P("			_, _ = handler(ctx, input)")
-	g.gf.P("			return")
+	// errors should be dealt with in handler or middlewares
+	g.gf.P("			resp, _ = handler(ctx, input)")
+	g.gf.P("		} else {")
+	g.gf.P("			resp, _ = middleware(ctx, input, handler)")
 	g.gf.P("		}")
-	g.gf.P("		_, _ = middleware(ctx, input, handler)")
+	switch *g.cfg.Library {
+	case libraryFastHTTP:
+		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(resp)")
+		g.gf.P("		_, _ = fastctx.Write(respJson)")
+	case libraryNetHTTP:
+		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(resp)")
+		g.gf.P("		_, _ = w.Write(respJson)")
+	}
 	g.gf.P("	})")
 	g.gf.P()
 }

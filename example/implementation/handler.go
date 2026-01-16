@@ -124,3 +124,11 @@ func (h *Handler) AllTextTypesGet(ctx context.Context, msg *proto.AllTextTypesMs
 	}
 	return msg, nil
 }
+
+func (h *Handler) AllTypesMaxTest(ctx context.Context, msg *proto.AllNumberTypesMsg) (*proto.AllNumberTypesMsg, error) {
+	return msg, nil
+}
+
+func (h *Handler) AllTypesMaxQueryTest(ctx context.Context, msg *proto.AllNumberTypesMsg) (*proto.AllNumberTypesMsg, error) {
+	return msg, nil
+}

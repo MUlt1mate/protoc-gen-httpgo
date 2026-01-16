@@ -1,6 +1,8 @@
 package implementation
 
 import (
+	"math"
+
 	proto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 )
 
@@ -58,6 +60,15 @@ var (
 			Name: "file.exe",
 		},
 		RepeatedStringValue: []string{"24"},
+	}
+
+	NumberTypesMaxMsg = proto.AllNumberTypesMsg{
+		Int32Value:  math.MaxInt32,
+		Uint32Value: math.MaxUint32,
+		Int64Value:  math.MaxInt64,
+		Uint64Value: math.MaxUint64,
+		FloatValue:  math.MaxFloat32,
+		DoubleValue: math.MaxFloat64,
 	}
 )
 

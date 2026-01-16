@@ -22,7 +22,7 @@ linters:
     - ineffassign
     - loggercheck
     - makezero
-    - musttag
+#    - musttag # disabled for inline response structs
     - nakedret
     - nilerr
     - nilnil

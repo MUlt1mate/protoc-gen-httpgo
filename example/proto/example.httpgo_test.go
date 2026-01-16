@@ -399,6 +399,15 @@ func TestHTTPGoServer(t *testing.T) {
 			expectedResponseErr:    nil,
 			expectedRespStatusCode: http.StatusOK,
 		},
+		{
+			name:                   "RPCName Invalid Request 1",
+			method:                 http.MethodPost,
+			uri:                    "/v1/test/test/test",
+			requestBody:            []byte(`{"int64Argument":1,"stringArgument":"test"}`),
+			expectedResponseBody:   []byte(`{"Error":"conversion failed for parameter int64Argument: strconv.ParseInt: parsing \"test\": invalid syntax"}`),
+			expectedResponseErr:    nil,
+			expectedRespStatusCode: http.StatusBadRequest,
+		},
 	}
 	var (
 		resp        *http.Response

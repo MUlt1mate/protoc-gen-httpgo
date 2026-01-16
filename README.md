@@ -247,4 +247,3 @@ message FileStruct {
 - websocket
 - production ready middleware example
 - optionally ignore unknown query parameters
-- check overflow for numeric types after conversion

@@ -32,6 +32,21 @@ message AllTypesMsg {
   repeated int32 SliceInt32Value = 19;
 }
 
+message AllNumberTypesMsg {
+  int32 Int32Value = 3;
+  sint32 Sint32Value = 4;
+  uint32 Uint32Value = 5;
+  int64 Int64Value = 6;
+  sint64 Sint64Value = 7;
+  uint64 Uint64Value = 8;
+  sfixed32 Sfixed32Value = 9;
+  fixed32 Fixed32Value = 10;
+  float FloatValue = 11;
+  sfixed64 Sfixed64Value = 12;
+  fixed64 Fixed64Value = 13;
+  double DoubleValue = 14;
+}
+
 enum options {
   FIRST = 0;
   SECOND = 1;

@@ -109,6 +109,7 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 	if _, err = client.RPCName(ctx, &common.InputMsgName{Int64Argument: 999, StringArgument: "rand"}); err != nil {
 		return fmt.Errorf("RPCName failed: %w", err)
 	}
+
 	var allTypesResp *common.AllTypesMsg
 	if allTypesResp, err = client.AllTypesTest(ctx, &implementation.AllTypesMsg); err != nil {
 		return fmt.Errorf("AllTypesTest failed: %w", err)
@@ -116,6 +117,20 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 	if diff := cmp.Diff(&implementation.AllTypesMsg, allTypesResp, cmpopts.IgnoreUnexported(implementation.AllTypesMsg)); diff != "" {
 		log.Println(diff)
 	}
+	var allNumberTypesResp *common.AllNumberTypesMsg
+	if allNumberTypesResp, err = client.AllTypesMaxTest(ctx, &implementation.NumberTypesMaxMsg); err != nil {
+		return fmt.Errorf("AllTypesTest failed: %w", err)
+	}
+	if diff := cmp.Diff(&implementation.NumberTypesMaxMsg, allNumberTypesResp, cmpopts.IgnoreUnexported(implementation.NumberTypesMaxMsg)); diff != "" {
+		log.Println(diff)
+	}
+	if allNumberTypesResp, err = client.AllTypesMaxQueryTest(ctx, &implementation.NumberTypesMaxMsg); err != nil {
+		return fmt.Errorf("AllTypesTest failed: %w", err)
+	}
+	if diff := cmp.Diff(&implementation.NumberTypesMaxMsg, allNumberTypesResp, cmpopts.IgnoreUnexported(implementation.NumberTypesMaxMsg)); diff != "" {
+		log.Println(diff)
+	}
+
 	if _, err = client.MultipartForm(ctx, &implementation.MultipartFormRequestMsg); err != nil {
 		return fmt.Errorf("MultipartForm failed: %w", err)
 	}
@@ -136,5 +151,6 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 	if diff := cmp.Diff(&implementation.AllTextTypesMsg, allTextTypesResp, cmpopts.IgnoreUnexported(implementation.AllTextTypesMsg)); diff != "" {
 		log.Println(diff)
 	}
+
 	return nil
 }

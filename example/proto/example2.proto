@@ -5,6 +5,8 @@ option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/example/proto;proto"
 
 import "google/api/annotations.proto";
 
+// here we check two services in one proto file and messages without import
+// also protojson generation
 service ServiceName2 {
   rpc Imports (someCustomMsg) returns (someCustomMsg) {
     option (google.api.http) = {
@@ -25,7 +27,6 @@ message someCustomMsg {
   string val = 1;
   someOptions option = 2;
 }
-
 
 enum someOptions {
   SOME_FIRST = 0;
