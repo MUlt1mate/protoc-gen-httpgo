@@ -23,23 +23,29 @@ func RegisterNoURLHTTPGoServer(
 ) error {
 	var middleware = chainServerMiddlewaresNourl(middlewares)
 
-	r.POST("/NoURL/MethodWithoutURLAnnotation", func(ctx *fasthttp.RequestCtx) {
-		input, err := buildNourlNoURLMethodWithoutURLAnnotationEmpty(ctx)
+	r.POST("/NoURL/MethodWithoutURLAnnotation", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildNourlNoURLMethodWithoutURLAnnotationEmpty(fastctx)
 		if err != nil {
-			ctx.SetStatusCode(fasthttp.StatusBadRequest)
-			_, _ = ctx.WriteString(err.Error())
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
 			return
 		}
-		ctx.SetUserValue("proto_service", "NoURL")
-		ctx.SetUserValue("proto_method", "MethodWithoutURLAnnotation")
+		fastctx.SetUserValue("proto_service", "NoURL")
+		fastctx.SetUserValue("proto_method", "MethodWithoutURLAnnotation")
+		ctx := context.WithValue(fastctx, "request", fastctx)
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.MethodWithoutURLAnnotation(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
 	})
 
 	return nil
@@ -119,6 +125,8 @@ func (p *NoURLHTTPGoClient) MethodWithoutURLAnnotation(ctx context.Context, requ
 	req.SetBody(body)
 	req.SetRequestURI(fmt.Sprintf("%s/NoURL/MethodWithoutURLAnnotation%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "NoURL")
 	ctx = context.WithValue(ctx, "proto_method", "MethodWithoutURLAnnotation")

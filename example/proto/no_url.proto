@@ -5,6 +5,7 @@ option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/example/proto;proto"
 
 import "google/protobuf/empty.proto";
 
+// here we check generation without annotations
 service NoURL {
   rpc MethodWithoutURLAnnotation (google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }

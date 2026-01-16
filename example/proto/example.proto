@@ -8,6 +8,7 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/any.proto";
 import "common/structs.proto";
 
+// here we check all variable types
 service ServiceName {
   rpc RPCName (common.InputMsgName) returns (common.OutputMsgName) {
     option (google.api.http) = {
@@ -104,4 +105,14 @@ service ServiceName {
       post: "/v1/multipartall"
     };
   };
+  rpc AllTypesMaxTest (common.AllNumberTypesMsg) returns (common.AllNumberTypesMsg) {
+    option (google.api.http) = {
+      get: "/v1/max/{Int32Value}/{Uint32Value}/{Int64Value}/{Uint64Value}/{FloatValue}/{DoubleValue}"
+    };
+  }
+  rpc AllTypesMaxQueryTest (common.AllNumberTypesMsg) returns (common.AllNumberTypesMsg) {
+    option (google.api.http) = {
+      get: "/v1/maxquery"
+    };
+  }
 }

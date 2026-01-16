@@ -3,7 +3,6 @@ package nethttp
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -41,7 +40,6 @@ var ServerMiddlewares = []func(ctx context.Context, arg any, handler func(ctx co
 }
 var ClientMiddlewares = []func(ctx context.Context, req *http.Request, handler func(ctx context.Context, req *http.Request) (resp *http.Response, err error)) (resp *http.Response, err error){
 	LoggerClientMiddleware,
-	HeadersClientMiddleware,
 	ErrorClientMiddleware,
 	TimeoutClientMiddleware,
 }
@@ -62,14 +60,10 @@ func ResponseServerMiddleware(
 	ctx context.Context, arg any,
 	next func(ctx context.Context, arg any) (resp any, err error),
 ) (resp any, err error) {
-	var responseBody []byte
 	resp, err = next(ctx, arg)
 	if err != nil {
 		resp = respError{Error: err.Error()}
 	}
-	responseBody, _ = json.Marshal(resp)
-	writer, _ := ctx.Value("writer").(http.ResponseWriter)
-	_, _ = writer.Write(responseBody)
 	return resp, err
 }
 
@@ -79,14 +73,6 @@ func HeadersServerMiddleware(
 	next func(ctx context.Context, arg any) (resp any, err error),
 ) (resp any, err error) {
 	writer, _ := ctx.Value("writer").(http.ResponseWriter)
-	// request, _ := ctx.Value("request").(*http.Request)
-	// jsonContentType := "application/json"
-	// contentType := request.Header.Get("Content-Type")
-	// if contentType != jsonContentType {
-	// 	writer.WriteHeader(http.StatusBadRequest)
-	// 	return nil, errors.New("incorrect content type")
-	// }
-	// writer.Header().Add("Content-Type", jsonContentType)
 	resp, err = next(ctx, arg)
 	if err == nil {
 		writer.WriteHeader(http.StatusOK)
@@ -115,7 +101,6 @@ func TimeoutServerMiddleware(
 	case <-ctx.Done():
 		writer, _ := ctx.Value("writer").(http.ResponseWriter)
 		writer.WriteHeader(http.StatusGatewayTimeout)
-		writer.Header().Add("Content-Type", "application/json")
 		_, _ = writer.Write([]byte(errTimeoutBody))
 		return resp, err
 	case <-done:
@@ -132,7 +117,6 @@ func ValidationServerMiddleware(
 		if err = validatorArg.Validate(); err != nil {
 			writer, _ := ctx.Value("writer").(http.ResponseWriter)
 			writer.WriteHeader(http.StatusBadRequest)
-			writer.Header().Add("Content-Type", "application/json")
 			_, _ = writer.Write([]byte(err.Error()))
 			return nil, err
 		}
@@ -161,21 +145,6 @@ func LoggerClientMiddleware(
 		resp.Body = io.NopCloser(bytes.NewBuffer(body))
 		log.Printf("%s: client got response with code %d, body %s", serviceName, resp.StatusCode, string(body))
 	}
-	return resp, err
-}
-
-// HeadersClientMiddleware checks and sets headers for client
-func HeadersClientMiddleware(
-	ctx context.Context,
-	req *http.Request,
-	next func(ctx context.Context, req *http.Request) (resp *http.Response, err error),
-) (resp *http.Response, err error) {
-	// jsonContentType := "application/json"
-	// req.(*http.Request).Header.Set("Content-Type", jsonContentType)
-	resp, err = next(ctx, req)
-	// if err == nil && resp.(*http.Response).Header.Get("Content-Type") != jsonContentType {
-	// err = fmt.Errorf("incorrect response content type %s", resp.(*http.Response).Header.Get("Content-Type"))
-	// }
 	return resp, err
 }
 

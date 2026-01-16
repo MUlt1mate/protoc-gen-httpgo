@@ -38,6 +38,8 @@ type ServiceNameHTTPGoService interface {
 	OnlyStructInGet(context.Context, *common.OnlyStruct) (*common.Empty, error)
 	MultipartForm(context.Context, *common.MultipartFormRequest) (*common.Empty, error)
 	MultipartFormAllTypes(context.Context, *common.MultipartFormAllTypes) (*common.Empty, error)
+	AllTypesMaxTest(context.Context, *common.AllNumberTypesMsg) (*common.AllNumberTypesMsg, error)
+	AllTypesMaxQueryTest(context.Context, *common.AllNumberTypesMsg) (*common.AllNumberTypesMsg, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -49,10 +51,12 @@ func RegisterServiceNameHTTPGoServer(
 	var middleware = chainServerMiddlewaresExample(middlewares)
 
 	r.HandleFunc("POST /v1/test/{stringArgument}/{int64Argument}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameRPCNameInputMsgName(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -63,18 +67,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.RPCName(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("POST /v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTypesTestAllTypesMsg(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -85,18 +94,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTypesTest(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("POST /v1/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -107,18 +121,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTextTypesPost(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("GET /v2/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -129,18 +148,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTextTypesGet(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("POST /v1/test/commonTypes", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCommonTypesAny(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -151,19 +175,24 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CommonTypes(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	// same types but different query, we need different query builder function
 	r.HandleFunc("POST /v1/test/{stringArgument}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -174,18 +203,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.SameInputAndOutput(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("POST /v1/test/optional", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameOptionalOptionalField(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -196,18 +230,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.Optional(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("GET /v1/test/get", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMethodInputMsgName(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -218,18 +257,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.GetMethod(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("GET /v1/repeated/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}/{StringValueQuery}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -240,18 +284,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CheckRepeatedPath(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("GET /v1/repeated/{StringValue}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -262,18 +311,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CheckRepeatedQuery(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("POST /v1/repeated/{StringValue}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCheckRepeatedPostRepeatedCheck(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -284,18 +338,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CheckRepeatedPost(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("GET /v1/emptyGet", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameEmptyGetEmpty(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -306,18 +365,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.EmptyGet(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("POST /v1/emptyPost", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameEmptyPostEmpty(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -328,18 +392,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.EmptyPost(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("POST /v1/array", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameTopLevelArrayEmpty(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -350,18 +419,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.TopLevelArray(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("POST /v1/onlyStruct", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameOnlyStructInGetOnlyStruct(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -372,18 +446,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.OnlyStructInGet(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("POST /v1/multipart", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameMultipartFormMultipartFormRequest(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -394,18 +473,23 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.MultipartForm(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
-			return
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
 		}
-		_, _ = middleware(ctx, input, handler)
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	r.HandleFunc("POST /v1/multipartall", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte(err.Error()))
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
 		ctx := r.Context()
@@ -416,11 +500,68 @@ func RegisterServiceNameHTTPGoServer(
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.MultipartFormAllTypes(ctx, input)
 		}
+		var resp any
 		if middleware == nil {
-			_, _ = handler(ctx, input)
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
+	})
+
+	r.HandleFunc("GET /v1/max/{Int32Value}/{Uint32Value}/{Int64Value}/{Uint64Value}/{FloatValue}/{DoubleValue}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(r)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
 			return
 		}
-		_, _ = middleware(ctx, input, handler)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxTest")
+		ctx = context.WithValue(ctx, "writer", w)
+		ctx = context.WithValue(ctx, "request", r)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.AllTypesMaxTest(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
+	})
+
+	r.HandleFunc("GET /v1/maxquery", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(r)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
+			return
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxQueryTest")
+		ctx = context.WithValue(ctx, "writer", w)
+		ctx = context.WithValue(ctx, "request", r)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.AllTypesMaxQueryTest(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
 	})
 
 	return nil
@@ -2286,6 +2427,247 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 	return arg, err
 }
 
+func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(r *http.Request) (arg *common.AllNumberTypesMsg, err error) {
+	arg = &common.AllNumberTypesMsg{}
+	for key, values := range r.URL.Query() {
+		for _, value := range values {
+			switch key {
+			case "Int32Value":
+				Int32Value, convErr := strconv.ParseInt(value, 10, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
+					return
+				}
+				arg.Int32Value = int32(Int32Value)
+			case "Sint32Value":
+				Sint32Value, convErr := strconv.ParseInt(value, 10, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter Sint32Value: %w", convErr)
+					return
+				}
+				arg.Sint32Value = int32(Sint32Value)
+			case "Uint32Value":
+				Uint32Value, convErr := strconv.ParseUint(value, 10, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter Uint32Value: %w", convErr)
+					return
+				}
+				arg.Uint32Value = uint32(Uint32Value)
+			case "Int64Value":
+				arg.Int64Value, err = strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
+					return
+				}
+			case "Sint64Value":
+				arg.Sint64Value, err = strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter Sint64Value: %w", err)
+					return
+				}
+			case "Uint64Value":
+				arg.Uint64Value, err = strconv.ParseUint(value, 10, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
+					return
+				}
+			case "Sfixed32Value":
+				Sfixed32Value, convErr := strconv.ParseInt(value, 10, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter Sfixed32Value: %w", convErr)
+					return
+				}
+				arg.Sfixed32Value = int32(Sfixed32Value)
+			case "Fixed32Value":
+				Fixed32Value, convErr := strconv.ParseUint(value, 10, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter Fixed32Value: %w", convErr)
+					return
+				}
+				arg.Fixed32Value = uint32(Fixed32Value)
+			case "FloatValue":
+				FloatValue, convErr := strconv.ParseFloat(value, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
+					return
+				}
+				arg.FloatValue = float32(FloatValue)
+			case "Sfixed64Value":
+				arg.Sfixed64Value, err = strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", err)
+					return
+				}
+			case "Fixed64Value":
+				arg.Fixed64Value, err = strconv.ParseUint(value, 10, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter Fixed64Value: %w", err)
+					return
+				}
+			case "DoubleValue":
+				arg.DoubleValue, err = strconv.ParseFloat(value, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
+					return
+				}
+			default:
+				err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+				return
+			}
+		}
+	}
+	Int32ValueStr := r.PathValue("Int32Value")
+	if len(Int32ValueStr) == 0 {
+		return nil, errors.New("empty value for parameter Int32Value")
+	}
+	Int32Value, convErr := strconv.ParseInt(Int32ValueStr, 10, 32)
+	if convErr != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
+	}
+	arg.Int32Value = int32(Int32Value)
+
+	Uint32ValueStr := r.PathValue("Uint32Value")
+	if len(Uint32ValueStr) == 0 {
+		return nil, errors.New("empty value for parameter Uint32Value")
+	}
+	Uint32Value, convErr := strconv.ParseUint(Uint32ValueStr, 10, 32)
+	if convErr != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Uint32Value: %w", convErr)
+	}
+	arg.Uint32Value = uint32(Uint32Value)
+
+	Int64ValueStr := r.PathValue("Int64Value")
+	if len(Int64ValueStr) == 0 {
+		return nil, errors.New("empty value for parameter Int64Value")
+	}
+	arg.Int64Value, err = strconv.ParseInt(Int64ValueStr, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
+	}
+
+	Uint64ValueStr := r.PathValue("Uint64Value")
+	if len(Uint64ValueStr) == 0 {
+		return nil, errors.New("empty value for parameter Uint64Value")
+	}
+	arg.Uint64Value, err = strconv.ParseUint(Uint64ValueStr, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
+	}
+
+	FloatValueStr := r.PathValue("FloatValue")
+	if len(FloatValueStr) == 0 {
+		return nil, errors.New("empty value for parameter FloatValue")
+	}
+	FloatValue, convErr := strconv.ParseFloat(FloatValueStr, 32)
+	if convErr != nil {
+		return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
+	}
+	arg.FloatValue = float32(FloatValue)
+
+	DoubleValueStr := r.PathValue("DoubleValue")
+	if len(DoubleValueStr) == 0 {
+		return nil, errors.New("empty value for parameter DoubleValue")
+	}
+	arg.DoubleValue, err = strconv.ParseFloat(DoubleValueStr, 64)
+	if err != nil {
+		return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
+	}
+
+	return arg, err
+}
+
+func buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(r *http.Request) (arg *common.AllNumberTypesMsg, err error) {
+	arg = &common.AllNumberTypesMsg{}
+	for key, values := range r.URL.Query() {
+		for _, value := range values {
+			switch key {
+			case "Int32Value":
+				Int32Value, convErr := strconv.ParseInt(value, 10, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
+					return
+				}
+				arg.Int32Value = int32(Int32Value)
+			case "Sint32Value":
+				Sint32Value, convErr := strconv.ParseInt(value, 10, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter Sint32Value: %w", convErr)
+					return
+				}
+				arg.Sint32Value = int32(Sint32Value)
+			case "Uint32Value":
+				Uint32Value, convErr := strconv.ParseUint(value, 10, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter Uint32Value: %w", convErr)
+					return
+				}
+				arg.Uint32Value = uint32(Uint32Value)
+			case "Int64Value":
+				arg.Int64Value, err = strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
+					return
+				}
+			case "Sint64Value":
+				arg.Sint64Value, err = strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter Sint64Value: %w", err)
+					return
+				}
+			case "Uint64Value":
+				arg.Uint64Value, err = strconv.ParseUint(value, 10, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
+					return
+				}
+			case "Sfixed32Value":
+				Sfixed32Value, convErr := strconv.ParseInt(value, 10, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter Sfixed32Value: %w", convErr)
+					return
+				}
+				arg.Sfixed32Value = int32(Sfixed32Value)
+			case "Fixed32Value":
+				Fixed32Value, convErr := strconv.ParseUint(value, 10, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter Fixed32Value: %w", convErr)
+					return
+				}
+				arg.Fixed32Value = uint32(Fixed32Value)
+			case "FloatValue":
+				FloatValue, convErr := strconv.ParseFloat(value, 32)
+				if convErr != nil {
+					err = fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
+					return
+				}
+				arg.FloatValue = float32(FloatValue)
+			case "Sfixed64Value":
+				arg.Sfixed64Value, err = strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", err)
+					return
+				}
+			case "Fixed64Value":
+				arg.Fixed64Value, err = strconv.ParseUint(value, 10, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter Fixed64Value: %w", err)
+					return
+				}
+			case "DoubleValue":
+				arg.DoubleValue, err = strconv.ParseFloat(value, 64)
+				if err != nil {
+					err = fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
+					return
+				}
+			default:
+				err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+				return
+			}
+		}
+	}
+	return arg, err
+}
+
 func chainServerMiddlewaresExample(
 	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 ) func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
@@ -2353,6 +2735,8 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *common.I
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "RPCName")
@@ -2395,6 +2779,8 @@ func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *com
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "AllTypesTest")
@@ -2448,6 +2834,8 @@ func (p *ServiceNameHTTPGoClient) AllTextTypesPost(ctx context.Context, request 
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesPost")
@@ -2510,6 +2898,8 @@ func (p *ServiceNameHTTPGoClient) AllTextTypesGet(ctx context.Context, request *
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodGet
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesGet")
@@ -2552,6 +2942,8 @@ func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anyp
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "CommonTypes")
@@ -2595,6 +2987,8 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "SameInputAndOutput")
@@ -2637,6 +3031,8 @@ func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *common.
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "Optional")
@@ -2682,6 +3078,8 @@ func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *common
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodGet
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "GetMethod")
@@ -2795,6 +3193,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodGet
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPath")
@@ -2899,6 +3299,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, reques
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodGet
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedQuery")
@@ -2942,6 +3344,8 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPost")
@@ -2978,6 +3382,8 @@ func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *common.
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodGet
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "EmptyGet")
@@ -3020,6 +3426,8 @@ func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *common
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "EmptyPost")
@@ -3062,6 +3470,8 @@ func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *co
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "TopLevelArray")
@@ -3104,6 +3514,8 @@ func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *
 	u.RawQuery = u.Query().Encode()
 	req.URL = u
 	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
@@ -3157,6 +3569,7 @@ func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *co
 	req.URL = u
 	req.Method = http.MethodPost
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
@@ -3278,6 +3691,7 @@ func (p *ServiceNameHTTPGoClient) MultipartFormAllTypes(ctx context.Context, req
 	req.URL = u
 	req.Method = http.MethodPost
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	req.Header.Set("Accept", "application/json")
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "MultipartFormAllTypes")
@@ -3295,6 +3709,128 @@ func (p *ServiceNameHTTPGoClient) MultipartFormAllTypes(ctx context.Context, req
 		}
 	}
 	resp = &common.Empty{}
+	var respBody []byte
+	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
+		return nil, err
+	}
+	_ = reqResp.Body.Close()
+	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) AllTypesMaxTest(ctx context.Context, request *common.AllNumberTypesMsg) (resp *common.AllNumberTypesMsg, err error) {
+	req := &http.Request{Header: make(http.Header)}
+	var queryArgs string
+	var parameters = []string{
+		"Sint32Value=%d",
+		"Sint64Value=%d",
+		"Sfixed32Value=%d",
+		"Fixed32Value=%d",
+		"Sfixed64Value=%d",
+		"Fixed64Value=%d",
+	}
+	var values = []any{
+		request.Sint32Value,
+		request.Sint64Value,
+		request.Sfixed32Value,
+		request.Fixed32Value,
+		request.Sfixed64Value,
+		request.Fixed64Value,
+	}
+	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	u, err := url.Parse(fmt.Sprintf("%s/v1/max/%d/%d/%d/%d/%f/%f%s", p.host, request.Int32Value, request.Uint32Value, request.Int64Value, request.Uint64Value, request.FloatValue, request.DoubleValue, queryArgs))
+	if err != nil {
+		return nil, err
+	}
+	u.RawQuery = u.Query().Encode()
+	req.URL = u
+	req.Method = http.MethodGet
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *http.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxTest")
+	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
+		resp, err = p.cl.Do(req)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.AllNumberTypesMsg{}
+	var respBody []byte
+	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
+		return nil, err
+	}
+	_ = reqResp.Body.Close()
+	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) AllTypesMaxQueryTest(ctx context.Context, request *common.AllNumberTypesMsg) (resp *common.AllNumberTypesMsg, err error) {
+	req := &http.Request{Header: make(http.Header)}
+	var queryArgs string
+	var parameters = []string{
+		"Int32Value=%d",
+		"Sint32Value=%d",
+		"Uint32Value=%d",
+		"Int64Value=%d",
+		"Sint64Value=%d",
+		"Uint64Value=%d",
+		"Sfixed32Value=%d",
+		"Fixed32Value=%d",
+		"FloatValue=%f",
+		"Sfixed64Value=%d",
+		"Fixed64Value=%d",
+		"DoubleValue=%f",
+	}
+	var values = []any{
+		request.Int32Value,
+		request.Sint32Value,
+		request.Uint32Value,
+		request.Int64Value,
+		request.Sint64Value,
+		request.Uint64Value,
+		request.Sfixed32Value,
+		request.Fixed32Value,
+		request.FloatValue,
+		request.Sfixed64Value,
+		request.Fixed64Value,
+		request.DoubleValue,
+	}
+	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	u, err := url.Parse(fmt.Sprintf("%s/v1/maxquery%s", p.host, queryArgs))
+	if err != nil {
+		return nil, err
+	}
+	u.RawQuery = u.Query().Encode()
+	req.URL = u
+	req.Method = http.MethodGet
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *http.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxQueryTest")
+	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
+		resp, err = p.cl.Do(req)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.AllNumberTypesMsg{}
 	var respBody []byte
 	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
 		return nil, err

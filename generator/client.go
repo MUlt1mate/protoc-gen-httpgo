@@ -111,13 +111,16 @@ func (g *generator) genClientMethod(
 		g.gf.P("	u.RawQuery = u.Query().Encode()")
 		g.gf.P("	req.URL = u")
 		g.gf.P("	req.Method = ", g.lib.Ident("Method"+titleString(method.httpMethodName)))
-		if method.withFiles {
-			g.gf.P("	req.Header.Set(\"Content-Type\", writer.FormDataContentType())")
-		}
 	case libraryFastHTTP:
 		g.gf.P("	req.SetRequestURI(", fmtPackage.Ident("Sprintf"), "(\"%s", requestURI, "%s\",p.host", paramsURI, ",queryArgs))")
 		g.gf.P("	req.Header.SetMethod(\"", method.httpMethodName, "\")")
 	}
+	if method.withFiles {
+		g.gf.P("	req.Header.Set(\"Content-Type\", writer.FormDataContentType())")
+	} else {
+		g.gf.P("	req.Header.Set(\"Content-Type\", \"application/json\")")
+	}
+	g.gf.P("	req.Header.Set(\"Accept\", \"application/json\")")
 	g.gf.P("	var reqResp *", g.lib.Ident("Response"))
 	g.gf.P("	ctx = context.WithValue(ctx, \"proto_service\", \"", srvName, "\")")
 	g.gf.P("	ctx = context.WithValue(ctx, \"proto_method\", \"", method.name, "\")")
@@ -245,10 +248,9 @@ func (g *generator) genMultipartRequestClient(method methodParams) (err error) {
 	g.gf.P("}")
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
-		g.gf.P("	req.Body = ", ioPackage.Ident("NopCloser"), "(", bytesPackage.Ident("NewBuffer"), "(requestBody.Bytes()))")
+		g.gf.P("req.Body = ", ioPackage.Ident("NopCloser"), "(", bytesPackage.Ident("NewBuffer"), "(requestBody.Bytes()))")
 	case libraryFastHTTP:
 		g.gf.P("req.SetBody(requestBody.Bytes())")
-		g.gf.P("req.Header.SetContentType(writer.FormDataContentType())")
 	}
 	return nil
 }

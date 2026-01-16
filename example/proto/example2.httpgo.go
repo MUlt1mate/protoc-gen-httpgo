@@ -52,6 +52,8 @@ func (p *ServiceName2HTTPGoClient) Imports(ctx context.Context, request *SomeCus
 	req.SetBody(body)
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/imports%s", p.host, queryArgs))
 	req.Header.SetMethod("POST")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName2")
 	ctx = context.WithValue(ctx, "proto_method", "Imports")
@@ -114,6 +116,8 @@ func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *S
 	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/imports%s", p.host, queryArgs))
 	req.Header.SetMethod("GET")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
 	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "SecondServiceName2")
 	ctx = context.WithValue(ctx, "proto_method", "Imports")
