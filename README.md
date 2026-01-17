@@ -140,7 +140,7 @@ func clientExample(ctx context.Context) (err error) {
 You can define custom middlewares with specific arguments and return values.  
 Pass a slice of middlewares to the constructor, and they will be invoked in the specified order.  
 There
-are [middleware examples](https://github.com/MUlt1mate/protoc-gen-httpgo/blob/main/example/middleware/middlewares.go)
+are [middleware examples](https://github.com/MUlt1mate/protoc-gen-httpgo/blob/main/example/implementation/fasthttp/middlewares.go)
 for logs, timeout, headers, etc.
 
 ```go
@@ -175,7 +175,7 @@ func LoggerClientMiddleware(
 	req *fasthttp.Request,
 	next func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
 ) (resp *fasthttp.Response, err error) {
-	log.Println("client request", string(req.RequestURI()))
+	log.Println("client request", string(req.URL.String()))
 	resp, err = next(ctx, req)
 	log.Println("client response", string(resp.Body()))
 	return resp, err
