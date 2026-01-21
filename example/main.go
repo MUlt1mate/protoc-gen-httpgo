@@ -178,7 +178,12 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 		MessageId: "234567",
 		UserId:    "",
 	}); err != nil {
-		return fmt.Errorf("UpdateMessageV2 failed: %w", err)
+		return fmt.Errorf("GetMessageV3 failed: %w", err)
+	}
+	if _, err = client.GetMessageV4(ctx, &common.GetMessageRequestV3{
+		MessageId: "seg1/seg2.ext",
+	}); err != nil {
+		return fmt.Errorf("GetMessageV4 failed: %w", err)
 	}
 
 	return nil

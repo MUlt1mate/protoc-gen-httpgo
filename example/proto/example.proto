@@ -148,4 +148,9 @@ service ServiceName {
       }
     };
   }
+  rpc GetMessageV4(common.GetMessageRequestV3) returns (common.MessageV2) {
+    option (google.api.http) = {
+      get: "/v4/messages/{message_id=base/**}"
+    };
+  }
 }

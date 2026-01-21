@@ -45,6 +45,7 @@ type ServiceNameHTTPGoService interface {
 	UpdateMessage(context.Context, *common.UpdateMessageRequest) (*common.Message, error)
 	UpdateMessageV2(context.Context, *common.MessageV2) (*common.MessageV2, error)
 	GetMessageV3(context.Context, *common.GetMessageRequestV3) (*common.MessageV2, error)
+	GetMessageV4(context.Context, *common.GetMessageRequestV3) (*common.MessageV2, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -722,6 +723,33 @@ func RegisterServiceNameHTTPGoServer(
 		ctx = context.WithValue(ctx, "request", r)
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.GetMessageV3(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
+	})
+
+	r.HandleFunc("GET /v4/messages/base/{message_id:*}", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMessageV4GetMessageRequestV3(r)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
+			return
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "GetMessageV4")
+		ctx = context.WithValue(ctx, "writer", w)
+		ctx = context.WithValue(ctx, "request", r)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.GetMessageV4(ctx, input)
 		}
 		var resp any
 		if middleware == nil {
@@ -2977,6 +3005,30 @@ func buildExampleServiceNameGetMessageV3GetMessageRequestV3(r *http.Request) (ar
 	return arg, err
 }
 
+func buildExampleServiceNameGetMessageV4GetMessageRequestV3(r *http.Request) (arg *common.GetMessageRequestV3, err error) {
+	arg = &common.GetMessageRequestV3{}
+	for key, values := range r.URL.Query() {
+		for _, value := range values {
+			switch key {
+			case "message_id":
+				arg.MessageId = value
+			case "user_id":
+				arg.UserId = value
+			default:
+				err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+				return
+			}
+		}
+	}
+	MessageIdStr := r.PathValue("message_id")
+	if len(MessageIdStr) != 0 {
+		arg.MessageId = MessageIdStr
+		arg.MessageId = fmt.Sprintf("base/%s*", arg.MessageId)
+	}
+
+	return arg, err
+}
+
 func chainServerMiddlewaresExample(
 	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 ) func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
@@ -4346,6 +4398,51 @@ func (p *ServiceNameHTTPGoClient) GetMessageV3(ctx context.Context, request *com
 	var reqResp *http.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "GetMessageV3")
+	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
+		resp, err = p.cl.Do(req)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.MessageV2{}
+	var respBody []byte
+	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
+		return nil, err
+	}
+	_ = reqResp.Body.Close()
+	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) GetMessageV4(ctx context.Context, request *common.GetMessageRequestV3) (resp *common.MessageV2, err error) {
+	req := &http.Request{Header: make(http.Header)}
+	var queryArgs string
+	var parameters = []string{
+		"user_id=%s",
+	}
+	var values = []any{
+		request.UserId,
+	}
+	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	u, err := url.Parse(fmt.Sprintf("%s/v4/messages/base/{message_id:*}%s", p.host, request.MessageId, queryArgs))
+	if err != nil {
+		return nil, err
+	}
+	u.RawQuery = u.Query().Encode()
+	req.URL = u
+	req.Method = http.MethodGet
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *http.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "GetMessageV4")
 	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
 		resp, err = p.cl.Do(req)
 		return resp, err

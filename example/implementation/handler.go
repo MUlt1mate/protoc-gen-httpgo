@@ -192,3 +192,10 @@ func (h *Handler) GetMessageV3(ctx context.Context, request *proto.GetMessageReq
 	}
 	return &proto.MessageV2{}, nil
 }
+
+func (h *Handler) GetMessageV4(ctx context.Context, request *proto.GetMessageRequestV3) (*proto.MessageV2, error) {
+	if request.MessageId != "base/seg1/seg2.ext" {
+		return nil, fmt.Errorf("unexpected MessageId: %s", request.MessageId)
+	}
+	return &proto.MessageV2{MessageId: request.MessageId}, nil
+}

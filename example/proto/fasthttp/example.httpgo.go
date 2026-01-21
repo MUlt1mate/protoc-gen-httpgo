@@ -3,19 +3,21 @@
 package proto
 
 import (
-	bytes "bytes"
-	context "context"
-	json "encoding/json"
-	fmt "fmt"
-	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
-	router "github.com/fasthttp/router"
-	fasthttp "github.com/valyala/fasthttp"
-	anypb "google.golang.org/protobuf/types/known/anypb"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	multipart "mime/multipart"
-	url "net/url"
-	strconv "strconv"
-	strings "strings"
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"mime/multipart"
+	"net/url"
+	"strconv"
+	"strings"
+
+	"github.com/fasthttp/router"
+	"github.com/valyala/fasthttp"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -43,6 +45,7 @@ type ServiceNameHTTPGoService interface {
 	UpdateMessage(context.Context, *common.UpdateMessageRequest) (*common.Message, error)
 	UpdateMessageV2(context.Context, *common.MessageV2) (*common.MessageV2, error)
 	GetMessageV3(context.Context, *common.GetMessageRequestV3) (*common.MessageV2, error)
+	GetMessageV4(context.Context, *common.GetMessageRequestV3) (*common.MessageV2, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -670,6 +673,31 @@ func RegisterServiceNameHTTPGoServer(
 		ctx := context.WithValue(fastctx, "request", fastctx)
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.GetMessageV3(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
+	})
+
+	r.GET("/v4/messages/base/{message_id:*}", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExampleServiceNameGetMessageV4GetMessageRequestV3(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "ServiceName")
+		fastctx.SetUserValue("proto_method", "GetMessageV4")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.GetMessageV4(ctx, input)
 		}
 		var resp any
 		if middleware == nil {
@@ -2984,6 +3012,33 @@ func buildExampleServiceNameGetMessageV3GetMessageRequestV3(ctx *fasthttp.Reques
 	return arg, err
 }
 
+func buildExampleServiceNameGetMessageV4GetMessageRequestV3(ctx *fasthttp.RequestCtx) (arg *common.GetMessageRequestV3, err error) {
+	arg = &common.GetMessageRequestV3{}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "message_id":
+			arg.MessageId = value
+		case "user_id":
+			arg.UserId = value
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	MessageIdStr, ok := ctx.UserValue("message_id").(string)
+	if ok && len(MessageIdStr) != 0 {
+		arg.MessageId = MessageIdStr
+		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
+		}
+		arg.MessageId = fmt.Sprintf("base/%s*", arg.MessageId)
+	}
+
+	return arg, err
+}
+
 func chainServerMiddlewaresExample(
 	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 ) func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
@@ -4195,6 +4250,45 @@ func (p *ServiceNameHTTPGoClient) GetMessageV3(ctx context.Context, request *com
 	var reqResp *fasthttp.Response
 	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 	ctx = context.WithValue(ctx, "proto_method", "GetMessageV3")
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req, resp)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.MessageV2{}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) GetMessageV4(ctx context.Context, request *common.GetMessageRequestV3) (resp *common.MessageV2, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	var parameters = []string{
+		"user_id=%s",
+	}
+	var values = []any{
+		request.UserId,
+	}
+	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
+	req.SetRequestURI(fmt.Sprintf("%s/v4/messages/base/{message_id:*}%s", p.host, request.MessageId, queryArgs))
+	req.Header.SetMethod("GET")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "GetMessageV4")
 	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
 		resp = &fasthttp.Response{}
 		err = p.cl.Do(req, resp)
