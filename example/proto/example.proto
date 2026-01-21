@@ -115,4 +115,37 @@ service ServiceName {
       get: "/v1/maxquery"
     };
   }
+
+  // http rule checks
+  // v1/{name=messages/*}
+  rpc GetMessage(common.GetMessageRequest) returns (common.Message) {
+    option (google.api.http) = {
+      get: "/v1/{name=messages/*}"
+    };
+  }
+  rpc GetMessageV2(common.GetMessageRequestV2) returns (common.Message) {
+    option (google.api.http) = {
+      get:"/v2/messages/{message_id}"
+    };
+  }
+  rpc UpdateMessage(common.UpdateMessageRequest) returns (common.Message) {
+    option (google.api.http) = {
+      patch: "/v1/messages/{message_id}"
+      body: "message"
+    };
+  }
+  rpc UpdateMessageV2(common.MessageV2) returns (common.MessageV2) {
+    option (google.api.http) = {
+      patch: "/v2/messages/{message_id}"
+      body: "*"
+    };
+  }
+  rpc GetMessageV3(common.GetMessageRequestV3) returns (common.MessageV2) {
+    option (google.api.http) = {
+      get: "/v3/messages/{message_id}"
+      additional_bindings {
+        get: "/v3/users/{user_id}/messages/{message_id}"
+      }
+    };
+  }
 }

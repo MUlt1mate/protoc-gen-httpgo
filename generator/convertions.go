@@ -10,13 +10,13 @@ import (
 func (g *generator) genFieldConvertor(
 	f field,
 	source string,
+	destination string,
 	repeatedDestination bool,
 	returnPrefix string,
 	nakedReturn bool,
 ) error {
 	var (
-		destination = "arg." + f.goName
-		reference   string
+		reference string
 	)
 	if f.optional {
 		reference = "&"
@@ -164,27 +164,27 @@ func (g *generator) genEnumFieldConverter(
 	returnPrefix string,
 	nakedReturn bool,
 ) {
-	g.gf.P("if ", f.enumName.GoName, "Value, optValueOk := ", f.enumName, "_value[", stringsPackage.Ident("ToUpper"), "(", source, ")]; optValueOk {")
+	g.gf.P("if ", f.structTypeIdent.GoName, "Value, optValueOk := ", f.structTypeIdent, "_value[", stringsPackage.Ident("ToUpper"), "(", source, ")]; optValueOk {")
 	if repeatedDestination {
-		g.gf.P("	", destination, " = append(", destination, ", ", f.enumName, "(", f.enumName.GoName, "Value))")
+		g.gf.P("	", destination, " = append(", destination, ", ", f.structTypeIdent, "(", f.structTypeIdent.GoName, "Value))")
 	} else {
 		if !f.optional {
-			g.gf.P("	", destination, " = ", f.enumName, "(", f.enumName.GoName, "Value)")
+			g.gf.P("	", destination, " = ", f.structTypeIdent, "(", f.structTypeIdent.GoName, "Value)")
 		} else {
-			g.gf.P("	", f.goName, " := ", f.enumName, "(", f.enumName.GoName, "Value)")
+			g.gf.P("	", f.goName, " := ", f.structTypeIdent, "(", f.structTypeIdent.GoName, "Value)")
 			g.gf.P("	", destination, " = &", f.goName)
 		}
 	}
 	g.gf.P("} else {")
 	g.gf.P("	if intOptionValue, convErr := ", strconvPackage.Ident("ParseInt"), "(", source, ", 10, 32); convErr == nil {")
-	g.gf.P("		if _, optIntValueOk := ", f.enumName, "_name[int32(intOptionValue)]; optIntValueOk {")
+	g.gf.P("		if _, optIntValueOk := ", f.structTypeIdent, "_name[int32(intOptionValue)]; optIntValueOk {")
 	if repeatedDestination {
-		g.gf.P("			", destination, " = append(", destination, ", ", f.enumName, "(intOptionValue))")
+		g.gf.P("			", destination, " = append(", destination, ", ", f.structTypeIdent, "(intOptionValue))")
 	} else {
 		if !f.optional {
-			g.gf.P("			", destination, " = ", f.enumName, "(intOptionValue)")
+			g.gf.P("			", destination, " = ", f.structTypeIdent, "(intOptionValue)")
 		} else {
-			g.gf.P("			", f.goName, " := ", f.enumName, "(intOptionValue)")
+			g.gf.P("			", f.goName, " := ", f.structTypeIdent, "(intOptionValue)")
 			g.gf.P("			", destination, " = &", f.goName)
 		}
 	}
@@ -228,7 +228,7 @@ func getFieldConversionFuncName(f field) any {
 	case protoreflect.DoubleKind:
 		return "float64"
 	case protoreflect.EnumKind:
-		return f.enumName
+		return f.structTypeIdent
 	}
 
 	return f.kind.String()

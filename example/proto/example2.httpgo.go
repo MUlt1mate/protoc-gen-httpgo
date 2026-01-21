@@ -4,17 +4,185 @@ package proto
 
 import (
 	context "context"
+	json "encoding/json"
 	fmt "fmt"
+	router "github.com/fasthttp/router"
 	fasthttp "github.com/valyala/fasthttp"
 	protojson "google.golang.org/protobuf/encoding/protojson"
+	strconv "strconv"
 	strings "strings"
 )
 
 type ServiceName2HTTPGoService interface {
 	Imports(context.Context, *SomeCustomMsg) (*SomeCustomMsg, error)
 }
+
+func RegisterServiceName2HTTPGoServer(
+	_ context.Context,
+	r *router.Router,
+	h ServiceName2HTTPGoService,
+	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
+) error {
+	var middleware = chainServerMiddlewaresExample2(middlewares)
+
+	r.POST("/v1/test/imports", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExample2ServiceName2ImportsSomeCustomMsg(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "ServiceName2")
+		fastctx.SetUserValue("proto_method", "Imports")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.Imports(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
+	})
+
+	return nil
+}
+
+func buildExample2ServiceName2ImportsSomeCustomMsg(ctx *fasthttp.RequestCtx) (arg *SomeCustomMsg, err error) {
+	arg = &SomeCustomMsg{}
+	var body = ctx.PostBody()
+	if len(body) > 0 {
+		if err = protojson.Unmarshal(body, arg); err != nil {
+			return nil, err
+		}
+	}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "val":
+			arg.Val = value
+		case "option":
+			if SomeOptionsValue, optValueOk := SomeOptions_value[strings.ToUpper(value)]; optValueOk {
+				arg.Option = SomeOptions(SomeOptionsValue)
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := SomeOptions_name[int32(intOptionValue)]; optIntValueOk {
+						arg.Option = SomeOptions(intOptionValue)
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter option: %w", convErr)
+					return
+				}
+			}
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	return arg, err
+}
+
 type SecondServiceName2HTTPGoService interface {
 	Imports(context.Context, *SomeCustomMsg) (*SomeCustomMsg, error)
+}
+
+func RegisterSecondServiceName2HTTPGoServer(
+	_ context.Context,
+	r *router.Router,
+	h SecondServiceName2HTTPGoService,
+	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
+) error {
+	var middleware = chainServerMiddlewaresExample2(middlewares)
+
+	r.GET("/v1/test/imports", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExample2SecondServiceName2ImportsSomeCustomMsg(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "SecondServiceName2")
+		fastctx.SetUserValue("proto_method", "Imports")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.Imports(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
+	})
+
+	return nil
+}
+
+func buildExample2SecondServiceName2ImportsSomeCustomMsg(ctx *fasthttp.RequestCtx) (arg *SomeCustomMsg, err error) {
+	arg = &SomeCustomMsg{}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "val":
+			arg.Val = value
+		case "option":
+			if SomeOptionsValue, optValueOk := SomeOptions_value[strings.ToUpper(value)]; optValueOk {
+				arg.Option = SomeOptions(SomeOptionsValue)
+			} else {
+				if intOptionValue, convErr := strconv.ParseInt(value, 10, 32); convErr == nil {
+					if _, optIntValueOk := SomeOptions_name[int32(intOptionValue)]; optIntValueOk {
+						arg.Option = SomeOptions(intOptionValue)
+					}
+				} else {
+					err = fmt.Errorf("conversion failed for parameter option: %w", convErr)
+					return
+				}
+			}
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	return arg, err
+}
+
+func chainServerMiddlewaresExample2(
+	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
+) func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
+	switch len(middlewares) {
+	case 0:
+		return nil
+	case 1:
+		return middlewares[0]
+	default:
+		return func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
+			return middlewares[0](ctx, req, getChainServerMiddlewareHandlerExample2(middlewares, 0, handler))
+		}
+	}
+}
+
+func getChainServerMiddlewareHandlerExample2(
+	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
+	curr int,
+	finalHandler func(ctx context.Context, req any) (resp any, err error),
+) func(ctx context.Context, req any) (resp any, err error) {
+	if curr == len(middlewares)-1 {
+		return finalHandler
+	}
+	return func(ctx context.Context, req any) (resp any, err error) {
+		return middlewares[curr+1](ctx, req, getChainServerMiddlewareHandlerExample2(middlewares, curr+1, finalHandler))
+	}
 }
 
 var _ ServiceName2HTTPGoService = &ServiceName2HTTPGoClient{}

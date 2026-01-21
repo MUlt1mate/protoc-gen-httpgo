@@ -1420,6 +1420,354 @@ func (x *AllTextTypesMsg) GetOptionalEnum() Options {
 	return Options_FIRST
 }
 
+type GetMessageRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"` // Mapped to URL path.
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMessageRequest) Reset() {
+	*x = GetMessageRequest{}
+	mi := &file_common_structs_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMessageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMessageRequest) ProtoMessage() {}
+
+func (x *GetMessageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_common_structs_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMessageRequest.ProtoReflect.Descriptor instead.
+func (*GetMessageRequest) Descriptor() ([]byte, []int) {
+	return file_common_structs_proto_rawDescGZIP(), []int{14}
+}
+
+func (x *GetMessageRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+type Message struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Text          string                 `protobuf:"bytes,1,opt,name=text,proto3" json:"text,omitempty"` // The resource content.
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Message) Reset() {
+	*x = Message{}
+	mi := &file_common_structs_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Message) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Message) ProtoMessage() {}
+
+func (x *Message) ProtoReflect() protoreflect.Message {
+	mi := &file_common_structs_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Message.ProtoReflect.Descriptor instead.
+func (*Message) Descriptor() ([]byte, []int) {
+	return file_common_structs_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *Message) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type GetMessageRequestV2 struct {
+	state         protoimpl.MessageState          `protogen:"open.v1"`
+	MessageId     string                          `protobuf:"bytes,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"` // Mapped to URL path.
+	Revision      int64                           `protobuf:"varint,2,opt,name=revision,proto3" json:"revision,omitempty"`                   // Mapped to URL query parameter `revision`.
+	Sub           *GetMessageRequestV2_SubMessage `protobuf:"bytes,3,opt,name=sub,proto3" json:"sub,omitempty"`                              // Mapped to URL query parameter `sub.subfield`.
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMessageRequestV2) Reset() {
+	*x = GetMessageRequestV2{}
+	mi := &file_common_structs_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMessageRequestV2) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMessageRequestV2) ProtoMessage() {}
+
+func (x *GetMessageRequestV2) ProtoReflect() protoreflect.Message {
+	mi := &file_common_structs_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMessageRequestV2.ProtoReflect.Descriptor instead.
+func (*GetMessageRequestV2) Descriptor() ([]byte, []int) {
+	return file_common_structs_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *GetMessageRequestV2) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *GetMessageRequestV2) GetRevision() int64 {
+	if x != nil {
+		return x.Revision
+	}
+	return 0
+}
+
+func (x *GetMessageRequestV2) GetSub() *GetMessageRequestV2_SubMessage {
+	if x != nil {
+		return x.Sub
+	}
+	return nil
+}
+
+type UpdateMessageRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MessageId     string                 `protobuf:"bytes,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"` // mapped to the URL
+	Message       *MessageV2             `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`                      // mapped to the body
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateMessageRequest) Reset() {
+	*x = UpdateMessageRequest{}
+	mi := &file_common_structs_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateMessageRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateMessageRequest) ProtoMessage() {}
+
+func (x *UpdateMessageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_common_structs_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateMessageRequest.ProtoReflect.Descriptor instead.
+func (*UpdateMessageRequest) Descriptor() ([]byte, []int) {
+	return file_common_structs_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *UpdateMessageRequest) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *UpdateMessageRequest) GetMessage() *MessageV2 {
+	if x != nil {
+		return x.Message
+	}
+	return nil
+}
+
+type MessageV2 struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MessageId     string                 `protobuf:"bytes,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MessageV2) Reset() {
+	*x = MessageV2{}
+	mi := &file_common_structs_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MessageV2) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MessageV2) ProtoMessage() {}
+
+func (x *MessageV2) ProtoReflect() protoreflect.Message {
+	mi := &file_common_structs_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MessageV2.ProtoReflect.Descriptor instead.
+func (*MessageV2) Descriptor() ([]byte, []int) {
+	return file_common_structs_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *MessageV2) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *MessageV2) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
+type GetMessageRequestV3 struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MessageId     string                 `protobuf:"bytes,1,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMessageRequestV3) Reset() {
+	*x = GetMessageRequestV3{}
+	mi := &file_common_structs_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMessageRequestV3) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMessageRequestV3) ProtoMessage() {}
+
+func (x *GetMessageRequestV3) ProtoReflect() protoreflect.Message {
+	mi := &file_common_structs_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMessageRequestV3.ProtoReflect.Descriptor instead.
+func (*GetMessageRequestV3) Descriptor() ([]byte, []int) {
+	return file_common_structs_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *GetMessageRequestV3) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *GetMessageRequestV3) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type GetMessageRequestV2_SubMessage struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Subfield      string                 `protobuf:"bytes,1,opt,name=subfield,proto3" json:"subfield,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetMessageRequestV2_SubMessage) Reset() {
+	*x = GetMessageRequestV2_SubMessage{}
+	mi := &file_common_structs_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetMessageRequestV2_SubMessage) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMessageRequestV2_SubMessage) ProtoMessage() {}
+
+func (x *GetMessageRequestV2_SubMessage) ProtoReflect() protoreflect.Message {
+	mi := &file_common_structs_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMessageRequestV2_SubMessage.ProtoReflect.Descriptor instead.
+func (*GetMessageRequestV2_SubMessage) Descriptor() ([]byte, []int) {
+	return file_common_structs_proto_rawDescGZIP(), []int{16, 0}
+}
+
+func (x *GetMessageRequestV2_SubMessage) GetSubfield() string {
+	if x != nil {
+		return x.Subfield
+	}
+	return ""
+}
+
 var File_common_structs_proto protoreflect.FileDescriptor
 
 var file_common_structs_proto_rawDesc = string([]byte{
@@ -1711,14 +2059,45 @@ var file_common_structs_proto_rawDesc = string([]byte{
 	0x75, 0x6d, 0x88, 0x01, 0x01, 0x42, 0x11, 0x0a, 0x0f, 0x5f, 0x4f, 0x70, 0x74, 0x69, 0x6f, 0x6e,
 	0x61, 0x6c, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x42, 0x10, 0x0a, 0x0e, 0x5f, 0x4f, 0x70, 0x74,
 	0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x42, 0x79, 0x74, 0x65, 0x73, 0x42, 0x0f, 0x0a, 0x0d, 0x5f, 0x4f,
-	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x45, 0x6e, 0x75, 0x6d, 0x2a, 0x20, 0x0a, 0x07, 0x6f,
-	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x09, 0x0a, 0x05, 0x46, 0x49, 0x52, 0x53, 0x54, 0x10,
-	0x00, 0x12, 0x0a, 0x0a, 0x06, 0x53, 0x45, 0x43, 0x4f, 0x4e, 0x44, 0x10, 0x01, 0x42, 0x44, 0x5a,
-	0x42, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4d, 0x55, 0x6c, 0x74,
-	0x31, 0x6d, 0x61, 0x74, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67, 0x65, 0x6e,
-	0x2d, 0x68, 0x74, 0x74, 0x70, 0x67, 0x6f, 0x2f, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c, 0x65, 0x2f,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x3b, 0x63, 0x6f, 0x6d,
-	0x6d, 0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x70, 0x74, 0x69, 0x6f, 0x6e, 0x61, 0x6c, 0x45, 0x6e, 0x75, 0x6d, 0x22, 0x27, 0x0a, 0x11, 0x47,
+	0x65, 0x74, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x12, 0x0a, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
+	0x6e, 0x61, 0x6d, 0x65, 0x22, 0x1d, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12,
+	0x12, 0x0a, 0x04, 0x74, 0x65, 0x78, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74,
+	0x65, 0x78, 0x74, 0x22, 0xb4, 0x01, 0x0a, 0x13, 0x47, 0x65, 0x74, 0x4d, 0x65, 0x73, 0x73, 0x61,
+	0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x56, 0x32, 0x12, 0x1d, 0x0a, 0x0a, 0x6d,
+	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x09, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x49, 0x64, 0x12, 0x1a, 0x0a, 0x08, 0x72, 0x65,
+	0x76, 0x69, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x03, 0x52, 0x08, 0x72, 0x65,
+	0x76, 0x69, 0x73, 0x69, 0x6f, 0x6e, 0x12, 0x38, 0x0a, 0x03, 0x73, 0x75, 0x62, 0x18, 0x03, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x26, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x47, 0x65, 0x74,
+	0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x56, 0x32,
+	0x2e, 0x53, 0x75, 0x62, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x52, 0x03, 0x73, 0x75, 0x62,
+	0x1a, 0x28, 0x0a, 0x0a, 0x53, 0x75, 0x62, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x1a,
+	0x0a, 0x08, 0x73, 0x75, 0x62, 0x66, 0x69, 0x65, 0x6c, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x08, 0x73, 0x75, 0x62, 0x66, 0x69, 0x65, 0x6c, 0x64, 0x22, 0x62, 0x0a, 0x14, 0x55, 0x70,
+	0x64, 0x61, 0x74, 0x65, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65,
+	0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x69, 0x64,
+	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x49,
+	0x64, 0x12, 0x2b, 0x0a, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x11, 0x2e, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x2e, 0x4d, 0x65, 0x73, 0x73,
+	0x61, 0x67, 0x65, 0x56, 0x32, 0x52, 0x07, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22, 0x3e,
+	0x0a, 0x09, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x56, 0x32, 0x12, 0x1d, 0x0a, 0x0a, 0x6d,
+	0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x09, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x49, 0x64, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x65,
+	0x78, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x65, 0x78, 0x74, 0x22, 0x4d,
+	0x0a, 0x13, 0x47, 0x65, 0x74, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x52, 0x65, 0x71, 0x75,
+	0x65, 0x73, 0x74, 0x56, 0x33, 0x12, 0x1d, 0x0a, 0x0a, 0x6d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x6d, 0x65, 0x73, 0x73, 0x61,
+	0x67, 0x65, 0x49, 0x64, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x2a, 0x20, 0x0a,
+	0x07, 0x6f, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x12, 0x09, 0x0a, 0x05, 0x46, 0x49, 0x52, 0x53,
+	0x54, 0x10, 0x00, 0x12, 0x0a, 0x0a, 0x06, 0x53, 0x45, 0x43, 0x4f, 0x4e, 0x44, 0x10, 0x01, 0x42,
+	0x44, 0x5a, 0x42, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x4d, 0x55,
+	0x6c, 0x74, 0x31, 0x6d, 0x61, 0x74, 0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x63, 0x2d, 0x67,
+	0x65, 0x6e, 0x2d, 0x68, 0x74, 0x74, 0x70, 0x67, 0x6f, 0x2f, 0x65, 0x78, 0x61, 0x6d, 0x70, 0x6c,
+	0x65, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x63, 0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x3b, 0x63,
+	0x6f, 0x6d, 0x6d, 0x6f, 0x6e, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 })
 
 var (
@@ -1734,24 +2113,31 @@ func file_common_structs_proto_rawDescGZIP() []byte {
 }
 
 var file_common_structs_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_common_structs_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_common_structs_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_common_structs_proto_goTypes = []any{
-	(Options)(0),                  // 0: common.options
-	(*InputMsgName)(nil),          // 1: common.InputMsgName
-	(*AllTypesMsg)(nil),           // 2: common.AllTypesMsg
-	(*AllNumberTypesMsg)(nil),     // 3: common.AllNumberTypesMsg
-	(*OutputMsgName)(nil),         // 4: common.OutputMsgName
-	(*OptionalField)(nil),         // 5: common.OptionalField
-	(*RepeatedCheck)(nil),         // 6: common.RepeatedCheck
-	(*Empty)(nil),                 // 7: common.Empty
-	(*Array)(nil),                 // 8: common.Array
-	(*ArrayItem)(nil),             // 9: common.ArrayItem
-	(*OnlyStruct)(nil),            // 10: common.OnlyStruct
-	(*MultipartFormRequest)(nil),  // 11: common.MultipartFormRequest
-	(*FileEx)(nil),                // 12: common.FileEx
-	(*MultipartFormAllTypes)(nil), // 13: common.MultipartFormAllTypes
-	(*AllTextTypesMsg)(nil),       // 14: common.AllTextTypesMsg
-	nil,                           // 15: common.FileEx.HeadersEntry
+	(Options)(0),                           // 0: common.options
+	(*InputMsgName)(nil),                   // 1: common.InputMsgName
+	(*AllTypesMsg)(nil),                    // 2: common.AllTypesMsg
+	(*AllNumberTypesMsg)(nil),              // 3: common.AllNumberTypesMsg
+	(*OutputMsgName)(nil),                  // 4: common.OutputMsgName
+	(*OptionalField)(nil),                  // 5: common.OptionalField
+	(*RepeatedCheck)(nil),                  // 6: common.RepeatedCheck
+	(*Empty)(nil),                          // 7: common.Empty
+	(*Array)(nil),                          // 8: common.Array
+	(*ArrayItem)(nil),                      // 9: common.ArrayItem
+	(*OnlyStruct)(nil),                     // 10: common.OnlyStruct
+	(*MultipartFormRequest)(nil),           // 11: common.MultipartFormRequest
+	(*FileEx)(nil),                         // 12: common.FileEx
+	(*MultipartFormAllTypes)(nil),          // 13: common.MultipartFormAllTypes
+	(*AllTextTypesMsg)(nil),                // 14: common.AllTextTypesMsg
+	(*GetMessageRequest)(nil),              // 15: common.GetMessageRequest
+	(*Message)(nil),                        // 16: common.Message
+	(*GetMessageRequestV2)(nil),            // 17: common.GetMessageRequestV2
+	(*UpdateMessageRequest)(nil),           // 18: common.UpdateMessageRequest
+	(*MessageV2)(nil),                      // 19: common.MessageV2
+	(*GetMessageRequestV3)(nil),            // 20: common.GetMessageRequestV3
+	nil,                                    // 21: common.FileEx.HeadersEntry
+	(*GetMessageRequestV2_SubMessage)(nil), // 22: common.GetMessageRequestV2.SubMessage
 }
 var file_common_structs_proto_depIdxs = []int32{
 	0,  // 0: common.AllTypesMsg.EnumValue:type_name -> common.options
@@ -1762,17 +2148,19 @@ var file_common_structs_proto_depIdxs = []int32{
 	9,  // 5: common.Array.items:type_name -> common.ArrayItem
 	9,  // 6: common.OnlyStruct.value:type_name -> common.ArrayItem
 	12, // 7: common.MultipartFormRequest.document:type_name -> common.FileEx
-	15, // 8: common.FileEx.headers:type_name -> common.FileEx.HeadersEntry
+	21, // 8: common.FileEx.headers:type_name -> common.FileEx.HeadersEntry
 	0,  // 9: common.MultipartFormAllTypes.EnumValue:type_name -> common.options
 	12, // 10: common.MultipartFormAllTypes.document:type_name -> common.FileEx
 	0,  // 11: common.AllTextTypesMsg.Enum:type_name -> common.options
 	0,  // 12: common.AllTextTypesMsg.RepeatedEnum:type_name -> common.options
 	0,  // 13: common.AllTextTypesMsg.OptionalEnum:type_name -> common.options
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	22, // 14: common.GetMessageRequestV2.sub:type_name -> common.GetMessageRequestV2.SubMessage
+	19, // 15: common.UpdateMessageRequest.message:type_name -> common.MessageV2
+	16, // [16:16] is the sub-list for method output_type
+	16, // [16:16] is the sub-list for method input_type
+	16, // [16:16] is the sub-list for extension type_name
+	16, // [16:16] is the sub-list for extension extendee
+	0,  // [0:16] is the sub-list for field type_name
 }
 
 func init() { file_common_structs_proto_init() }
@@ -1789,7 +2177,7 @@ func file_common_structs_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_structs_proto_rawDesc), len(file_common_structs_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

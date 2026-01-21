@@ -46,10 +46,10 @@ func main() {
 	time.Sleep(time.Millisecond * 100)
 
 	if err = clientRunRequests(ctx, fastClient); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	if err = clientRunRequests(ctx, nethttpClient); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	// f := make(chan bool)
@@ -150,6 +150,35 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 	}
 	if diff := cmp.Diff(&implementation.AllTextTypesMsg, allTextTypesResp, cmpopts.IgnoreUnexported(implementation.AllTextTypesMsg)); diff != "" {
 		log.Println(diff)
+	}
+
+	// http rule checks
+	if _, err = client.GetMessage(ctx, &common.GetMessageRequest{Name: "123456"}); err != nil {
+		return fmt.Errorf("GetMessage failed: %w", err)
+	}
+	if _, err = client.GetMessageV2(ctx, &common.GetMessageRequestV2{
+		MessageId: "123456",
+		Sub:       &common.GetMessageRequestV2_SubMessage{Subfield: "foo"},
+	}); err != nil {
+		return fmt.Errorf("GetMessageV2 failed: %w", err)
+	}
+	if _, err = client.UpdateMessage(ctx, &common.UpdateMessageRequest{
+		MessageId: "123456",
+		Message:   &common.MessageV2{Text: "Hi!"},
+	}); err != nil {
+		return fmt.Errorf("UpdateMessage failed: %w", err)
+	}
+	if _, err = client.UpdateMessageV2(ctx, &common.MessageV2{
+		Text:      "Hi!",
+		MessageId: "123456",
+	}); err != nil {
+		return fmt.Errorf("UpdateMessageV2 failed: %w", err)
+	}
+	if _, err = client.GetMessageV3(ctx, &common.GetMessageRequestV3{
+		MessageId: "234567",
+		UserId:    "",
+	}); err != nil {
+		return fmt.Errorf("UpdateMessageV2 failed: %w", err)
 	}
 
 	return nil

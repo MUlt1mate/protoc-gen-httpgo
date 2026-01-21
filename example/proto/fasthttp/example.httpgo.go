@@ -6,7 +6,6 @@ import (
 	bytes "bytes"
 	context "context"
 	json "encoding/json"
-	errors "errors"
 	fmt "fmt"
 	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 	router "github.com/fasthttp/router"
@@ -39,6 +38,11 @@ type ServiceNameHTTPGoService interface {
 	MultipartFormAllTypes(context.Context, *common.MultipartFormAllTypes) (*common.Empty, error)
 	AllTypesMaxTest(context.Context, *common.AllNumberTypesMsg) (*common.AllNumberTypesMsg, error)
 	AllTypesMaxQueryTest(context.Context, *common.AllNumberTypesMsg) (*common.AllNumberTypesMsg, error)
+	GetMessage(context.Context, *common.GetMessageRequest) (*common.Message, error)
+	GetMessageV2(context.Context, *common.GetMessageRequestV2) (*common.Message, error)
+	UpdateMessage(context.Context, *common.UpdateMessageRequest) (*common.Message, error)
+	UpdateMessageV2(context.Context, *common.MessageV2) (*common.MessageV2, error)
+	GetMessageV3(context.Context, *common.GetMessageRequestV3) (*common.MessageV2, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -525,6 +529,158 @@ func RegisterServiceNameHTTPGoServer(
 		_, _ = fastctx.Write(respJson)
 	})
 
+	// http rule checks
+	// v1/{name=messages/*}
+	r.GET("/v1/messages/{name}", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExampleServiceNameGetMessageGetMessageRequest(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "ServiceName")
+		fastctx.SetUserValue("proto_method", "GetMessage")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.GetMessage(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
+	})
+
+	r.GET("/v2/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExampleServiceNameGetMessageV2GetMessageRequestV2(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "ServiceName")
+		fastctx.SetUserValue("proto_method", "GetMessageV2")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.GetMessageV2(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
+	})
+
+	r.PATCH("/v1/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExampleServiceNameUpdateMessageUpdateMessageRequest(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "ServiceName")
+		fastctx.SetUserValue("proto_method", "UpdateMessage")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.UpdateMessage(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
+	})
+
+	r.PATCH("/v2/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExampleServiceNameUpdateMessageV2MessageV2(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "ServiceName")
+		fastctx.SetUserValue("proto_method", "UpdateMessageV2")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.UpdateMessageV2(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
+	})
+
+	r.GET("/v3/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "ServiceName")
+		fastctx.SetUserValue("proto_method", "GetMessageV3")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.GetMessageV3(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
+	})
+
+	r.GET("/v3/users/{user_id}/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "ServiceName")
+		fastctx.SetUserValue("proto_method", "GetMessageV3")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.GetMessageV3(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = fastctx.Write(respJson)
+	})
+
 	return nil
 }
 
@@ -554,21 +710,19 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 		}
 	})
 	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
-	if !ok || len(StringArgumentStr) == 0 {
-		return nil, errors.New("empty value for parameter stringArgument")
-	}
-	arg.StringArgument = StringArgumentStr
-	if arg.StringArgument, err = url.PathUnescape(arg.StringArgument); err != nil {
-		return nil, fmt.Errorf("PathUnescape failed for field stringArgument: %w", err)
+	if ok && len(StringArgumentStr) != 0 {
+		arg.StringArgument = StringArgumentStr
+		if arg.StringArgument, err = url.PathUnescape(arg.StringArgument); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field stringArgument: %w", err)
+		}
 	}
 
 	Int64ArgumentStr, ok := ctx.UserValue("int64Argument").(string)
-	if !ok || len(Int64ArgumentStr) == 0 {
-		return nil, errors.New("empty value for parameter int64Argument")
-	}
-	arg.Int64Argument, err = strconv.ParseInt(Int64ArgumentStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter int64Argument: %w", err)
+	if ok && len(Int64ArgumentStr) != 0 {
+		arg.Int64Argument, err = strconv.ParseInt(Int64ArgumentStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("conversion failed for parameter int64Argument: %w", err)
+		}
 	}
 
 	return arg, err
@@ -694,6 +848,20 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		case "MessageValue":
 			err = fmt.Errorf("unsupported type message for query argument MessageValue")
 			return
+		case "MessageValue.int64Argument":
+			if arg.MessageValue == nil {
+				arg.MessageValue = &common.InputMsgName{}
+			}
+			arg.MessageValue.Int64Argument, err = strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				err = fmt.Errorf("conversion failed for parameter int64Argument: %w", err)
+				return
+			}
+		case "MessageValue.stringArgument":
+			if arg.MessageValue == nil {
+				arg.MessageValue = &common.InputMsgName{}
+			}
+			arg.MessageValue.StringArgument = value
 		case "SliceStringValue[]":
 			arg.SliceStringValue = append(arg.SliceStringValue, value)
 		case "SliceInt32Value[]":
@@ -709,166 +877,150 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		}
 	})
 	BoolValueStr, ok := ctx.UserValue("BoolValue").(string)
-	if !ok || len(BoolValueStr) == 0 {
-		return nil, errors.New("empty value for parameter BoolValue")
-	}
-	switch BoolValueStr {
-	case "true", "t", "1":
-		arg.BoolValue = true
-	case "false", "f", "0":
-		arg.BoolValue = false
-	default:
-		return nil, fmt.Errorf("unknown bool string value %s", BoolValueStr)
+	if ok && len(BoolValueStr) != 0 {
+		switch BoolValueStr {
+		case "true", "t", "1":
+			arg.BoolValue = true
+		case "false", "f", "0":
+			arg.BoolValue = false
+		default:
+			return nil, fmt.Errorf("unknown bool string value %s", BoolValueStr)
+		}
 	}
 
 	EnumValueStr, ok := ctx.UserValue("EnumValue").(string)
-	if !ok || len(EnumValueStr) == 0 {
-		return nil, errors.New("empty value for parameter EnumValue")
-	}
-	if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumValueStr)]; optValueOk {
-		arg.EnumValue = common.Options(OptionsValue)
-	} else {
-		if intOptionValue, convErr := strconv.ParseInt(EnumValueStr, 10, 32); convErr == nil {
-			if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
-				arg.EnumValue = common.Options(intOptionValue)
-			}
+	if ok && len(EnumValueStr) != 0 {
+		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumValueStr)]; optValueOk {
+			arg.EnumValue = common.Options(OptionsValue)
 		} else {
-			return nil, fmt.Errorf("conversion failed for parameter EnumValue: %w", convErr)
+			if intOptionValue, convErr := strconv.ParseInt(EnumValueStr, 10, 32); convErr == nil {
+				if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+					arg.EnumValue = common.Options(intOptionValue)
+				}
+			} else {
+				return nil, fmt.Errorf("conversion failed for parameter EnumValue: %w", convErr)
+			}
 		}
 	}
 
 	Int32ValueStr, ok := ctx.UserValue("Int32Value").(string)
-	if !ok || len(Int32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Int32Value")
+	if ok && len(Int32ValueStr) != 0 {
+		Int32Value, convErr := strconv.ParseInt(Int32ValueStr, 10, 32)
+		if convErr != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
+		}
+		arg.Int32Value = int32(Int32Value)
 	}
-	Int32Value, convErr := strconv.ParseInt(Int32ValueStr, 10, 32)
-	if convErr != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
-	}
-	arg.Int32Value = int32(Int32Value)
 
 	Sint32ValueStr, ok := ctx.UserValue("Sint32Value").(string)
-	if !ok || len(Sint32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Sint32Value")
+	if ok && len(Sint32ValueStr) != 0 {
+		Sint32Value, convErr := strconv.ParseInt(Sint32ValueStr, 10, 32)
+		if convErr != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Sint32Value: %w", convErr)
+		}
+		arg.Sint32Value = int32(Sint32Value)
 	}
-	Sint32Value, convErr := strconv.ParseInt(Sint32ValueStr, 10, 32)
-	if convErr != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Sint32Value: %w", convErr)
-	}
-	arg.Sint32Value = int32(Sint32Value)
 
 	Uint32ValueStr, ok := ctx.UserValue("Uint32Value").(string)
-	if !ok || len(Uint32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Uint32Value")
+	if ok && len(Uint32ValueStr) != 0 {
+		Uint32Value, convErr := strconv.ParseUint(Uint32ValueStr, 10, 32)
+		if convErr != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Uint32Value: %w", convErr)
+		}
+		arg.Uint32Value = uint32(Uint32Value)
 	}
-	Uint32Value, convErr := strconv.ParseUint(Uint32ValueStr, 10, 32)
-	if convErr != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Uint32Value: %w", convErr)
-	}
-	arg.Uint32Value = uint32(Uint32Value)
 
 	Int64ValueStr, ok := ctx.UserValue("Int64Value").(string)
-	if !ok || len(Int64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Int64Value")
-	}
-	arg.Int64Value, err = strconv.ParseInt(Int64ValueStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
+	if ok && len(Int64ValueStr) != 0 {
+		arg.Int64Value, err = strconv.ParseInt(Int64ValueStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
+		}
 	}
 
 	Sint64ValueStr, ok := ctx.UserValue("Sint64Value").(string)
-	if !ok || len(Sint64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Sint64Value")
-	}
-	arg.Sint64Value, err = strconv.ParseInt(Sint64ValueStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", err)
+	if ok && len(Sint64ValueStr) != 0 {
+		arg.Sint64Value, err = strconv.ParseInt(Sint64ValueStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", err)
+		}
 	}
 
 	Uint64ValueStr, ok := ctx.UserValue("Uint64Value").(string)
-	if !ok || len(Uint64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Uint64Value")
-	}
-	arg.Uint64Value, err = strconv.ParseUint(Uint64ValueStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
+	if ok && len(Uint64ValueStr) != 0 {
+		arg.Uint64Value, err = strconv.ParseUint(Uint64ValueStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
+		}
 	}
 
 	Sfixed32ValueStr, ok := ctx.UserValue("Sfixed32Value").(string)
-	if !ok || len(Sfixed32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Sfixed32Value")
+	if ok && len(Sfixed32ValueStr) != 0 {
+		Sfixed32Value, convErr := strconv.ParseInt(Sfixed32ValueStr, 10, 32)
+		if convErr != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Sfixed32Value: %w", convErr)
+		}
+		arg.Sfixed32Value = int32(Sfixed32Value)
 	}
-	Sfixed32Value, convErr := strconv.ParseInt(Sfixed32ValueStr, 10, 32)
-	if convErr != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Sfixed32Value: %w", convErr)
-	}
-	arg.Sfixed32Value = int32(Sfixed32Value)
 
 	Fixed32ValueStr, ok := ctx.UserValue("Fixed32Value").(string)
-	if !ok || len(Fixed32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Fixed32Value")
+	if ok && len(Fixed32ValueStr) != 0 {
+		Fixed32Value, convErr := strconv.ParseUint(Fixed32ValueStr, 10, 32)
+		if convErr != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Fixed32Value: %w", convErr)
+		}
+		arg.Fixed32Value = uint32(Fixed32Value)
 	}
-	Fixed32Value, convErr := strconv.ParseUint(Fixed32ValueStr, 10, 32)
-	if convErr != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Fixed32Value: %w", convErr)
-	}
-	arg.Fixed32Value = uint32(Fixed32Value)
 
 	FloatValueStr, ok := ctx.UserValue("FloatValue").(string)
-	if !ok || len(FloatValueStr) == 0 {
-		return nil, errors.New("empty value for parameter FloatValue")
+	if ok && len(FloatValueStr) != 0 {
+		FloatValue, convErr := strconv.ParseFloat(FloatValueStr, 32)
+		if convErr != nil {
+			return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
+		}
+		arg.FloatValue = float32(FloatValue)
 	}
-	FloatValue, convErr := strconv.ParseFloat(FloatValueStr, 32)
-	if convErr != nil {
-		return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
-	}
-	arg.FloatValue = float32(FloatValue)
 
 	Sfixed64ValueStr, ok := ctx.UserValue("Sfixed64Value").(string)
-	if !ok || len(Sfixed64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Sfixed64Value")
-	}
-	arg.Sfixed64Value, err = strconv.ParseInt(Sfixed64ValueStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", err)
+	if ok && len(Sfixed64ValueStr) != 0 {
+		arg.Sfixed64Value, err = strconv.ParseInt(Sfixed64ValueStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", err)
+		}
 	}
 
 	Fixed64ValueStr, ok := ctx.UserValue("Fixed64Value").(string)
-	if !ok || len(Fixed64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Fixed64Value")
-	}
-	arg.Fixed64Value, err = strconv.ParseUint(Fixed64ValueStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Fixed64Value: %w", err)
+	if ok && len(Fixed64ValueStr) != 0 {
+		arg.Fixed64Value, err = strconv.ParseUint(Fixed64ValueStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Fixed64Value: %w", err)
+		}
 	}
 
 	DoubleValueStr, ok := ctx.UserValue("DoubleValue").(string)
-	if !ok || len(DoubleValueStr) == 0 {
-		return nil, errors.New("empty value for parameter DoubleValue")
-	}
-	arg.DoubleValue, err = strconv.ParseFloat(DoubleValueStr, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
+	if ok && len(DoubleValueStr) != 0 {
+		arg.DoubleValue, err = strconv.ParseFloat(DoubleValueStr, 64)
+		if err != nil {
+			return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
+		}
 	}
 
 	StringValueStr, ok := ctx.UserValue("StringValue").(string)
-	if !ok || len(StringValueStr) == 0 {
-		return nil, errors.New("empty value for parameter StringValue")
-	}
-	arg.StringValue = StringValueStr
-	if arg.StringValue, err = url.PathUnescape(arg.StringValue); err != nil {
-		return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+	if ok && len(StringValueStr) != 0 {
+		arg.StringValue = StringValueStr
+		if arg.StringValue, err = url.PathUnescape(arg.StringValue); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+		}
 	}
 
 	BytesValueStr, ok := ctx.UserValue("BytesValue").(string)
-	if !ok || len(BytesValueStr) == 0 {
-		return nil, errors.New("empty value for parameter BytesValue")
+	if ok && len(BytesValueStr) != 0 {
+		arg.BytesValue = []byte(BytesValueStr)
+		if BytesValueStr, err = url.PathUnescape(string(arg.BytesValue)); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field BytesValue: %w", err)
+		}
+		arg.BytesValue = []byte(BytesValueStr)
 	}
-	arg.BytesValue = []byte(BytesValueStr)
-	if BytesValueStr, err = url.PathUnescape(string(arg.BytesValue)); err != nil {
-		return nil, fmt.Errorf("PathUnescape failed for field BytesValue: %w", err)
-	}
-	arg.BytesValue = []byte(BytesValueStr)
 
 	return arg, err
 }
@@ -944,83 +1096,77 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *fasthttp.Reques
 		}
 	})
 	String_Str, ok := ctx.UserValue("String").(string)
-	if !ok || len(String_Str) == 0 {
-		return nil, errors.New("empty value for parameter String")
-	}
-	arg.String_ = String_Str
-	if arg.String_, err = url.PathUnescape(arg.String_); err != nil {
-		return nil, fmt.Errorf("PathUnescape failed for field String: %w", err)
+	if ok && len(String_Str) != 0 {
+		arg.String_ = String_Str
+		if arg.String_, err = url.PathUnescape(arg.String_); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field String: %w", err)
+		}
 	}
 
 	RepeatedStringStr, ok := ctx.UserValue("RepeatedString").(string)
-	if !ok || len(RepeatedStringStr) == 0 {
-		return nil, errors.New("empty value for parameter RepeatedString")
-	}
-	arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
-	for i, value := range arg.RepeatedString {
-		if arg.RepeatedString[i], err = url.PathUnescape(value); err != nil {
-			return nil, fmt.Errorf("PathUnescape failed for field RepeatedString: %w", err)
+	if ok && len(RepeatedStringStr) != 0 {
+		arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
+		for i, value := range arg.RepeatedString {
+			if arg.RepeatedString[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field RepeatedString: %w", err)
+			}
 		}
 	}
 
 	BytesStr, ok := ctx.UserValue("Bytes").(string)
-	if !ok || len(BytesStr) == 0 {
-		return nil, errors.New("empty value for parameter Bytes")
+	if ok && len(BytesStr) != 0 {
+		arg.Bytes = []byte(BytesStr)
+		if BytesStr, err = url.PathUnescape(string(arg.Bytes)); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field Bytes: %w", err)
+		}
+		arg.Bytes = []byte(BytesStr)
 	}
-	arg.Bytes = []byte(BytesStr)
-	if BytesStr, err = url.PathUnescape(string(arg.Bytes)); err != nil {
-		return nil, fmt.Errorf("PathUnescape failed for field Bytes: %w", err)
-	}
-	arg.Bytes = []byte(BytesStr)
 
 	RepeatedBytesStr, ok := ctx.UserValue("RepeatedBytes").(string)
-	if !ok || len(RepeatedBytesStr) == 0 {
-		return nil, errors.New("empty value for parameter RepeatedBytes")
-	}
-	RepeatedBytesStrs := strings.Split(RepeatedBytesStr, ",")
-	arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
-	for _, str := range RepeatedBytesStrs {
-		arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(str))
-	}
-	for i, value := range arg.RepeatedBytes {
-		if RepeatedBytesStr, err = url.PathUnescape(string(value)); err != nil {
-			return nil, fmt.Errorf("PathUnescape failed for field RepeatedBytes: %w", err)
+	if ok && len(RepeatedBytesStr) != 0 {
+		RepeatedBytesStrs := strings.Split(RepeatedBytesStr, ",")
+		arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
+		for _, str := range RepeatedBytesStrs {
+			arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(str))
 		}
-		arg.RepeatedBytes[i] = []byte(RepeatedBytesStr)
+		for i, value := range arg.RepeatedBytes {
+			if RepeatedBytesStr, err = url.PathUnescape(string(value)); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field RepeatedBytes: %w", err)
+			}
+			arg.RepeatedBytes[i] = []byte(RepeatedBytesStr)
+		}
 	}
 
 	EnumStr, ok := ctx.UserValue("Enum").(string)
-	if !ok || len(EnumStr) == 0 {
-		return nil, errors.New("empty value for parameter Enum")
-	}
-	if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
-		arg.Enum = common.Options(OptionsValue)
-	} else {
-		if intOptionValue, convErr := strconv.ParseInt(EnumStr, 10, 32); convErr == nil {
-			if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
-				arg.Enum = common.Options(intOptionValue)
-			}
+	if ok && len(EnumStr) != 0 {
+		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
+			arg.Enum = common.Options(OptionsValue)
 		} else {
-			return nil, fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+			if intOptionValue, convErr := strconv.ParseInt(EnumStr, 10, 32); convErr == nil {
+				if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+					arg.Enum = common.Options(intOptionValue)
+				}
+			} else {
+				return nil, fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+			}
 		}
 	}
 
 	RepeatedEnumStr, ok := ctx.UserValue("RepeatedEnum").(string)
-	if !ok || len(RepeatedEnumStr) == 0 {
-		return nil, errors.New("empty value for parameter RepeatedEnum")
-	}
-	RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
-	arg.RepeatedEnum = make([]common.Options, 0, len(RepeatedEnumStrs))
-	for _, str := range RepeatedEnumStrs {
-		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
-			arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
-		} else {
-			if intOptionValue, convErr := strconv.ParseInt(str, 10, 32); convErr == nil {
-				if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
-					arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
-				}
+	if ok && len(RepeatedEnumStr) != 0 {
+		RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
+		arg.RepeatedEnum = make([]common.Options, 0, len(RepeatedEnumStrs))
+		for _, str := range RepeatedEnumStrs {
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
+				arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
 			} else {
-				return nil, fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+				if intOptionValue, convErr := strconv.ParseInt(str, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
+					}
+				} else {
+					return nil, fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+				}
 			}
 		}
 	}
@@ -1093,83 +1239,77 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx *fasthttp.Request
 		}
 	})
 	String_Str, ok := ctx.UserValue("String").(string)
-	if !ok || len(String_Str) == 0 {
-		return nil, errors.New("empty value for parameter String")
-	}
-	arg.String_ = String_Str
-	if arg.String_, err = url.PathUnescape(arg.String_); err != nil {
-		return nil, fmt.Errorf("PathUnescape failed for field String: %w", err)
+	if ok && len(String_Str) != 0 {
+		arg.String_ = String_Str
+		if arg.String_, err = url.PathUnescape(arg.String_); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field String: %w", err)
+		}
 	}
 
 	RepeatedStringStr, ok := ctx.UserValue("RepeatedString").(string)
-	if !ok || len(RepeatedStringStr) == 0 {
-		return nil, errors.New("empty value for parameter RepeatedString")
-	}
-	arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
-	for i, value := range arg.RepeatedString {
-		if arg.RepeatedString[i], err = url.PathUnescape(value); err != nil {
-			return nil, fmt.Errorf("PathUnescape failed for field RepeatedString: %w", err)
+	if ok && len(RepeatedStringStr) != 0 {
+		arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
+		for i, value := range arg.RepeatedString {
+			if arg.RepeatedString[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field RepeatedString: %w", err)
+			}
 		}
 	}
 
 	BytesStr, ok := ctx.UserValue("Bytes").(string)
-	if !ok || len(BytesStr) == 0 {
-		return nil, errors.New("empty value for parameter Bytes")
+	if ok && len(BytesStr) != 0 {
+		arg.Bytes = []byte(BytesStr)
+		if BytesStr, err = url.PathUnescape(string(arg.Bytes)); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field Bytes: %w", err)
+		}
+		arg.Bytes = []byte(BytesStr)
 	}
-	arg.Bytes = []byte(BytesStr)
-	if BytesStr, err = url.PathUnescape(string(arg.Bytes)); err != nil {
-		return nil, fmt.Errorf("PathUnescape failed for field Bytes: %w", err)
-	}
-	arg.Bytes = []byte(BytesStr)
 
 	RepeatedBytesStr, ok := ctx.UserValue("RepeatedBytes").(string)
-	if !ok || len(RepeatedBytesStr) == 0 {
-		return nil, errors.New("empty value for parameter RepeatedBytes")
-	}
-	RepeatedBytesStrs := strings.Split(RepeatedBytesStr, ",")
-	arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
-	for _, str := range RepeatedBytesStrs {
-		arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(str))
-	}
-	for i, value := range arg.RepeatedBytes {
-		if RepeatedBytesStr, err = url.PathUnescape(string(value)); err != nil {
-			return nil, fmt.Errorf("PathUnescape failed for field RepeatedBytes: %w", err)
+	if ok && len(RepeatedBytesStr) != 0 {
+		RepeatedBytesStrs := strings.Split(RepeatedBytesStr, ",")
+		arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
+		for _, str := range RepeatedBytesStrs {
+			arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(str))
 		}
-		arg.RepeatedBytes[i] = []byte(RepeatedBytesStr)
+		for i, value := range arg.RepeatedBytes {
+			if RepeatedBytesStr, err = url.PathUnescape(string(value)); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field RepeatedBytes: %w", err)
+			}
+			arg.RepeatedBytes[i] = []byte(RepeatedBytesStr)
+		}
 	}
 
 	EnumStr, ok := ctx.UserValue("Enum").(string)
-	if !ok || len(EnumStr) == 0 {
-		return nil, errors.New("empty value for parameter Enum")
-	}
-	if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
-		arg.Enum = common.Options(OptionsValue)
-	} else {
-		if intOptionValue, convErr := strconv.ParseInt(EnumStr, 10, 32); convErr == nil {
-			if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
-				arg.Enum = common.Options(intOptionValue)
-			}
+	if ok && len(EnumStr) != 0 {
+		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
+			arg.Enum = common.Options(OptionsValue)
 		} else {
-			return nil, fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+			if intOptionValue, convErr := strconv.ParseInt(EnumStr, 10, 32); convErr == nil {
+				if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+					arg.Enum = common.Options(intOptionValue)
+				}
+			} else {
+				return nil, fmt.Errorf("conversion failed for parameter Enum: %w", convErr)
+			}
 		}
 	}
 
 	RepeatedEnumStr, ok := ctx.UserValue("RepeatedEnum").(string)
-	if !ok || len(RepeatedEnumStr) == 0 {
-		return nil, errors.New("empty value for parameter RepeatedEnum")
-	}
-	RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
-	arg.RepeatedEnum = make([]common.Options, 0, len(RepeatedEnumStrs))
-	for _, str := range RepeatedEnumStrs {
-		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
-			arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
-		} else {
-			if intOptionValue, convErr := strconv.ParseInt(str, 10, 32); convErr == nil {
-				if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
-					arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
-				}
+	if ok && len(RepeatedEnumStr) != 0 {
+		RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
+		arg.RepeatedEnum = make([]common.Options, 0, len(RepeatedEnumStrs))
+		for _, str := range RepeatedEnumStrs {
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
+				arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(OptionsValue))
 			} else {
-				return nil, fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+				if intOptionValue, convErr := strconv.ParseInt(str, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.RepeatedEnum = append(arg.RepeatedEnum, common.Options(intOptionValue))
+					}
+				} else {
+					return nil, fmt.Errorf("conversion failed for parameter RepeatedEnum: %w", convErr)
+				}
 			}
 		}
 	}
@@ -1189,7 +1329,7 @@ func buildExampleServiceNameCommonTypesAny(ctx *fasthttp.RequestCtx) (arg *anypb
 		var key = string(keyB)
 		var value = string(valueB)
 		switch key {
-		case "typeUrl":
+		case "type_url":
 			arg.TypeUrl = value
 		case "value":
 			arg.Value = []byte(value)
@@ -1227,12 +1367,11 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 		}
 	})
 	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
-	if !ok || len(StringArgumentStr) == 0 {
-		return nil, errors.New("empty value for parameter stringArgument")
-	}
-	arg.StringArgument = StringArgumentStr
-	if arg.StringArgument, err = url.PathUnescape(arg.StringArgument); err != nil {
-		return nil, fmt.Errorf("PathUnescape failed for field stringArgument: %w", err)
+	if ok && len(StringArgumentStr) != 0 {
+		arg.StringArgument = StringArgumentStr
+		if arg.StringArgument, err = url.PathUnescape(arg.StringArgument); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field stringArgument: %w", err)
+		}
 	}
 
 	return arg, err
@@ -1374,6 +1513,20 @@ func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg
 		case "MessageValue":
 			err = fmt.Errorf("unsupported type message for query argument MessageValue")
 			return
+		case "MessageValue.int64Argument":
+			if arg.MessageValue == nil {
+				arg.MessageValue = &common.InputMsgName{}
+			}
+			arg.MessageValue.Int64Argument, err = strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				err = fmt.Errorf("conversion failed for parameter int64Argument: %w", err)
+				return
+			}
+		case "MessageValue.stringArgument":
+			if arg.MessageValue == nil {
+				arg.MessageValue = &common.InputMsgName{}
+			}
+			arg.MessageValue.StringArgument = value
 		default:
 			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
@@ -1529,245 +1682,228 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	})
 	BoolValueStr, ok := ctx.UserValue("BoolValue").(string)
-	if !ok || len(BoolValueStr) == 0 {
-		return nil, errors.New("empty value for parameter BoolValue")
-	}
-	BoolValueStrs := strings.Split(BoolValueStr, ",")
-	arg.BoolValue = make([]bool, 0, len(BoolValueStrs))
-	for _, str := range BoolValueStrs {
-		switch str {
-		case "true", "t", "1":
-			arg.BoolValue = append(arg.BoolValue, true)
-		case "false", "f", "0":
-			arg.BoolValue = append(arg.BoolValue, false)
-		default:
-			return nil, fmt.Errorf("unknown bool string value %s", str)
+	if ok && len(BoolValueStr) != 0 {
+		BoolValueStrs := strings.Split(BoolValueStr, ",")
+		arg.BoolValue = make([]bool, 0, len(BoolValueStrs))
+		for _, str := range BoolValueStrs {
+			switch str {
+			case "true", "t", "1":
+				arg.BoolValue = append(arg.BoolValue, true)
+			case "false", "f", "0":
+				arg.BoolValue = append(arg.BoolValue, false)
+			default:
+				return nil, fmt.Errorf("unknown bool string value %s", str)
+			}
 		}
 	}
 
 	EnumValueStr, ok := ctx.UserValue("EnumValue").(string)
-	if !ok || len(EnumValueStr) == 0 {
-		return nil, errors.New("empty value for parameter EnumValue")
-	}
-	EnumValueStrs := strings.Split(EnumValueStr, ",")
-	arg.EnumValue = make([]common.Options, 0, len(EnumValueStrs))
-	for _, str := range EnumValueStrs {
-		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
-			arg.EnumValue = append(arg.EnumValue, common.Options(OptionsValue))
-		} else {
-			if intOptionValue, convErr := strconv.ParseInt(str, 10, 32); convErr == nil {
-				if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
-					arg.EnumValue = append(arg.EnumValue, common.Options(intOptionValue))
-				}
+	if ok && len(EnumValueStr) != 0 {
+		EnumValueStrs := strings.Split(EnumValueStr, ",")
+		arg.EnumValue = make([]common.Options, 0, len(EnumValueStrs))
+		for _, str := range EnumValueStrs {
+			if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(str)]; optValueOk {
+				arg.EnumValue = append(arg.EnumValue, common.Options(OptionsValue))
 			} else {
-				return nil, fmt.Errorf("conversion failed for parameter EnumValue: %w", convErr)
+				if intOptionValue, convErr := strconv.ParseInt(str, 10, 32); convErr == nil {
+					if _, optIntValueOk := common.Options_name[int32(intOptionValue)]; optIntValueOk {
+						arg.EnumValue = append(arg.EnumValue, common.Options(intOptionValue))
+					}
+				} else {
+					return nil, fmt.Errorf("conversion failed for parameter EnumValue: %w", convErr)
+				}
 			}
 		}
 	}
 
 	Int32ValueStr, ok := ctx.UserValue("Int32Value").(string)
-	if !ok || len(Int32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Int32Value")
-	}
-	Int32ValueStrs := strings.Split(Int32ValueStr, ",")
-	arg.Int32Value = make([]int32, 0, len(Int32ValueStrs))
-	for _, str := range Int32ValueStrs {
-		Int32Value, convErr := strconv.ParseInt(str, 10, 32)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
+	if ok && len(Int32ValueStr) != 0 {
+		Int32ValueStrs := strings.Split(Int32ValueStr, ",")
+		arg.Int32Value = make([]int32, 0, len(Int32ValueStrs))
+		for _, str := range Int32ValueStrs {
+			Int32Value, convErr := strconv.ParseInt(str, 10, 32)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
+			}
+			arg.Int32Value = append(arg.Int32Value, int32(Int32Value))
 		}
-		arg.Int32Value = append(arg.Int32Value, int32(Int32Value))
 	}
 
 	Sint32ValueStr, ok := ctx.UserValue("Sint32Value").(string)
-	if !ok || len(Sint32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Sint32Value")
-	}
-	Sint32ValueStrs := strings.Split(Sint32ValueStr, ",")
-	arg.Sint32Value = make([]int32, 0, len(Sint32ValueStrs))
-	for _, str := range Sint32ValueStrs {
-		Sint32Value, convErr := strconv.ParseInt(str, 10, 32)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter Sint32Value: %w", convErr)
+	if ok && len(Sint32ValueStr) != 0 {
+		Sint32ValueStrs := strings.Split(Sint32ValueStr, ",")
+		arg.Sint32Value = make([]int32, 0, len(Sint32ValueStrs))
+		for _, str := range Sint32ValueStrs {
+			Sint32Value, convErr := strconv.ParseInt(str, 10, 32)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter Sint32Value: %w", convErr)
+			}
+			arg.Sint32Value = append(arg.Sint32Value, int32(Sint32Value))
 		}
-		arg.Sint32Value = append(arg.Sint32Value, int32(Sint32Value))
 	}
 
 	Uint32ValueStr, ok := ctx.UserValue("Uint32Value").(string)
-	if !ok || len(Uint32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Uint32Value")
-	}
-	Uint32ValueStrs := strings.Split(Uint32ValueStr, ",")
-	arg.Uint32Value = make([]uint32, 0, len(Uint32ValueStrs))
-	for _, str := range Uint32ValueStrs {
-		Uint32Value, convErr := strconv.ParseUint(str, 10, 32)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter Uint32Value: %w", convErr)
+	if ok && len(Uint32ValueStr) != 0 {
+		Uint32ValueStrs := strings.Split(Uint32ValueStr, ",")
+		arg.Uint32Value = make([]uint32, 0, len(Uint32ValueStrs))
+		for _, str := range Uint32ValueStrs {
+			Uint32Value, convErr := strconv.ParseUint(str, 10, 32)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter Uint32Value: %w", convErr)
+			}
+			arg.Uint32Value = append(arg.Uint32Value, uint32(Uint32Value))
 		}
-		arg.Uint32Value = append(arg.Uint32Value, uint32(Uint32Value))
 	}
 
 	Int64ValueStr, ok := ctx.UserValue("Int64Value").(string)
-	if !ok || len(Int64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Int64Value")
-	}
-	Int64ValueStrs := strings.Split(Int64ValueStr, ",")
-	arg.Int64Value = make([]int64, 0, len(Int64ValueStrs))
-	for _, str := range Int64ValueStrs {
-		Int64Value, convErr := strconv.ParseInt(str, 10, 64)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", convErr)
+	if ok && len(Int64ValueStr) != 0 {
+		Int64ValueStrs := strings.Split(Int64ValueStr, ",")
+		arg.Int64Value = make([]int64, 0, len(Int64ValueStrs))
+		for _, str := range Int64ValueStrs {
+			Int64Value, convErr := strconv.ParseInt(str, 10, 64)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", convErr)
+			}
+			arg.Int64Value = append(arg.Int64Value, Int64Value)
 		}
-		arg.Int64Value = append(arg.Int64Value, Int64Value)
 	}
 
 	Sint64ValueStr, ok := ctx.UserValue("Sint64Value").(string)
-	if !ok || len(Sint64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Sint64Value")
-	}
-	Sint64ValueStrs := strings.Split(Sint64ValueStr, ",")
-	arg.Sint64Value = make([]int64, 0, len(Sint64ValueStrs))
-	for _, str := range Sint64ValueStrs {
-		Sint64Value, convErr := strconv.ParseInt(str, 10, 64)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
+	if ok && len(Sint64ValueStr) != 0 {
+		Sint64ValueStrs := strings.Split(Sint64ValueStr, ",")
+		arg.Sint64Value = make([]int64, 0, len(Sint64ValueStrs))
+		for _, str := range Sint64ValueStrs {
+			Sint64Value, convErr := strconv.ParseInt(str, 10, 64)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
+			}
+			arg.Sint64Value = append(arg.Sint64Value, Sint64Value)
 		}
-		arg.Sint64Value = append(arg.Sint64Value, Sint64Value)
 	}
 
 	Uint64ValueStr, ok := ctx.UserValue("Uint64Value").(string)
-	if !ok || len(Uint64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Uint64Value")
-	}
-	Uint64ValueStrs := strings.Split(Uint64ValueStr, ",")
-	arg.Uint64Value = make([]uint64, 0, len(Uint64ValueStrs))
-	for _, str := range Uint64ValueStrs {
-		Uint64Value, convErr := strconv.ParseUint(str, 10, 64)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", convErr)
+	if ok && len(Uint64ValueStr) != 0 {
+		Uint64ValueStrs := strings.Split(Uint64ValueStr, ",")
+		arg.Uint64Value = make([]uint64, 0, len(Uint64ValueStrs))
+		for _, str := range Uint64ValueStrs {
+			Uint64Value, convErr := strconv.ParseUint(str, 10, 64)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", convErr)
+			}
+			arg.Uint64Value = append(arg.Uint64Value, Uint64Value)
 		}
-		arg.Uint64Value = append(arg.Uint64Value, Uint64Value)
 	}
 
 	Sfixed32ValueStr, ok := ctx.UserValue("Sfixed32Value").(string)
-	if !ok || len(Sfixed32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Sfixed32Value")
-	}
-	Sfixed32ValueStrs := strings.Split(Sfixed32ValueStr, ",")
-	arg.Sfixed32Value = make([]int32, 0, len(Sfixed32ValueStrs))
-	for _, str := range Sfixed32ValueStrs {
-		Sfixed32Value, convErr := strconv.ParseInt(str, 10, 32)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter Sfixed32Value: %w", convErr)
+	if ok && len(Sfixed32ValueStr) != 0 {
+		Sfixed32ValueStrs := strings.Split(Sfixed32ValueStr, ",")
+		arg.Sfixed32Value = make([]int32, 0, len(Sfixed32ValueStrs))
+		for _, str := range Sfixed32ValueStrs {
+			Sfixed32Value, convErr := strconv.ParseInt(str, 10, 32)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter Sfixed32Value: %w", convErr)
+			}
+			arg.Sfixed32Value = append(arg.Sfixed32Value, int32(Sfixed32Value))
 		}
-		arg.Sfixed32Value = append(arg.Sfixed32Value, int32(Sfixed32Value))
 	}
 
 	Fixed32ValueStr, ok := ctx.UserValue("Fixed32Value").(string)
-	if !ok || len(Fixed32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Fixed32Value")
-	}
-	Fixed32ValueStrs := strings.Split(Fixed32ValueStr, ",")
-	arg.Fixed32Value = make([]uint32, 0, len(Fixed32ValueStrs))
-	for _, str := range Fixed32ValueStrs {
-		Fixed32Value, convErr := strconv.ParseUint(str, 10, 32)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter Fixed32Value: %w", convErr)
+	if ok && len(Fixed32ValueStr) != 0 {
+		Fixed32ValueStrs := strings.Split(Fixed32ValueStr, ",")
+		arg.Fixed32Value = make([]uint32, 0, len(Fixed32ValueStrs))
+		for _, str := range Fixed32ValueStrs {
+			Fixed32Value, convErr := strconv.ParseUint(str, 10, 32)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter Fixed32Value: %w", convErr)
+			}
+			arg.Fixed32Value = append(arg.Fixed32Value, uint32(Fixed32Value))
 		}
-		arg.Fixed32Value = append(arg.Fixed32Value, uint32(Fixed32Value))
 	}
 
 	FloatValueStr, ok := ctx.UserValue("FloatValue").(string)
-	if !ok || len(FloatValueStr) == 0 {
-		return nil, errors.New("empty value for parameter FloatValue")
-	}
-	FloatValueStrs := strings.Split(FloatValueStr, ",")
-	arg.FloatValue = make([]float32, 0, len(FloatValueStrs))
-	for _, str := range FloatValueStrs {
-		FloatValue, convErr := strconv.ParseFloat(str, 32)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
+	if ok && len(FloatValueStr) != 0 {
+		FloatValueStrs := strings.Split(FloatValueStr, ",")
+		arg.FloatValue = make([]float32, 0, len(FloatValueStrs))
+		for _, str := range FloatValueStrs {
+			FloatValue, convErr := strconv.ParseFloat(str, 32)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
+			}
+			arg.FloatValue = append(arg.FloatValue, float32(FloatValue))
 		}
-		arg.FloatValue = append(arg.FloatValue, float32(FloatValue))
 	}
 
 	Sfixed64ValueStr, ok := ctx.UserValue("Sfixed64Value").(string)
-	if !ok || len(Sfixed64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Sfixed64Value")
-	}
-	Sfixed64ValueStrs := strings.Split(Sfixed64ValueStr, ",")
-	arg.Sfixed64Value = make([]int64, 0, len(Sfixed64ValueStrs))
-	for _, str := range Sfixed64ValueStrs {
-		Sfixed64Value, convErr := strconv.ParseInt(str, 10, 64)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", convErr)
+	if ok && len(Sfixed64ValueStr) != 0 {
+		Sfixed64ValueStrs := strings.Split(Sfixed64ValueStr, ",")
+		arg.Sfixed64Value = make([]int64, 0, len(Sfixed64ValueStrs))
+		for _, str := range Sfixed64ValueStrs {
+			Sfixed64Value, convErr := strconv.ParseInt(str, 10, 64)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", convErr)
+			}
+			arg.Sfixed64Value = append(arg.Sfixed64Value, Sfixed64Value)
 		}
-		arg.Sfixed64Value = append(arg.Sfixed64Value, Sfixed64Value)
 	}
 
 	Fixed64ValueStr, ok := ctx.UserValue("Fixed64Value").(string)
-	if !ok || len(Fixed64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Fixed64Value")
-	}
-	Fixed64ValueStrs := strings.Split(Fixed64ValueStr, ",")
-	arg.Fixed64Value = make([]uint64, 0, len(Fixed64ValueStrs))
-	for _, str := range Fixed64ValueStrs {
-		Fixed64Value, convErr := strconv.ParseUint(str, 10, 64)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter Fixed64Value: %w", convErr)
+	if ok && len(Fixed64ValueStr) != 0 {
+		Fixed64ValueStrs := strings.Split(Fixed64ValueStr, ",")
+		arg.Fixed64Value = make([]uint64, 0, len(Fixed64ValueStrs))
+		for _, str := range Fixed64ValueStrs {
+			Fixed64Value, convErr := strconv.ParseUint(str, 10, 64)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter Fixed64Value: %w", convErr)
+			}
+			arg.Fixed64Value = append(arg.Fixed64Value, Fixed64Value)
 		}
-		arg.Fixed64Value = append(arg.Fixed64Value, Fixed64Value)
 	}
 
 	DoubleValueStr, ok := ctx.UserValue("DoubleValue").(string)
-	if !ok || len(DoubleValueStr) == 0 {
-		return nil, errors.New("empty value for parameter DoubleValue")
-	}
-	DoubleValueStrs := strings.Split(DoubleValueStr, ",")
-	arg.DoubleValue = make([]float64, 0, len(DoubleValueStrs))
-	for _, str := range DoubleValueStrs {
-		DoubleValue, convErr := strconv.ParseFloat(str, 64)
-		if convErr != nil {
-			return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", convErr)
+	if ok && len(DoubleValueStr) != 0 {
+		DoubleValueStrs := strings.Split(DoubleValueStr, ",")
+		arg.DoubleValue = make([]float64, 0, len(DoubleValueStrs))
+		for _, str := range DoubleValueStrs {
+			DoubleValue, convErr := strconv.ParseFloat(str, 64)
+			if convErr != nil {
+				return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", convErr)
+			}
+			arg.DoubleValue = append(arg.DoubleValue, DoubleValue)
 		}
-		arg.DoubleValue = append(arg.DoubleValue, DoubleValue)
 	}
 
 	StringValueStr, ok := ctx.UserValue("StringValue").(string)
-	if !ok || len(StringValueStr) == 0 {
-		return nil, errors.New("empty value for parameter StringValue")
-	}
-	arg.StringValue = strings.Split(StringValueStr, ",")
-	for i, value := range arg.StringValue {
-		if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
-			return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+	if ok && len(StringValueStr) != 0 {
+		arg.StringValue = strings.Split(StringValueStr, ",")
+		for i, value := range arg.StringValue {
+			if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+			}
 		}
 	}
 
 	BytesValueStr, ok := ctx.UserValue("BytesValue").(string)
-	if !ok || len(BytesValueStr) == 0 {
-		return nil, errors.New("empty value for parameter BytesValue")
-	}
-	BytesValueStrs := strings.Split(BytesValueStr, ",")
-	arg.BytesValue = make([][]byte, 0, len(BytesValueStrs))
-	for _, str := range BytesValueStrs {
-		arg.BytesValue = append(arg.BytesValue, []byte(str))
-	}
-	for i, value := range arg.BytesValue {
-		if BytesValueStr, err = url.PathUnescape(string(value)); err != nil {
-			return nil, fmt.Errorf("PathUnescape failed for field BytesValue: %w", err)
+	if ok && len(BytesValueStr) != 0 {
+		BytesValueStrs := strings.Split(BytesValueStr, ",")
+		arg.BytesValue = make([][]byte, 0, len(BytesValueStrs))
+		for _, str := range BytesValueStrs {
+			arg.BytesValue = append(arg.BytesValue, []byte(str))
 		}
-		arg.BytesValue[i] = []byte(BytesValueStr)
+		for i, value := range arg.BytesValue {
+			if BytesValueStr, err = url.PathUnescape(string(value)); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field BytesValue: %w", err)
+			}
+			arg.BytesValue[i] = []byte(BytesValueStr)
+		}
 	}
 
 	StringValueQueryStr, ok := ctx.UserValue("StringValueQuery").(string)
-	if !ok || len(StringValueQueryStr) == 0 {
-		return nil, errors.New("empty value for parameter StringValueQuery")
-	}
-	arg.StringValueQuery = strings.Split(StringValueQueryStr, ",")
-	for i, value := range arg.StringValueQuery {
-		if arg.StringValueQuery[i], err = url.PathUnescape(value); err != nil {
-			return nil, fmt.Errorf("PathUnescape failed for field StringValueQuery: %w", err)
+	if ok && len(StringValueQueryStr) != 0 {
+		arg.StringValueQuery = strings.Split(StringValueQueryStr, ",")
+		for i, value := range arg.StringValueQuery {
+			if arg.StringValueQuery[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field StringValueQuery: %w", err)
+			}
 		}
 	}
 
@@ -1899,13 +2035,12 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.Reques
 		}
 	})
 	StringValueStr, ok := ctx.UserValue("StringValue").(string)
-	if !ok || len(StringValueStr) == 0 {
-		return nil, errors.New("empty value for parameter StringValue")
-	}
-	arg.StringValue = strings.Split(StringValueStr, ",")
-	for i, value := range arg.StringValue {
-		if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
-			return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+	if ok && len(StringValueStr) != 0 {
+		arg.StringValue = strings.Split(StringValueStr, ",")
+		for i, value := range arg.StringValue {
+			if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+			}
 		}
 	}
 
@@ -2043,13 +2178,12 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.Request
 		}
 	})
 	StringValueStr, ok := ctx.UserValue("StringValue").(string)
-	if !ok || len(StringValueStr) == 0 {
-		return nil, errors.New("empty value for parameter StringValue")
-	}
-	arg.StringValue = strings.Split(StringValueStr, ",")
-	for i, value := range arg.StringValue {
-		if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
-			return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+	if ok && len(StringValueStr) != 0 {
+		arg.StringValue = strings.Split(StringValueStr, ",")
+		for i, value := range arg.StringValue {
+			if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+			}
 		}
 	}
 
@@ -2098,6 +2232,11 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx *fasthttp.RequestCtx) 
 		case "value":
 			err = fmt.Errorf("unsupported type message for query argument value")
 			return
+		case "value.value":
+			if arg.Value == nil {
+				arg.Value = &common.ArrayItem{}
+			}
+			arg.Value.Value = value
 		default:
 			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
 			return
@@ -2527,60 +2666,54 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ctx *fasthttp.Reque
 		}
 	})
 	Int32ValueStr, ok := ctx.UserValue("Int32Value").(string)
-	if !ok || len(Int32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Int32Value")
+	if ok && len(Int32ValueStr) != 0 {
+		Int32Value, convErr := strconv.ParseInt(Int32ValueStr, 10, 32)
+		if convErr != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
+		}
+		arg.Int32Value = int32(Int32Value)
 	}
-	Int32Value, convErr := strconv.ParseInt(Int32ValueStr, 10, 32)
-	if convErr != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
-	}
-	arg.Int32Value = int32(Int32Value)
 
 	Uint32ValueStr, ok := ctx.UserValue("Uint32Value").(string)
-	if !ok || len(Uint32ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Uint32Value")
+	if ok && len(Uint32ValueStr) != 0 {
+		Uint32Value, convErr := strconv.ParseUint(Uint32ValueStr, 10, 32)
+		if convErr != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Uint32Value: %w", convErr)
+		}
+		arg.Uint32Value = uint32(Uint32Value)
 	}
-	Uint32Value, convErr := strconv.ParseUint(Uint32ValueStr, 10, 32)
-	if convErr != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Uint32Value: %w", convErr)
-	}
-	arg.Uint32Value = uint32(Uint32Value)
 
 	Int64ValueStr, ok := ctx.UserValue("Int64Value").(string)
-	if !ok || len(Int64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Int64Value")
-	}
-	arg.Int64Value, err = strconv.ParseInt(Int64ValueStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
+	if ok && len(Int64ValueStr) != 0 {
+		arg.Int64Value, err = strconv.ParseInt(Int64ValueStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
+		}
 	}
 
 	Uint64ValueStr, ok := ctx.UserValue("Uint64Value").(string)
-	if !ok || len(Uint64ValueStr) == 0 {
-		return nil, errors.New("empty value for parameter Uint64Value")
-	}
-	arg.Uint64Value, err = strconv.ParseUint(Uint64ValueStr, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
+	if ok && len(Uint64ValueStr) != 0 {
+		arg.Uint64Value, err = strconv.ParseUint(Uint64ValueStr, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
+		}
 	}
 
 	FloatValueStr, ok := ctx.UserValue("FloatValue").(string)
-	if !ok || len(FloatValueStr) == 0 {
-		return nil, errors.New("empty value for parameter FloatValue")
+	if ok && len(FloatValueStr) != 0 {
+		FloatValue, convErr := strconv.ParseFloat(FloatValueStr, 32)
+		if convErr != nil {
+			return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
+		}
+		arg.FloatValue = float32(FloatValue)
 	}
-	FloatValue, convErr := strconv.ParseFloat(FloatValueStr, 32)
-	if convErr != nil {
-		return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
-	}
-	arg.FloatValue = float32(FloatValue)
 
 	DoubleValueStr, ok := ctx.UserValue("DoubleValue").(string)
-	if !ok || len(DoubleValueStr) == 0 {
-		return nil, errors.New("empty value for parameter DoubleValue")
-	}
-	arg.DoubleValue, err = strconv.ParseFloat(DoubleValueStr, 64)
-	if err != nil {
-		return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
+	if ok && len(DoubleValueStr) != 0 {
+		arg.DoubleValue, err = strconv.ParseFloat(DoubleValueStr, 64)
+		if err != nil {
+			return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
+		}
 	}
 
 	return arg, err
@@ -2675,6 +2808,179 @@ func buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(ctx *fasthttp.
 			return
 		}
 	})
+	return arg, err
+}
+
+func buildExampleServiceNameGetMessageGetMessageRequest(ctx *fasthttp.RequestCtx) (arg *common.GetMessageRequest, err error) {
+	arg = &common.GetMessageRequest{}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "name":
+			arg.Name = value
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	NameStr, ok := ctx.UserValue("name").(string)
+	if ok && len(NameStr) != 0 {
+		arg.Name = NameStr
+		if arg.Name, err = url.PathUnescape(arg.Name); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field name: %w", err)
+		}
+		arg.Name = fmt.Sprintf("messages/%s", arg.Name)
+	}
+
+	return arg, err
+}
+
+func buildExampleServiceNameGetMessageV2GetMessageRequestV2(ctx *fasthttp.RequestCtx) (arg *common.GetMessageRequestV2, err error) {
+	arg = &common.GetMessageRequestV2{}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "message_id":
+			arg.MessageId = value
+		case "revision":
+			arg.Revision, err = strconv.ParseInt(value, 10, 64)
+			if err != nil {
+				err = fmt.Errorf("conversion failed for parameter revision: %w", err)
+				return
+			}
+		case "sub":
+			err = fmt.Errorf("unsupported type message for query argument sub")
+			return
+		case "sub.subfield":
+			if arg.Sub == nil {
+				arg.Sub = &common.GetMessageRequestV2_SubMessage{}
+			}
+			arg.Sub.Subfield = value
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	MessageIdStr, ok := ctx.UserValue("message_id").(string)
+	if ok && len(MessageIdStr) != 0 {
+		arg.MessageId = MessageIdStr
+		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
+		}
+	}
+
+	return arg, err
+}
+
+func buildExampleServiceNameUpdateMessageUpdateMessageRequest(ctx *fasthttp.RequestCtx) (arg *common.UpdateMessageRequest, err error) {
+	arg = &common.UpdateMessageRequest{}
+	var body = ctx.PostBody()
+	if len(body) > 0 {
+		arg.Message = &common.MessageV2{}
+		if err = json.Unmarshal(body, arg.Message); err != nil {
+			return nil, err
+		}
+	}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "message_id":
+			arg.MessageId = value
+		case "message":
+			err = fmt.Errorf("unsupported type message for query argument message")
+			return
+		case "message.message_id":
+			if arg.Message == nil {
+				arg.Message = &common.MessageV2{}
+			}
+			arg.Message.MessageId = value
+		case "message.text":
+			if arg.Message == nil {
+				arg.Message = &common.MessageV2{}
+			}
+			arg.Message.Text = value
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	MessageIdStr, ok := ctx.UserValue("message_id").(string)
+	if ok && len(MessageIdStr) != 0 {
+		arg.MessageId = MessageIdStr
+		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
+		}
+	}
+
+	return arg, err
+}
+
+func buildExampleServiceNameUpdateMessageV2MessageV2(ctx *fasthttp.RequestCtx) (arg *common.MessageV2, err error) {
+	arg = &common.MessageV2{}
+	var body = ctx.PostBody()
+	if len(body) > 0 {
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
+		}
+	}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "message_id":
+			arg.MessageId = value
+		case "text":
+			arg.Text = value
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	MessageIdStr, ok := ctx.UserValue("message_id").(string)
+	if ok && len(MessageIdStr) != 0 {
+		arg.MessageId = MessageIdStr
+		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
+		}
+	}
+
+	return arg, err
+}
+
+func buildExampleServiceNameGetMessageV3GetMessageRequestV3(ctx *fasthttp.RequestCtx) (arg *common.GetMessageRequestV3, err error) {
+	arg = &common.GetMessageRequestV3{}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "message_id":
+			arg.MessageId = value
+		case "user_id":
+			arg.UserId = value
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	MessageIdStr, ok := ctx.UserValue("message_id").(string)
+	if ok && len(MessageIdStr) != 0 {
+		arg.MessageId = MessageIdStr
+		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
+		}
+	}
+
+	UserIdStr, ok := ctx.UserValue("user_id").(string)
+	if ok && len(UserIdStr) != 0 {
+		arg.UserId = UserIdStr
+		if arg.UserId, err = url.PathUnescape(arg.UserId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field user_id: %w", err)
+		}
+	}
+
 	return arg, err
 }
 
@@ -3717,6 +4023,193 @@ func (p *ServiceNameHTTPGoClient) AllTypesMaxQueryTest(ctx context.Context, requ
 		}
 	}
 	resp = &common.AllNumberTypesMsg{}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+// GetMessage http rule checks
+// v1/{name=messages/*}
+func (p *ServiceNameHTTPGoClient) GetMessage(ctx context.Context, request *common.GetMessageRequest) (resp *common.Message, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	req.SetRequestURI(fmt.Sprintf("%s/v1/messages/%s%s", p.host, request.Name, queryArgs))
+	req.Header.SetMethod("GET")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "GetMessage")
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req, resp)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.Message{}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) GetMessageV2(ctx context.Context, request *common.GetMessageRequestV2) (resp *common.Message, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	var parameters = []string{
+		"revision=%d",
+		"sub.subfield=%s",
+	}
+	var values = []any{
+		request.Revision,
+		request.Sub.Subfield,
+	}
+	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
+	req.SetRequestURI(fmt.Sprintf("%s/v2/messages/%s%s", p.host, request.MessageId, queryArgs))
+	req.Header.SetMethod("GET")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "GetMessageV2")
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req, resp)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.Message{}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) UpdateMessage(ctx context.Context, request *common.UpdateMessageRequest) (resp *common.Message, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	var body []byte
+	body, err = json.Marshal(request.Message)
+	if err != nil {
+		return nil, err
+	}
+	req.SetBody(body)
+	req.SetRequestURI(fmt.Sprintf("%s/v1/messages/%s%s", p.host, request.MessageId, queryArgs))
+	req.Header.SetMethod("PATCH")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "UpdateMessage")
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req, resp)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.Message{}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) UpdateMessageV2(ctx context.Context, request *common.MessageV2) (resp *common.MessageV2, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	var body []byte
+	body, err = json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	req.SetBody(body)
+	req.SetRequestURI(fmt.Sprintf("%s/v2/messages/%s%s", p.host, request.MessageId, queryArgs))
+	req.Header.SetMethod("PATCH")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV2")
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req, resp)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.MessageV2{}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) GetMessageV3(ctx context.Context, request *common.GetMessageRequestV3) (resp *common.MessageV2, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	var parameters = []string{
+		"user_id=%s",
+	}
+	var values = []any{
+		request.UserId,
+	}
+	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
+	req.SetRequestURI(fmt.Sprintf("%s/v3/messages/%s%s", p.host, request.MessageId, queryArgs))
+	req.Header.SetMethod("GET")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "GetMessageV3")
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req, resp)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.MessageV2{}
 	var respBody = reqResp.Body()
 	err = json.Unmarshal(respBody, resp)
 	return resp, err

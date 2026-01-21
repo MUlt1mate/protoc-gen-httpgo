@@ -39,6 +39,7 @@ func run() error {
 		Marshaller: ptr("json"),
 		Only:       ptr(""),
 		AutoURI:    ptr(false),
+		Library:    ptr("fasthttp"),
 	}
 	if err = generator.Run(gen, cfg); err != nil {
 		return err

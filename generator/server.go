@@ -79,7 +79,7 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 	g.gf.P(method.comment)
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
-		g.gf.P("	r.HandleFunc( \"", method.httpMethodName, " ", method.uri, "\", func(w ", g.lib.Ident("ResponseWriter"), ", r *", g.lib.Ident("Request"), ") { ")
+		g.gf.P("	r.HandleFunc( \"", method.httpMethodName, " ", method.uri.protoURI, "\", func(w ", g.lib.Ident("ResponseWriter"), ", r *", g.lib.Ident("Request"), ") { ")
 		g.gf.P("		w.Header().Set(\"Content-Type\", \"application/json\")")
 		g.gf.P("		input, err := build", g.getBuildMethodInputName(serviceName, method), "(r)")
 		g.gf.P("		if err != nil {")
@@ -94,7 +94,7 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		g.gf.P("		ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"writer\", w)")
 		g.gf.P("		ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"request\", r)")
 	case libraryFastHTTP:
-		g.gf.P("	r.", method.httpMethodName, "( \"", method.uri, "\", func(fastctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
+		g.gf.P("	r.", method.httpMethodName, "( \"", method.uri.protoURI, "\", func(fastctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
 		g.gf.P("		fastctx.Response.Header.SetContentType(\"application/json\")")
 		g.gf.P("		input, err := build", g.getBuildMethodInputName(serviceName, method), "(fastctx)")
 		g.gf.P("		if err != nil {")
@@ -129,6 +129,16 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 	}
 	g.gf.P("	})")
 	g.gf.P()
+	if method.rule != nil && len(method.rule.AdditionalBindings) > 0 {
+		// this will duplicate whole method. can be optimized
+		for _, binding := range method.rule.AdditionalBindings {
+			copiedMethod := method.Copy()
+			copiedMethod.httpMethodName, copiedMethod.uri.protoURI = getRuleMethodAndURI(binding)
+			copiedMethod.uri.parseURI()
+			copiedMethod.rule.AdditionalBindings = nil
+			g.genMethodDeclaration(serviceName, copiedMethod)
+		}
+	}
 }
 
 // getBuildMethodInputName creates name for function that builds method request
@@ -151,15 +161,24 @@ func (g *generator) genBuildRequestMethod(serviceName string, method methodParam
 			return err
 		}
 	} else if method.HasBody() {
-		g.genUnmarshalRequestStruct()
+		if err = g.genUnmarshalRequestStruct(method); err != nil {
+			return err
+		}
 	}
 	if err = g.genServerMethodQueryParams(method); err != nil {
 		return err
 	}
 
-	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
-		if f, ok := method.inputFields[match[1]]; ok {
-			if err = g.genBuildPathArgument(f); err != nil {
+	var allGeneratedFields = make(map[string]struct{})
+	if err = g.genMethodPathArguments(method, allGeneratedFields); err != nil {
+		return err
+	}
+	if method.rule != nil && len(method.rule.AdditionalBindings) > 0 {
+		for _, binding := range method.rule.AdditionalBindings {
+			copiedMethod := method.Copy()
+			copiedMethod.httpMethodName, copiedMethod.uri.protoURI = getRuleMethodAndURI(binding)
+			copiedMethod.uri.parseURI()
+			if err = g.genMethodPathArguments(copiedMethod, allGeneratedFields); err != nil {
 				return err
 			}
 		}
@@ -168,6 +187,23 @@ func (g *generator) genBuildRequestMethod(serviceName string, method methodParam
 	g.gf.P("	return arg, err")
 	g.gf.P("}")
 	g.gf.P()
+	return nil
+}
+
+func (g *generator) genMethodPathArguments(method methodParams, generatedFields map[string]struct{}) (err error) {
+	for _, fieldName := range method.uri.argList {
+		if _, ok := generatedFields[fieldName]; ok {
+			continue
+		}
+		if f, ok := method.inputFields[fieldName]; ok {
+			if err = g.genBuildPathArgument(f, method.uri.args[fieldName]); err != nil {
+				return err
+			}
+			generatedFields[fieldName] = struct{}{}
+		} else {
+			return fmt.Errorf("path argument %s found in uri, but not found in method %s argument fields", fieldName, method.name)
+		}
+	}
 	return nil
 }
 
@@ -207,26 +243,30 @@ func (g *generator) genServerMethodQueryParams(method methodParams) (err error) 
 // genBuildPathArgument generates code for request argument
 func (g *generator) genBuildPathArgument(
 	f field,
+	uriArg methodURIArg,
 ) (err error) {
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
 		g.gf.P("	", f.goName, "Str := r.PathValue(\"", f.protoName, "\")")
-		g.gf.P("	if len(", f.goName, "Str) == 0 {")
+		g.gf.P("	if len(", f.goName, "Str) != 0 {")
 	case libraryFastHTTP:
 		g.gf.P("	", f.goName, "Str, ok := ctx.UserValue(\"", f.protoName, "\").(string)")
-		g.gf.P("	if !ok || len(", f.goName, "Str) == 0 {")
+		g.gf.P("	if ok && len(", f.goName, "Str) != 0 {")
 	}
-	g.gf.P("		return nil, ", errorsPackage.Ident("New"), "(\"empty value for parameter ", f.protoName, "\")")
-	g.gf.P("	}")
 	if f.cardinality == protoreflect.Repeated {
-		return g.genRepeatedPathArgCheck(f)
+		if err = g.genRepeatedPathArgCheck(f); err != nil {
+			return err
+		}
+		g.gf.P("	}")
+		g.gf.P()
+		return nil
 	}
 	switch f.kind {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind,
 		protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind, protoreflect.Uint64Kind, protoreflect.Fixed64Kind,
 		protoreflect.DoubleKind, protoreflect.FloatKind, protoreflect.StringKind, protoreflect.BytesKind, protoreflect.BoolKind,
 		protoreflect.EnumKind:
-		if err = g.genFieldConvertor(f, f.goName+"Str", false, "nil, ", false); err != nil {
+		if err = g.genFieldConvertor(f, f.goName+"Str", "arg."+f.goName, false, "nil, ", false); err != nil {
 			return err
 		}
 	default:
@@ -245,6 +285,11 @@ func (g *generator) genBuildPathArgument(
 			g.gf.P("arg.", f.goName, " = []byte(", f.goName, "Str)")
 		}
 	}
+	if uriArg.ValueTemplate != "" {
+		replace := strings.Replace(uriArg.ValueTemplate, "*", "%s", 1)
+		g.gf.P("arg.", f.goName, " = ", fmtPackage.Ident("Sprintf"), "(\"", replace, "\", arg.", f.goName, ")")
+	}
+	g.gf.P("	}")
 	g.gf.P()
 	return nil
 }
@@ -258,13 +303,13 @@ func (g *generator) genRepeatedPathArgCheck(f field) (err error) {
 		// allocate space and override values if it was passed in a body or other way
 		g.gf.P("arg.", f.goName, " = make([]", getFieldConversionFuncName(f), ", 0, len(", f.goName, "Strs))")
 		g.gf.P("for _, str := range ", f.goName, "Strs {")
-		if err = g.genFieldConvertor(f, "str", true, "nil, ", false); err != nil {
+		if err = g.genFieldConvertor(f, "str", "arg."+f.goName, true, "nil, ", false); err != nil {
 			return err
 		}
 		g.gf.P("}")
 	case protoreflect.StringKind:
 		source := g.gf.QualifiedGoIdent(stringsPackage.Ident("Split")) + "(" + f.goName + "Str, \"" + pathRepeatedArgDelimiter + "\")"
-		if err = g.genFieldConvertor(f, source, false, "", false); err != nil {
+		if err = g.genFieldConvertor(f, source, "arg."+f.goName, false, "", false); err != nil {
 			return err
 		}
 	case protoreflect.BytesKind:
@@ -272,7 +317,7 @@ func (g *generator) genRepeatedPathArgCheck(f field) (err error) {
 		// allocate space and override values if it was passed in a body or other way
 		g.gf.P("arg.", f.goName, " = make([][]byte, 0, len(", f.goName, "Strs))")
 		g.gf.P("for _, str := range ", f.goName, "Strs {")
-		if err = g.genFieldConvertor(f, "str", true, "", false); err != nil {
+		if err = g.genFieldConvertor(f, "str", "arg."+f.goName, true, "", false); err != nil {
 			return err
 		}
 		g.gf.P("}")
@@ -297,7 +342,6 @@ func (g *generator) genRepeatedPathArgCheck(f field) (err error) {
 			g.gf.P("}")
 		}
 	}
-	g.gf.P()
 	return nil
 }
 
@@ -333,7 +377,7 @@ func (g *generator) genChainServerMiddlewares() {
 }
 
 // genUnmarshalRequestStruct generates unmarshalling from []byte to struct for request
-func (g *generator) genUnmarshalRequestStruct() {
+func (g *generator) genUnmarshalRequestStruct(method methodParams) (err error) {
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
 		g.gf.P("	var body []byte")
@@ -345,10 +389,20 @@ func (g *generator) genUnmarshalRequestStruct() {
 		g.gf.P("	var body = ctx.PostBody()")
 	}
 	g.gf.P("	if len(body) > 0 { ")
-	g.gf.P("		if err = ", g.marshaller.Ident("Unmarshal"), "(body, arg); err != nil {")
+	destination := "arg"
+	if method.rule != nil && method.rule.Body != "" && method.rule.Body != "*" {
+		f, ok := method.inputFields[method.rule.Body]
+		if !ok {
+			return fmt.Errorf("field %s set as body value, but not found in method %s argument fields", method.rule.Body, method.name)
+		}
+		destination = "arg." + f.goName
+		g.gf.P("	", destination, " = &", f.structTypeIdent, "{}")
+	}
+	g.gf.P("		if err = ", g.marshaller.Ident("Unmarshal"), "(body, ", destination, "); err != nil {")
 	g.gf.P("			return nil, err")
 	g.gf.P("		}")
 	g.gf.P("	}")
+	return nil
 }
 
 func (g *generator) genMultipartRequestServer(method methodParams) (err error) {
@@ -376,12 +430,12 @@ func (g *generator) genMultipartRequestServer(method methodParams) (err error) {
 			g.gf.P("	arg."+f.goName, " = append(arg."+f.goName, ", values...)")
 		case f.cardinality == protoreflect.Repeated:
 			g.gf.P("	for _, value := range values {")
-			if err = g.genFieldConvertor(f, "value", true, "nil, ", false); err != nil {
+			if err = g.genFieldConvertor(f, "value", "arg."+f.goName, true, "nil, ", false); err != nil {
 				return err
 			}
 			g.gf.P("	}")
 		default:
-			if err = g.genFieldConvertor(f, "values[0]", false, "nil, ", false); err != nil {
+			if err = g.genFieldConvertor(f, "values[0]", "arg."+f.goName, false, "nil, ", false); err != nil {
 				return err
 			}
 		}
@@ -394,7 +448,7 @@ func (g *generator) genMultipartServerRequestField(methodField field) {
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
 		g.gf.P("f, fh, err := r.FormFile(\"", methodField.protoName, "\")")
-		g.gf.P("if err == nil && !errors.Is(err, ", httpPackage.Ident("ErrMissingFile"), ") {")
+		g.gf.P("if err == nil && !", errorsPackage.Ident("Is"), "(err, ", httpPackage.Ident("ErrMissingFile"), ") {")
 		g.gf.P("	arg.", methodField.goName, " = &", methodField.fileStructIdent(), "{")
 		g.gf.P("		File:    make([]byte, fh.Size),")
 		g.gf.P("		Name:    fh.Filename,")
@@ -426,9 +480,9 @@ func (g *generator) genMultipartServerRequestField(methodField field) {
 
 func (g *generator) genQueryArgCheck(f field) (err error) {
 	if f.cardinality == protoreflect.Repeated {
-		g.gf.P("	case \"" + f.protoName + "[]\":")
+		g.gf.P("	case \"", f.protoName, "[]\":")
 	} else {
-		g.gf.P("	case \"" + f.protoName + "\":")
+		g.gf.P("	case \"", f.protoName, "\":")
 	}
 
 	switch f.kind {
@@ -436,12 +490,33 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 		protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind, protoreflect.Uint64Kind, protoreflect.Fixed64Kind,
 		protoreflect.DoubleKind, protoreflect.FloatKind, protoreflect.StringKind, protoreflect.BytesKind, protoreflect.BoolKind,
 		protoreflect.EnumKind:
-		if err = g.genFieldConvertor(f, "value", f.cardinality == protoreflect.Repeated, "", true); err != nil {
+		if err = g.genFieldConvertor(f, "value", "arg."+f.goName, f.cardinality == protoreflect.Repeated, "", true); err != nil {
 			return err
 		}
 	default:
 		g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"unsupported type "+f.kind.String()+" for query argument "+f.protoName+"\")")
 		g.gf.P("	return")
+	}
+
+	if f.kind == protoreflect.MessageKind && !f.isFile {
+		for _, sf := range f.structFields {
+			if sf.Desc.Cardinality() == protoreflect.Repeated ||
+				sf.Desc.HasOptionalKeyword() || // todo add optional sub fields
+				sf.Desc.Kind() == protoreflect.MessageKind { // for now support first sublevel fields only
+				continue
+			}
+			if f.cardinality == protoreflect.Repeated {
+				g.gf.P("	case \"", f.protoName, ".", sf.Desc.TextName(), "[]\":")
+			} else {
+				g.gf.P("	case \"", f.protoName, ".", sf.Desc.TextName(), "\":")
+			}
+			g.gf.P("		if arg.", f.goName, " == nil {")
+			g.gf.P("			arg.", f.goName, " = &", f.structTypeIdent, "{}")
+			g.gf.P("		}")
+			if err = g.genFieldConvertor(convertField(sf), "value", "arg."+f.goName+"."+sf.GoName, f.cardinality == protoreflect.Repeated, "", true); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

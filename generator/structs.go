@@ -44,13 +44,14 @@ type (
 	}
 
 	methodParams struct {
+		rule           *annotations.HttpRule
 		inputFields    map[string]field
 		outputFields   map[string]field
 		inputMsgName   protogen.GoIdent
 		outputMsgName  protogen.GoIdent
 		name           string
 		httpMethodName string
-		uri            string
+		uri            methodURI
 		comment        string
 		responseBody   string
 		inputFieldList []string // slice for constant sorting
@@ -58,18 +59,30 @@ type (
 		withFiles      bool
 	}
 
+	methodURI struct {
+		protoURI string
+		argList  []string
+		args     map[string]methodURIArg
+	}
+
+	methodURIArg struct {
+		ValueTemplate string
+	}
+
 	field struct {
-		goName      string // name in go generated files
-		protoName   string // name in proto file and http requests
-		enumName    protogen.GoIdent
-		kind        protoreflect.Kind
-		cardinality protoreflect.Cardinality
-		optional    bool
-		isFile      bool
-		fileStruct  struct {
+		goName          string // name in go generated files
+		protoName       string // name in proto file and http requests
+		jsonName        string // name in json tag and http requests
+		structTypeIdent protogen.GoIdent
+		kind            protoreflect.Kind
+		cardinality     protoreflect.Cardinality
+		optional        bool
+		isFile          bool
+		fileStruct      struct {
 			Name string
 			Path string
 		}
+		structFields []*protogen.Field
 	}
 	Config struct {
 		Marshaller         *string
@@ -176,21 +189,9 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 		fields = make(map[string]field)
 	)
 	for _, protoField := range protoMethod.Input.Fields {
-		f := field{
-			goName:      protoField.GoName,
-			protoName:   protoField.Desc.JSONName(),
-			kind:        protoField.Desc.Kind(),
-			cardinality: protoField.Desc.Cardinality(),
-			optional:    protoField.Desc.HasOptionalKeyword(),
-			isFile:      isFileField(protoField),
-		}
+		f := convertField(protoField)
 		if f.isFile {
-			f.fileStruct.Path = string(protoField.Message.GoIdent.GoImportPath)
-			f.fileStruct.Name = protoField.Message.GoIdent.GoName
 			method.withFiles = true
-		}
-		if protoField.Desc.Kind() == protoreflect.EnumKind {
-			f.enumName = protoField.Enum.GoIdent
 		}
 		fields[f.protoName] = f
 		method.inputFieldList = append(method.inputFieldList, f.protoName)
@@ -200,18 +201,43 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 	for _, protoField := range protoMethod.Output.Fields {
 		f := field{
 			goName:      protoField.GoName,
-			protoName:   protoField.Desc.JSONName(),
+			protoName:   protoField.Desc.TextName(),
+			jsonName:    protoField.Desc.JSONName(),
 			kind:        protoField.Desc.Kind(),
 			cardinality: protoField.Desc.Cardinality(),
 			optional:    protoField.Desc.HasOptionalKeyword(),
 		}
 		if protoField.Desc.Kind() == protoreflect.EnumKind {
-			f.enumName = protoField.Enum.GoIdent
+			f.structTypeIdent = protoField.Enum.GoIdent
 		}
 		fields[f.protoName] = f
 	}
 	method.outputFields = fields
 	method.comment = strings.TrimSuffix(protoMethod.Comments.Leading.String(), "\n")
+}
+
+func convertField(protoField *protogen.Field) field {
+	f := field{
+		goName:      protoField.GoName,
+		protoName:   protoField.Desc.TextName(),
+		jsonName:    protoField.Desc.JSONName(),
+		kind:        protoField.Desc.Kind(),
+		cardinality: protoField.Desc.Cardinality(),
+		optional:    protoField.Desc.HasOptionalKeyword(),
+		isFile:      isFileField(protoField),
+	}
+	if f.isFile {
+		f.fileStruct.Path = string(protoField.Message.GoIdent.GoImportPath)
+		f.fileStruct.Name = protoField.Message.GoIdent.GoName
+	}
+	if protoField.Desc.Kind() == protoreflect.EnumKind {
+		f.structTypeIdent = protoField.Enum.GoIdent
+	}
+	if protoField.Desc.Kind() == protoreflect.MessageKind {
+		f.structFields = protoField.Message.Fields
+		f.structTypeIdent = protoField.Message.GoIdent
+	}
+	return f
 }
 
 // initTemplates fill predefined templates
@@ -235,8 +261,8 @@ func getFilename(file *protogen.File) string {
 	return strings.ToUpper(fileName[:1]) + fileName[1:]
 }
 
-func (f field) getVariablePlaceholder() (string, error) {
-	switch f.kind {
+func getVariablePlaceholder(kind protoreflect.Kind) (string, error) {
+	switch kind {
 	case protoreflect.StringKind,
 		protoreflect.EnumKind,
 		protoreflect.BytesKind:
@@ -259,7 +285,7 @@ func (f field) getVariablePlaceholder() (string, error) {
 	case protoreflect.BoolKind:
 		return "%t", nil
 	default:
-		return "", fmt.Errorf(`unsupported type %s for path variable: "%s"`, f.kind, f.goName)
+		return "", fmt.Errorf(`unsupported type %s for path variable`, kind)
 	}
 }
 
@@ -274,51 +300,45 @@ func (g *generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceNam
 		return m, errors.New("empty option")
 	}
 
-	httpRule, ok := proto.GetExtension(options, annotations.E_Http).(*annotations.HttpRule)
-	if !ok && !*g.cfg.AutoURI {
+	httpRule, _ := proto.GetExtension(options, annotations.E_Http).(*annotations.HttpRule)
+	if httpRule == nil && !*g.cfg.AutoURI {
 		return m, errors.New("empty rule")
 	}
 
 	if *g.cfg.AutoURI {
 		return methodParams{
 			httpMethodName: "POST",
-			uri:            "/" + serviceName + "/" + protoMethod.GoName,
+			uri:            methodURI{protoURI: "/" + serviceName + "/" + protoMethod.GoName},
 			hasBody:        true,
 		}, nil
 	}
 
-	switch httpRule.GetPattern().(type) {
-	case *annotations.HttpRule_Get:
-		m = methodParams{
-			httpMethodName: "GET",
-			uri:            httpRule.GetGet(),
-		}
-	case *annotations.HttpRule_Put:
-		m = methodParams{
-			httpMethodName: "PUT",
-			uri:            httpRule.GetPut(),
-		}
-	case *annotations.HttpRule_Post:
-		m = methodParams{
-			httpMethodName: "POST",
-			uri:            httpRule.GetPost(),
-		}
-	case *annotations.HttpRule_Delete:
-		m = methodParams{
-			httpMethodName: "DELETE",
-			uri:            httpRule.GetDelete(),
-		}
-	case *annotations.HttpRule_Patch:
-		m = methodParams{
-			httpMethodName: "PATCH",
-			uri:            httpRule.GetPatch(),
-		}
-	default:
-		return m, fmt.Errorf("unknown method type %T", httpRule.GetPattern())
-	}
+	m.rule = httpRule
+	m.httpMethodName, m.uri.protoURI = getRuleMethodAndURI(httpRule)
+	m.uri.parseURI()
 	m.hasBody = g.MethodShouldHasBody(m.httpMethodName)
 	m.responseBody = httpRule.GetResponseBody()
 	return m, nil
+}
+
+func getRuleMethodAndURI(httpRule *annotations.HttpRule) (string, string) {
+	switch httpRule.GetPattern().(type) {
+	case *annotations.HttpRule_Get:
+		return "GET", httpRule.GetGet()
+	case *annotations.HttpRule_Put:
+		return "PUT", httpRule.GetPut()
+	case *annotations.HttpRule_Post:
+		return "POST", httpRule.GetPost()
+	case *annotations.HttpRule_Delete:
+		return "DELETE", httpRule.GetDelete()
+	case *annotations.HttpRule_Patch:
+		return "PATCH", httpRule.GetPatch()
+	case *annotations.HttpRule_Custom:
+		return httpRule.GetCustom().Kind, httpRule.GetCustom().Path
+	default:
+		// doesn't return error here, because it won't compile with other value anyway
+		return "", ""
+	}
 }
 
 // HasBody checks if method may have a body
@@ -375,4 +395,58 @@ func isFileField(field *protogen.Field) bool {
 	}
 
 	return matchedFields == totalFields
+}
+
+func (m *methodURI) parseURI() {
+	m.args = make(map[string]methodURIArg)
+	var path string
+	for _, match := range uriParametersRegexp.FindAllStringSubmatch(m.protoURI, -1) {
+		fieldName := match[1]
+		arg := methodURIArg{}
+		if i := strings.Index(fieldName, "="); i != -1 {
+			// split variable name and segments name=messages/*
+			arg.ValueTemplate = fieldName[i+1:]
+			fieldName = fieldName[:i]
+			// and change uri to messages/{name}
+			if strings.Contains(arg.ValueTemplate, "**") {
+				segment := "{" + fieldName + ":*}"
+				path = strings.Replace(arg.ValueTemplate, "**", segment, 1)
+			} else {
+				segment := "{" + fieldName + "}"
+				path = strings.Replace(arg.ValueTemplate, "*", segment, 1)
+			}
+			m.protoURI = strings.Replace(m.protoURI, match[0], path, 1)
+		}
+		m.argList = append(m.argList, fieldName)
+		m.args[fieldName] = arg
+	}
+}
+
+func (m methodParams) Copy() methodParams {
+	cp := m
+	if m.rule != nil {
+		ruleCopy := *m.rule //nolint:govet // we are copying mutex, but it's not used
+		cp.rule = &ruleCopy
+	}
+
+	if m.inputFields != nil {
+		cp.inputFields = make(map[string]field, len(m.inputFields))
+		for k, v := range m.inputFields {
+			cp.inputFields[k] = v
+		}
+	}
+
+	if m.outputFields != nil {
+		cp.outputFields = make(map[string]field, len(m.outputFields))
+		for k, v := range m.outputFields {
+			cp.outputFields[k] = v
+		}
+	}
+
+	if m.inputFieldList != nil {
+		cp.inputFieldList = make([]string, len(m.inputFieldList))
+		copy(cp.inputFieldList, m.inputFieldList)
+	}
+
+	return cp
 }
