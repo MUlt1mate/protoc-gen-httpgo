@@ -34,7 +34,6 @@ type ServiceNameHTTPGoService interface {
 	CheckRepeatedPost(context.Context, *common.RepeatedCheck) (*common.RepeatedCheck, error)
 	EmptyGet(context.Context, *common.Empty) (*common.Empty, error)
 	EmptyPost(context.Context, *common.Empty) (*common.Empty, error)
-	TopLevelArray(context.Context, *common.Empty) (*common.Array, error)
 	OnlyStructInGet(context.Context, *common.OnlyStruct) (*common.Empty, error)
 	MultipartForm(context.Context, *common.MultipartFormRequest) (*common.Empty, error)
 	MultipartFormAllTypes(context.Context, *common.MultipartFormAllTypes) (*common.Empty, error)
@@ -46,6 +45,7 @@ type ServiceNameHTTPGoService interface {
 	UpdateMessageV2(context.Context, *common.MessageV2) (*common.MessageV2, error)
 	GetMessageV3(context.Context, *common.GetMessageRequestV3) (*common.MessageV2, error)
 	GetMessageV4(context.Context, *common.GetMessageRequestV3) (*common.MessageV2, error)
+	TopLevelArray(context.Context, *common.Array) (*common.Array, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -408,33 +408,6 @@ func RegisterServiceNameHTTPGoServer(
 		_, _ = w.Write(respJson)
 	})
 
-	r.HandleFunc("POST /v1/array", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameTopLevelArrayEmpty(r)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
-			return
-		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-		ctx = context.WithValue(ctx, "proto_method", "TopLevelArray")
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
-		handler := func(ctx context.Context, req any) (resp any, err error) {
-			return h.TopLevelArray(ctx, input)
-		}
-		var resp any
-		if middleware == nil {
-			resp, _ = handler(ctx, input)
-		} else {
-			resp, _ = middleware(ctx, input, handler)
-		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
-	})
-
 	r.HandleFunc("POST /v1/onlyStruct", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameOnlyStructInGetOnlyStruct(r)
@@ -750,6 +723,33 @@ func RegisterServiceNameHTTPGoServer(
 		ctx = context.WithValue(ctx, "request", r)
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.GetMessageV4(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		respJson, _ := json.Marshal(resp)
+		_, _ = w.Write(respJson)
+	})
+
+	r.HandleFunc("POST /v1/array", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameTopLevelArrayArray(r)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
+			return
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "TopLevelArray")
+		ctx = context.WithValue(ctx, "writer", w)
+		ctx = context.WithValue(ctx, "request", r)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.TopLevelArray(ctx, input)
 		}
 		var resp any
 		if middleware == nil {
@@ -2243,21 +2243,6 @@ func buildExampleServiceNameEmptyPostEmpty(r *http.Request) (arg *common.Empty, 
 	return arg, err
 }
 
-func buildExampleServiceNameTopLevelArrayEmpty(r *http.Request) (arg *common.Empty, err error) {
-	arg = &common.Empty{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
-		return nil, err
-	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	return arg, err
-}
-
 func buildExampleServiceNameOnlyStructInGetOnlyStruct(r *http.Request) (arg *common.OnlyStruct, err error) {
 	arg = &common.OnlyStruct{}
 	var body []byte
@@ -3026,6 +3011,33 @@ func buildExampleServiceNameGetMessageV4GetMessageRequestV3(r *http.Request) (ar
 		arg.MessageId = fmt.Sprintf("base/%s", arg.MessageId)
 	}
 
+	return arg, err
+}
+
+func buildExampleServiceNameTopLevelArrayArray(r *http.Request) (arg *common.Array, err error) {
+	arg = &common.Array{}
+	var body []byte
+	if body, err = io.ReadAll(r.Body); err != nil {
+		return nil, err
+	}
+	_ = r.Body.Close()
+	if len(body) > 0 {
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
+		}
+	}
+	for key, values := range r.URL.Query() {
+		for _, value := range values {
+			switch key {
+			case "items[]":
+				err = fmt.Errorf("unsupported type message for query argument items")
+				return
+			default:
+				err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+				return
+			}
+		}
+	}
 	return arg, err
 }
 
@@ -3815,50 +3827,6 @@ func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *common
 	return resp, err
 }
 
-func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *common.Empty) (resp *common.Array, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/array%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "TopLevelArray")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Array{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, &resp.Items)
-	return resp, err
-}
-
 func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *common.OnlyStruct) (resp *common.Empty, err error) {
 	req := &http.Request{Header: make(http.Header)}
 	var queryArgs string
@@ -4463,6 +4431,50 @@ func (p *ServiceNameHTTPGoClient) GetMessageV4(ctx context.Context, request *com
 	}
 	_ = reqResp.Body.Close()
 	err = json.Unmarshal(respBody, resp)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *common.Array) (resp *common.Array, err error) {
+	req := &http.Request{Header: make(http.Header)}
+	var queryArgs string
+	var body []byte
+	body, err = json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	req.Body = io.NopCloser(bytes.NewBuffer(body))
+	u, err := url.Parse(fmt.Sprintf("%s/v1/array%s", p.host, queryArgs))
+	if err != nil {
+		return nil, err
+	}
+	u.RawQuery = u.Query().Encode()
+	req.URL = u
+	req.Method = http.MethodPost
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *http.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "TopLevelArray")
+	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
+		resp, err = p.cl.Do(req)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.Array{}
+	var respBody []byte
+	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
+		return nil, err
+	}
+	_ = reqResp.Body.Close()
+	err = json.Unmarshal(respBody, &resp.Items)
 	return resp, err
 }
 

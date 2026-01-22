@@ -84,12 +84,6 @@ service ServiceName {
       post: "/v1/emptyPost"
     };
   };
-  rpc TopLevelArray(common.Empty) returns (common.Array){
-    option (google.api.http) = {
-      post: "/v1/array",
-      response_body: "items"
-    };
-  };
   rpc OnlyStructInGet(common.OnlyStruct) returns (common.Empty){
     option (google.api.http) = {
       post: "/v1/onlyStruct"
@@ -153,4 +147,10 @@ service ServiceName {
       get: "/v4/messages/{message_id=base/**}"
     };
   }
+  rpc TopLevelArray(common.Array) returns (common.Array){
+    option (google.api.http) = {
+      post: "/v1/array",
+      response_body: "items"
+    };
+  };
 }

@@ -185,6 +185,11 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 	}); err != nil {
 		return fmt.Errorf("GetMessageV4 failed: %w", err)
 	}
+	if _, err = client.TopLevelArray(ctx, &common.Array{Items: []*common.ArrayItem{
+		{Value: "a"}, {Value: "b"}, {Value: "c"},
+	}}); err != nil {
+		return fmt.Errorf("TopLevelArray failed: %w", err)
+	}
 
 	return nil
 }

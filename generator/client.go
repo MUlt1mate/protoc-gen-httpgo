@@ -430,7 +430,6 @@ func (g *generator) genQueryRepeatedParameters(method methodParams) (err error) 
 // genUnmarshalResponseStruct generates unmarshalling from []byte to struct for response
 func (g *generator) genUnmarshalResponseStruct(method methodParams) error {
 	respStruct := "resp"
-	respStructPointer := respStruct
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
 		g.gf.P("	var respBody []byte")
@@ -442,15 +441,16 @@ func (g *generator) genUnmarshalResponseStruct(method methodParams) error {
 		g.gf.P("	var respBody = reqResp.Body()")
 	}
 
-	if method.responseBody != "" {
-		respField, ok := method.outputFields[method.responseBody]
+	var reference = ""
+	if method.rule != nil && method.rule.ResponseBody != "" {
+		respField, ok := method.outputFields[method.rule.ResponseBody]
 		if !ok {
-			return fmt.Errorf("field %s not found in struct %s for method %s", method.responseBody, method.outputMsgName.String(), method.name)
+			return fmt.Errorf("field %s not found in struct %s for method %s", method.rule.ResponseBody, method.outputMsgName.String(), method.name)
 		}
 		respStruct = "resp." + respField.goName
-		respStructPointer = "&" + respStruct
+		reference = "&"
 	}
-	g.gf.P("	err = ", g.marshaller.Ident("Unmarshal"), "(respBody, ", respStructPointer, ")")
+	g.gf.P("	err = ", g.marshaller.Ident("Unmarshal"), "(respBody, ", reference, respStruct, ")")
 	return nil
 }
 

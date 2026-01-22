@@ -14,7 +14,7 @@ This is a protoc plugin that generates HTTP server and client code from proto fi
     - Uses the native `encoding/json` by default
     - Optional usage of [protojson](https://pkg.go.dev/google.golang.org/protobuf/encoding/protojson) for better
       protocol buffer support
-- Utilizes google.api.http for defining HTTP paths (also can generate it)
+- Utilizes [google.api.http](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule) for defining HTTP paths (also can generate it)
 - Supports a wide range of data types in path parameters
 - Supports middlewares
 - Supports multipart form with files
@@ -238,9 +238,6 @@ message FileStruct {
 - Implement more web servers
     - gin
     - chi
-- Full support
-  for [httprule](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule)
-    - response_body supports for client natively, for server only in custom middleware
 - dependabot
 - buf
 - benchmark

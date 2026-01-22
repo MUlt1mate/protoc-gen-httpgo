@@ -53,7 +53,6 @@ type (
 		httpMethodName string
 		uri            methodURI
 		comment        string
-		responseBody   string
 		inputFieldList []string // slice for constant sorting
 		hasBody        bool
 		withFiles      bool
@@ -73,7 +72,6 @@ type (
 	field struct {
 		goName          string // name in go generated files
 		protoName       string // name in proto file and http requests
-		jsonName        string // name in json tag and http requests
 		structTypeIdent protogen.GoIdent
 		kind            protoreflect.Kind
 		cardinality     protoreflect.Cardinality
@@ -203,7 +201,6 @@ func fillMethod(method *methodParams, protoMethod *protogen.Method) {
 		f := field{
 			goName:      protoField.GoName,
 			protoName:   protoField.Desc.TextName(),
-			jsonName:    protoField.Desc.JSONName(),
 			kind:        protoField.Desc.Kind(),
 			cardinality: protoField.Desc.Cardinality(),
 			optional:    protoField.Desc.HasOptionalKeyword(),
@@ -221,7 +218,6 @@ func convertField(protoField *protogen.Field) field {
 	f := field{
 		goName:      protoField.GoName,
 		protoName:   protoField.Desc.TextName(),
-		jsonName:    protoField.Desc.JSONName(),
 		kind:        protoField.Desc.Kind(),
 		cardinality: protoField.Desc.Cardinality(),
 		optional:    protoField.Desc.HasOptionalKeyword(),
@@ -318,7 +314,6 @@ func (g *generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceNam
 	m.httpMethodName, m.uri.protoURI = getRuleMethodAndURI(httpRule)
 	m.uri.parseURI(*g.cfg.Library)
 	m.hasBody = g.MethodShouldHasBody(m.httpMethodName)
-	m.responseBody = httpRule.GetResponseBody()
 	return m, nil
 }
 

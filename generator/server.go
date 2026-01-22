@@ -497,18 +497,14 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 		g.gf.P("	return")
 	}
 
-	if f.kind == protoreflect.MessageKind && !f.isFile {
+	if f.kind == protoreflect.MessageKind && !f.isFile && f.cardinality != protoreflect.Repeated {
 		for _, sf := range f.structFields {
 			if sf.Desc.Cardinality() == protoreflect.Repeated ||
 				sf.Desc.HasOptionalKeyword() || // todo add optional sub fields
 				sf.Desc.Kind() == protoreflect.MessageKind { // for now support first sublevel fields only
 				continue
 			}
-			if f.cardinality == protoreflect.Repeated {
-				g.gf.P("	case \"", f.protoName, ".", sf.Desc.TextName(), "[]\":")
-			} else {
-				g.gf.P("	case \"", f.protoName, ".", sf.Desc.TextName(), "\":")
-			}
+			g.gf.P("	case \"", f.protoName, ".", sf.Desc.TextName(), "\":")
 			g.gf.P("		if arg.", f.goName, " == nil {")
 			g.gf.P("			arg.", f.goName, " = &", f.structTypeIdent, "{}")
 			g.gf.P("		}")
