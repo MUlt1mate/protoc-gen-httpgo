@@ -734,7 +734,7 @@ func RegisterServiceNameHTTPGoServer(
 		_, _ = w.Write(respJson)
 	})
 
-	r.HandleFunc("GET /v4/messages/base/{message_id:*}", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("GET /v4/messages/base/{message_id...}", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageV4GetMessageRequestV3(r)
 		if err != nil {
@@ -3023,7 +3023,7 @@ func buildExampleServiceNameGetMessageV4GetMessageRequestV3(r *http.Request) (ar
 	MessageIdStr := r.PathValue("message_id")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
-		arg.MessageId = fmt.Sprintf("base/%s*", arg.MessageId)
+		arg.MessageId = fmt.Sprintf("base/%s", arg.MessageId)
 	}
 
 	return arg, err
@@ -4431,7 +4431,7 @@ func (p *ServiceNameHTTPGoClient) GetMessageV4(ctx context.Context, request *com
 		request.UserId,
 	}
 	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
-	u, err := url.Parse(fmt.Sprintf("%s/v4/messages/base/{message_id:*}%s", p.host, request.MessageId, queryArgs))
+	u, err := url.Parse(fmt.Sprintf("%s/v4/messages/base/%s%s", p.host, request.MessageId, queryArgs))
 	if err != nil {
 		return nil, err
 	}

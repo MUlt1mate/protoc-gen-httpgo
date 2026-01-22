@@ -3,21 +3,19 @@
 package proto
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"mime/multipart"
-	"net/url"
-	"strconv"
-	"strings"
-
-	"github.com/fasthttp/router"
-	"github.com/valyala/fasthttp"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/emptypb"
-
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	bytes "bytes"
+	context "context"
+	json "encoding/json"
+	fmt "fmt"
+	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	router "github.com/fasthttp/router"
+	fasthttp "github.com/valyala/fasthttp"
+	anypb "google.golang.org/protobuf/types/known/anypb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	multipart "mime/multipart"
+	url "net/url"
+	strconv "strconv"
+	strings "strings"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -3033,7 +3031,7 @@ func buildExampleServiceNameGetMessageV4GetMessageRequestV3(ctx *fasthttp.Reques
 		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
 		}
-		arg.MessageId = fmt.Sprintf("base/%s*", arg.MessageId)
+		arg.MessageId = fmt.Sprintf("base/%s", arg.MessageId)
 	}
 
 	return arg, err
@@ -4282,7 +4280,7 @@ func (p *ServiceNameHTTPGoClient) GetMessageV4(ctx context.Context, request *com
 	}
 	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
 	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
-	req.SetRequestURI(fmt.Sprintf("%s/v4/messages/base/{message_id:*}%s", p.host, request.MessageId, queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v4/messages/base/%s%s", p.host, request.MessageId, queryArgs))
 	req.Header.SetMethod("GET")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")

@@ -66,7 +66,8 @@ type (
 	}
 
 	methodURIArg struct {
-		ValueTemplate string
+		PathTpl        string // how argument represented in path
+		DestinationTpl string // patter for fmt.Sprintf
 	}
 
 	field struct {
@@ -315,7 +316,7 @@ func (g *generator) getRuleMethodAndURI(protoMethod *protogen.Method, serviceNam
 
 	m.rule = httpRule
 	m.httpMethodName, m.uri.protoURI = getRuleMethodAndURI(httpRule)
-	m.uri.parseURI()
+	m.uri.parseURI(*g.cfg.Library)
 	m.hasBody = g.MethodShouldHasBody(m.httpMethodName)
 	m.responseBody = httpRule.GetResponseBody()
 	return m, nil
@@ -397,7 +398,7 @@ func isFileField(field *protogen.Field) bool {
 	return matchedFields == totalFields
 }
 
-func (m *methodURI) parseURI() {
+func (m *methodURI) parseURI(library string) {
 	m.args = make(map[string]methodURIArg)
 	var path string
 	for _, match := range uriParametersRegexp.FindAllStringSubmatch(m.protoURI, -1) {
@@ -405,15 +406,20 @@ func (m *methodURI) parseURI() {
 		arg := methodURIArg{}
 		if i := strings.Index(fieldName, "="); i != -1 {
 			// split variable name and segments name=messages/*
-			arg.ValueTemplate = fieldName[i+1:]
+			pattern := fieldName[i+1:]
 			fieldName = fieldName[:i]
 			// and change uri to messages/{name}
-			if strings.Contains(arg.ValueTemplate, "**") {
-				segment := "{" + fieldName + ":*}"
-				path = strings.Replace(arg.ValueTemplate, "**", segment, 1)
+			if strings.Contains(pattern, "**") {
+				arg.PathTpl = "{" + fieldName + ":*}"
+				if library == libraryNetHTTP {
+					arg.PathTpl = "{" + fieldName + "...}"
+				}
+				arg.DestinationTpl = strings.Replace(pattern, "**", "%s", 1)
+				path = strings.Replace(pattern, "**", arg.PathTpl, 1)
 			} else {
-				segment := "{" + fieldName + "}"
-				path = strings.Replace(arg.ValueTemplate, "*", segment, 1)
+				arg.PathTpl = "{" + fieldName + "}"
+				arg.DestinationTpl = strings.Replace(pattern, "*", "%s", 1)
+				path = strings.Replace(pattern, "*", arg.PathTpl, 1)
 			}
 			m.protoURI = strings.Replace(m.protoURI, match[0], path, 1)
 		}

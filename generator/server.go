@@ -134,7 +134,7 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		for _, binding := range method.rule.AdditionalBindings {
 			copiedMethod := method.Copy()
 			copiedMethod.httpMethodName, copiedMethod.uri.protoURI = getRuleMethodAndURI(binding)
-			copiedMethod.uri.parseURI()
+			copiedMethod.uri.parseURI(*g.cfg.Library)
 			copiedMethod.rule.AdditionalBindings = nil
 			g.genMethodDeclaration(serviceName, copiedMethod)
 		}
@@ -177,7 +177,7 @@ func (g *generator) genBuildRequestMethod(serviceName string, method methodParam
 		for _, binding := range method.rule.AdditionalBindings {
 			copiedMethod := method.Copy()
 			copiedMethod.httpMethodName, copiedMethod.uri.protoURI = getRuleMethodAndURI(binding)
-			copiedMethod.uri.parseURI()
+			copiedMethod.uri.parseURI(*g.cfg.Library)
 			if err = g.genMethodPathArguments(copiedMethod, allGeneratedFields); err != nil {
 				return err
 			}
@@ -285,9 +285,8 @@ func (g *generator) genBuildPathArgument(
 			g.gf.P("arg.", f.goName, " = []byte(", f.goName, "Str)")
 		}
 	}
-	if uriArg.ValueTemplate != "" {
-		replace := strings.Replace(uriArg.ValueTemplate, "*", "%s", 1)
-		g.gf.P("arg.", f.goName, " = ", fmtPackage.Ident("Sprintf"), "(\"", replace, "\", arg.", f.goName, ")")
+	if uriArg.DestinationTpl != "" {
+		g.gf.P("arg.", f.goName, " = ", fmtPackage.Ident("Sprintf"), "(\"", uriArg.DestinationTpl, "\", arg.", f.goName, ")")
 	}
 	g.gf.P("	}")
 	g.gf.P()

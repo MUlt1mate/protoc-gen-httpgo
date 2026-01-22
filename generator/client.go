@@ -160,13 +160,13 @@ func (g *generator) genClientMethod(
 func (g *generator) getRequestURIAndParams(method methodParams) (requestURI string, params []string, err error) {
 	requestURI = method.uri.protoURI
 	var placeholder string
-	for _, match := range method.uri.argList {
-		f, ok := method.inputFields[match]
+	for _, arg := range method.uri.argList {
+		f, ok := method.inputFields[arg]
 		if !ok {
 			continue
 		}
 		if f.optional {
-			return "", nil, fmt.Errorf("path field %s in method %s should not be optional", match, method.name)
+			return "", nil, fmt.Errorf("path field %s in method %s should not be optional", arg, method.name)
 		}
 		if placeholder, err = getVariablePlaceholder(f.kind); err != nil {
 			return "", nil, fmt.Errorf("field %s: %w", f.goName, err)
@@ -179,7 +179,11 @@ func (g *generator) getRequestURIAndParams(method methodParams) (requestURI stri
 				return "", nil, err
 			}
 		}
-		requestURI = strings.ReplaceAll(requestURI, "{"+match+"}", placeholder)
+		uriParam := "{" + arg + "}"
+		if method.uri.args[arg].PathTpl != "" {
+			uriParam = method.uri.args[arg].PathTpl
+		}
+		requestURI = strings.ReplaceAll(requestURI, uriParam, placeholder)
 		params = append(params, parameterName)
 	}
 	return requestURI, params, nil
