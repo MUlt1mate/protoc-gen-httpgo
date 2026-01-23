@@ -14,7 +14,10 @@ This is a protoc plugin that generates HTTP server and client code from proto fi
     - Uses the native `encoding/json` by default
     - Optional usage of [protojson](https://pkg.go.dev/google.golang.org/protobuf/encoding/protojson) for better
       protocol buffer support
-- Utilizes [google.api.http](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule) for defining HTTP paths (also can generate it)
+-
+Utilizes [google.api.http](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule)
+for defining HTTP paths (also can generate it)
+    - supports all HttpRule fields
 - Supports a wide range of data types in path parameters
 - Supports middlewares
 - Supports multipart form with files
