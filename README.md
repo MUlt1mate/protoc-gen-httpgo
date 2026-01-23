@@ -3,9 +3,8 @@
 ![workflow](https://github.com/MUlt1mate/protoc-gen-httpgo/actions/workflows/go.yml/badge.svg)
 ![go-report](https://goreportcard.com/badge/github.com/MUlt1mate/protoc-gen-httpgo)
 
-**httpgo** is a protoc plugin that generates native HTTP server and client code from your proto files. It is a
-lightweight,
-high-performance alternative to [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway).
+**httpgo** is a protoc plugin that generates native HTTP server and client code from your proto files.  
+It is a lightweight,high-performance alternative to [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway).
 
 Choose httpgo if you want to:
 
