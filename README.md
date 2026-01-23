@@ -3,7 +3,15 @@
 ![workflow](https://github.com/MUlt1mate/protoc-gen-httpgo/actions/workflows/go.yml/badge.svg)
 ![go-report](https://goreportcard.com/badge/github.com/MUlt1mate/protoc-gen-httpgo)
 
-This is a protoc plugin that generates HTTP server and client code from proto files.
+**httpgo** is a protoc plugin that generates native HTTP server and client code from your proto files. It is a
+lightweight,
+high-performance alternative to [grpc-gateway](https://github.com/grpc-ecosystem/grpc-gateway).
+
+Choose httpgo if you want to:
+
+- **Eliminate Proxy Overhead**: Serve HTTP directly from your application without a transcoding layer.
+- **Dual-Stack Support**: Use HTTP and gRPC simultaneously with minimal performance impact.
+- **Protobuf-First Design**: Define your API in Protobuf while leveraging the full flexibility of the HTTP ecosystem.
 
 ## Features
 
@@ -14,13 +22,15 @@ This is a protoc plugin that generates HTTP server and client code from proto fi
     - Uses the native `encoding/json` by default
     - Optional usage of [protojson](https://pkg.go.dev/google.golang.org/protobuf/encoding/protojson) for better
       protocol buffer support
--
-Utilizes [google.api.http](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule)
-for defining HTTP paths (also can generate it)
+- Uses standard
+  [google.api.http](https://cloud.google.com/service-infrastructure/docs/service-management/reference/rpc/google.api#httprule)
+  definitions for path mapping
     - supports all HttpRule fields
+- Supports automatic URI generation
 - Supports a wide range of data types in path parameters
 - Supports middlewares
 - Supports multipart form with files
+- Zero additional dependencies in generated code
 
 ## Usage
 
