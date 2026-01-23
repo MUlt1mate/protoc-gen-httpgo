@@ -86,6 +86,7 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(r)")
 		g.gf.P("	if err != nil {")
 		g.gf.P("		w.WriteHeader(", g.lib.Ident("StatusBadRequest"), ")")
+		// can't use protojson on inline structure
 		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
 		g.gf.P("		_, _ = w.Write(respJson)")
 		g.gf.P("		return")
@@ -101,6 +102,7 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(fastctx)")
 		g.gf.P("	if err != nil {")
 		g.gf.P("		fastctx.SetStatusCode(", fasthttpPackage.Ident("StatusBadRequest"), ")")
+		// can't use protojson on inline structure
 		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
 		g.gf.P("		_, _ = fastctx.Write(respJson)")
 		g.gf.P("		return")
@@ -152,12 +154,17 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 }
 
 func (g *generator) genMarshalServerResponse(source string) {
+	switch *g.cfg.Marshaller {
+	case marshallerProtoJSON:
+		g.gf.P("	respJson, _ := ", g.marshaller.Ident("Marshal"), "(", source, ".(", protoPackage.Ident("Message"), "))")
+	default:
+		g.gf.P("	respJson, _ := ", g.marshaller.Ident("Marshal"), "(", source, ")")
+	}
+
 	switch *g.cfg.Library {
 	case libraryFastHTTP:
-		g.gf.P("	respJson, _ := ", jsonPackage.Ident("Marshal"), "(", source, ")")
 		g.gf.P("	_, _ = fastctx.Write(respJson)")
 	case libraryNetHTTP:
-		g.gf.P("	respJson, _ := ", jsonPackage.Ident("Marshal"), "(", source, ")")
 		g.gf.P("	_, _ = w.Write(respJson)")
 	}
 }
