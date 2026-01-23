@@ -84,12 +84,6 @@ service ServiceName {
       post: "/v1/emptyPost"
     };
   };
-  rpc TopLevelArray(common.Empty) returns (common.Array){
-    option (google.api.http) = {
-      post: "/v1/array",
-      response_body: "items"
-    };
-  };
   rpc OnlyStructInGet(common.OnlyStruct) returns (common.Empty){
     option (google.api.http) = {
       post: "/v1/onlyStruct"
@@ -115,4 +109,55 @@ service ServiceName {
       get: "/v1/maxquery"
     };
   }
+
+  // http rule checks
+  // v1/{name=messages/*}
+  rpc GetMessage(common.GetMessageRequest) returns (common.Message) {
+    option (google.api.http) = {
+      get: "/v1/{name=messages/*}"
+    };
+  }
+  rpc GetMessageV2(common.GetMessageRequestV2) returns (common.Message) {
+    option (google.api.http) = {
+      get:"/v2/messages/{message_id}"
+    };
+  }
+  rpc UpdateMessage(common.UpdateMessageRequest) returns (common.Message) {
+    option (google.api.http) = {
+      patch: "/v1/messages/{message_id}"
+      body: "message"
+    };
+  }
+  rpc UpdateMessageV2(common.MessageV2) returns (common.MessageV2) {
+    option (google.api.http) = {
+      patch: "/v2/messages/{message_id}"
+      body: "*"
+    };
+  }
+  rpc GetMessageV3(common.GetMessageRequestV3) returns (common.MessageV2) {
+    option (google.api.http) = {
+      get: "/v3/messages/{message_id}"
+      additional_bindings {
+        get: "/v3/users/{user_id}/messages/{message_id}"
+      }
+    };
+  }
+  rpc GetMessageV4(common.GetMessageRequestV3) returns (common.MessageV2) {
+    option (google.api.http) = {
+      get: "/v4/messages/{message_id=base/**}"
+    };
+  }
+  rpc TopLevelArray(common.Array) returns (common.Array){
+    option (google.api.http) = {
+      post: "/v1/array",
+      response_body: "items"
+    };
+  };
+  rpc UpdateMessageV3(common.UpdateMessageRequest) returns (common.UpdateMessageRequest){
+    option (google.api.http) = {
+      patch: "/v3/messages"
+      body: "*"
+      response_body: "message"
+    };
+  };
 }

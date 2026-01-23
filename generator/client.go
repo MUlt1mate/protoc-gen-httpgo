@@ -85,7 +85,9 @@ func (g *generator) genClientMethod(
 			return err
 		}
 	case method.HasBody():
-		g.genMarshalRequestStruct()
+		if err = g.genMarshalRequestStruct(method); err != nil {
+			return err
+		}
 	default:
 		if err = g.genQueryRequestParameters(method); err != nil {
 			return err
@@ -156,18 +158,18 @@ func (g *generator) genClientMethod(
 
 // getRequestURIAndParams returns the request URI and parameters for the HTTP client method
 func (g *generator) getRequestURIAndParams(method methodParams) (requestURI string, params []string, err error) {
-	requestURI = method.uri
+	requestURI = method.uri.protoURI
 	var placeholder string
-	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
-		f, ok := method.inputFields[match[1]]
+	for _, arg := range method.uri.argList {
+		f, ok := method.inputFields[arg]
 		if !ok {
 			continue
 		}
 		if f.optional {
-			return "", nil, fmt.Errorf("path field %s in method %s should not be optional", match[1], method.name)
+			return "", nil, fmt.Errorf("path field %s in method %s should not be optional", arg, method.name)
 		}
-		if placeholder, err = f.getVariablePlaceholder(); err != nil {
-			return "", nil, err
+		if placeholder, err = getVariablePlaceholder(f.kind); err != nil {
+			return "", nil, fmt.Errorf("field %s: %w", f.goName, err)
 		}
 		parameterName := "request." + f.goName
 		if f.cardinality == protoreflect.Repeated {
@@ -177,7 +179,11 @@ func (g *generator) getRequestURIAndParams(method methodParams) (requestURI stri
 				return "", nil, err
 			}
 		}
-		requestURI = strings.ReplaceAll(requestURI, match[0], placeholder)
+		uriParam := "{" + arg + "}"
+		if method.uri.args[arg].PathTpl != "" {
+			uriParam = method.uri.args[arg].PathTpl
+		}
+		requestURI = strings.ReplaceAll(requestURI, uriParam, placeholder)
 		params = append(params, parameterName)
 	}
 	return requestURI, params, nil
@@ -210,9 +216,17 @@ func (g *generator) genClientRepeatedFieldRequestValues(f field) (err error) {
 }
 
 // genMarshalRequestStruct generates marshalling from struct to []byte for request
-func (g *generator) genMarshalRequestStruct() {
+func (g *generator) genMarshalRequestStruct(method methodParams) error {
+	source := "request"
+	if method.rule != nil && method.rule.Body != "" && method.rule.Body != "*" {
+		f, ok := method.inputFields[method.rule.Body]
+		if !ok {
+			return fmt.Errorf("field %s set as body value, but not found in method %s argument fields", method.rule.Body, method.name)
+		}
+		source = "request." + f.goName
+	}
 	g.gf.P("	var body []byte")
-	g.gf.P("	body, err = ", g.marshaller.Ident("Marshal"), "(request)")
+	g.gf.P("	body, err = ", g.marshaller.Ident("Marshal"), "(", source, ")")
 	g.gf.P("	if err != nil {")
 	g.gf.P("		return nil, err")
 	g.gf.P("	}")
@@ -222,6 +236,7 @@ func (g *generator) genMarshalRequestStruct() {
 	case libraryFastHTTP:
 		g.gf.P("	req.SetBody(body)")
 	}
+	return nil
 }
 
 func (g *generator) genMultipartRequestClient(method methodParams) (err error) {
@@ -291,15 +306,11 @@ func (g *generator) genMultipartField(f field) (err error) {
 
 // genQueryRequestParameters
 func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
-	pathParams := make(map[string]struct{})
-	for _, match := range uriParametersRegexp.FindAllStringSubmatch(method.uri, -1) {
-		pathParams[match[1]] = struct{}{}
-	}
-	if len(pathParams) == len(method.inputFieldList) {
+	if len(method.uri.argList) == len(method.inputFieldList) {
 		return nil
 	}
 	var parameters, values []string
-	if parameters, values, err = g.getQuerySimpleParameters(method, pathParams); err != nil {
+	if parameters, values, err = g.getQuerySimpleParameters(method); err != nil {
 		return err
 	}
 	g.gf.P("var parameters = []string{")
@@ -312,10 +323,10 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 		g.gf.P(q, ",")
 	}
 	g.gf.P("}")
-	if err = g.getQueryOptionalParameters(method, pathParams); err != nil {
+	if err = g.genQueryOptionalParameters(method); err != nil {
 		return err
 	}
-	if err = g.getQueryRepeatedParameters(method, pathParams); err != nil {
+	if err = g.genQueryRepeatedParameters(method); err != nil {
 		return err
 	}
 	g.gf.P("queryArgs = ", fmtPackage.Ident("Sprintf"), "(\"?\"+", stringsPackage.Ident("Join"), "(parameters, \"&\"),values...)")
@@ -325,20 +336,24 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 	return nil
 }
 
-func (g *generator) getQuerySimpleParameters(method methodParams, pathParams map[string]struct{}) (parameters []string, values []string, err error) {
-	var (
-		placeholder string
-	)
+func (g *generator) getQuerySimpleParameters(method methodParams) (parameters []string, values []string, err error) {
+	var placeholder string
 	for _, fieldName := range method.inputFieldList {
-		if _, ok := pathParams[fieldName]; ok {
+		if _, ok := method.uri.args[fieldName]; ok {
 			continue
 		}
 		f := method.inputFields[fieldName]
 		if f.cardinality == protoreflect.Repeated || f.optional {
 			continue
 		}
-		if placeholder, err = f.getVariablePlaceholder(); err != nil {
-			return nil, nil, err
+		if f.kind == protoreflect.MessageKind {
+			if err = g.getMessageSubParameters(f, &parameters, &values); err != nil {
+				return nil, nil, err
+			}
+			continue
+		}
+		if placeholder, err = getVariablePlaceholder(f.kind); err != nil {
+			return nil, nil, fmt.Errorf("field %s: %w", f.goName, err)
 		}
 		parameters = append(parameters, f.protoName+"="+placeholder)
 		values = append(values, "request."+f.goName)
@@ -346,19 +361,36 @@ func (g *generator) getQuerySimpleParameters(method methodParams, pathParams map
 	return parameters, values, nil
 }
 
-func (g *generator) getQueryOptionalParameters(method methodParams, pathParams map[string]struct{}) (err error) {
+func (g *generator) getMessageSubParameters(f field, parameters *[]string, values *[]string) (err error) {
+	var placeholder string
+	for _, sf := range f.structFields {
+		if sf.Desc.Cardinality() == protoreflect.Repeated ||
+			sf.Desc.HasOptionalKeyword() || // todo add optional sub fields
+			sf.Desc.Kind() == protoreflect.MessageKind { // for now support first sublevel fields only
+			continue
+		}
+		if placeholder, err = getVariablePlaceholder(sf.Desc.Kind()); err != nil {
+			return fmt.Errorf("field %s: %w", f.goName, err)
+		}
+		*parameters = append(*parameters, f.protoName+"."+sf.Desc.TextName()+"="+placeholder)
+		*values = append(*values, "request."+f.goName+"."+sf.GoName)
+	}
+	return nil
+}
+
+func (g *generator) genQueryOptionalParameters(method methodParams) (err error) {
 	var placeholder string
 	for _, fieldName := range method.inputFieldList {
 		dereference := "*"
-		if _, ok := pathParams[fieldName]; ok {
+		if _, ok := method.uri.args[fieldName]; ok {
 			continue
 		}
 		f := method.inputFields[fieldName]
 		if f.cardinality == protoreflect.Repeated || !f.optional {
 			continue
 		}
-		if placeholder, err = f.getVariablePlaceholder(); err != nil {
-			return err
+		if placeholder, err = getVariablePlaceholder(f.kind); err != nil {
+			return fmt.Errorf("field %s: %w", f.goName, err)
 		}
 
 		if f.kind == protoreflect.BytesKind {
@@ -373,21 +405,21 @@ func (g *generator) getQueryOptionalParameters(method methodParams, pathParams m
 	return nil
 }
 
-func (g *generator) getQueryRepeatedParameters(method methodParams, pathParams map[string]struct{}) (err error) {
+func (g *generator) genQueryRepeatedParameters(method methodParams) (err error) {
 	var placeholder string
-	for _, f := range method.inputFieldList {
-		if _, ok := pathParams[f]; ok {
+	for _, fieldName := range method.inputFieldList {
+		if _, ok := method.uri.args[fieldName]; ok {
 			continue
 		}
-		methodField := method.inputFields[f]
-		if methodField.cardinality != protoreflect.Repeated {
+		f := method.inputFields[fieldName]
+		if f.cardinality != protoreflect.Repeated {
 			continue
 		}
-		if placeholder, err = methodField.getVariablePlaceholder(); err != nil {
-			return err
+		if placeholder, err = getVariablePlaceholder(f.kind); err != nil {
+			return fmt.Errorf("field %s: %w", f.goName, err)
 		}
-		uriName := methodField.protoName + "[]"
-		g.gf.P("for _,v := range request.", methodField.goName, " {")
+		uriName := f.protoName + "[]"
+		g.gf.P("for _,v := range request.", f.goName, " {")
 		g.gf.P("	parameters = append(parameters, \"", uriName, "=", placeholder, "\")")
 		g.gf.P("	values = append(values, v)")
 		g.gf.P("}")
@@ -398,7 +430,6 @@ func (g *generator) getQueryRepeatedParameters(method methodParams, pathParams m
 // genUnmarshalResponseStruct generates unmarshalling from []byte to struct for response
 func (g *generator) genUnmarshalResponseStruct(method methodParams) error {
 	respStruct := "resp"
-	respStructPointer := respStruct
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
 		g.gf.P("	var respBody []byte")
@@ -410,15 +441,16 @@ func (g *generator) genUnmarshalResponseStruct(method methodParams) error {
 		g.gf.P("	var respBody = reqResp.Body()")
 	}
 
-	if method.responseBody != "" {
-		respField, ok := method.outputFields[method.responseBody]
+	var reference = ""
+	if method.rule != nil && method.rule.ResponseBody != "" {
+		respField, ok := method.outputFields[method.rule.ResponseBody]
 		if !ok {
-			return fmt.Errorf("field %s not found in struct %s for method %s", method.responseBody, method.outputMsgName.String(), method.name)
+			return fmt.Errorf("field %s not found in struct %s for method %s", method.rule.ResponseBody, method.outputMsgName.String(), method.name)
 		}
 		respStruct = "resp." + respField.goName
-		respStructPointer = "&" + respStruct
+		reference = "&"
 	}
-	g.gf.P("	err = ", g.marshaller.Ident("Unmarshal"), "(respBody, ", respStructPointer, ")")
+	g.gf.P("	err = ", g.marshaller.Ident("Unmarshal"), "(respBody, ", reference, respStruct, ")")
 	return nil
 }
 

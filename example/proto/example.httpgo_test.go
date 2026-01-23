@@ -408,6 +408,15 @@ func TestHTTPGoServer(t *testing.T) {
 			expectedResponseErr:    nil,
 			expectedRespStatusCode: http.StatusBadRequest,
 		},
+		{
+			name:                   "HttpRule additional binding",
+			method:                 http.MethodGet,
+			uri:                    "/v3/users/me/messages/123456",
+			requestBody:            []byte(`{}`),
+			expectedResponseBody:   []byte(`{}`),
+			expectedResponseErr:    nil,
+			expectedRespStatusCode: http.StatusOK,
+		},
 	}
 	var (
 		resp        *http.Response

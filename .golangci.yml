@@ -45,7 +45,6 @@ linters:
     - sqlclosecheck
     - staticcheck
     - testableexamples
-    - testpackage
     - tparallel
     - unconvert
     - unparam

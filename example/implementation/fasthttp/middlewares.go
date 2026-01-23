@@ -49,9 +49,12 @@ func LoggerServerMiddleware(
 	ctx context.Context, req any,
 	next func(ctx context.Context, req any) (resp any, err error),
 ) (resp any, err error) {
-	log.Printf("%s: server request %s", serviceName, req)
+	method := ctx.Value("proto_method").(string)
+	// log.Printf("%s: %s: server request %s", serviceName, method, req)
 	resp, err = next(ctx, req)
-	log.Printf("%s: server response %s", serviceName, resp)
+	if err != nil {
+		log.Printf("%s: %s: server response %s", serviceName, method, resp)
+	}
 	return resp, err
 }
 
@@ -129,14 +132,15 @@ func LoggerClientMiddleware(
 	req *fasthttp.Request,
 	next func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
 ) (resp *fasthttp.Response, err error) {
-	log.Printf("%s: client sending request with path %s", serviceName, req.RequestURI())
+	method := ctx.Value("proto_method").(string)
+	// log.Printf("%s: %s: client sending request with path %s", serviceName, method, req.RequestURI())
 	resp, err = next(ctx, req)
 	if err != nil {
-		log.Printf("%s: client got response with error %s", serviceName, err.Error())
+		log.Printf("%s: %s: client got response with error %s", serviceName, method, err.Error())
 		return resp, err
 	}
-	if resp != nil {
-		log.Printf("%s: client got response with code %d, body %s", serviceName, resp.StatusCode(), string(resp.Body()))
+	if resp != nil && resp.StatusCode() != fasthttp.StatusOK {
+		log.Printf("%s: %s: client got response with code %d, body %s", serviceName, method, resp.StatusCode(), string(resp.Body()))
 	}
 	return resp, err
 }

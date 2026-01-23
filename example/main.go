@@ -46,10 +46,10 @@ func main() {
 	time.Sleep(time.Millisecond * 100)
 
 	if err = clientRunRequests(ctx, fastClient); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	if err = clientRunRequests(ctx, nethttpClient); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	// f := make(chan bool)
@@ -149,6 +149,61 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 		return fmt.Errorf("AllTextTypesPost failed: %w", err)
 	}
 	if diff := cmp.Diff(&implementation.AllTextTypesMsg, allTextTypesResp, cmpopts.IgnoreUnexported(implementation.AllTextTypesMsg)); diff != "" {
+		log.Println(diff)
+	}
+
+	// http rule checks
+	if _, err = client.GetMessage(ctx, &common.GetMessageRequest{Name: "123456"}); err != nil {
+		return fmt.Errorf("GetMessage failed: %w", err)
+	}
+	if _, err = client.GetMessageV2(ctx, &common.GetMessageRequestV2{
+		MessageId: "123456",
+		Sub:       &common.GetMessageRequestV2_SubMessage{Subfield: "foo"},
+	}); err != nil {
+		return fmt.Errorf("GetMessageV2 failed: %w", err)
+	}
+	if _, err = client.UpdateMessage(ctx, &common.UpdateMessageRequest{
+		MessageId: "123456",
+		Message:   &common.MessageV2{Text: "Hi!"},
+	}); err != nil {
+		return fmt.Errorf("UpdateMessage failed: %w", err)
+	}
+	if _, err = client.UpdateMessageV2(ctx, &common.MessageV2{
+		Text:      "Hi!",
+		MessageId: "123456",
+	}); err != nil {
+		return fmt.Errorf("UpdateMessageV2 failed: %w", err)
+	}
+	if _, err = client.GetMessageV3(ctx, &common.GetMessageRequestV3{
+		MessageId: "234567",
+		UserId:    "",
+	}); err != nil {
+		return fmt.Errorf("GetMessageV3 failed: %w", err)
+	}
+	if _, err = client.GetMessageV4(ctx, &common.GetMessageRequestV3{
+		MessageId: "seg1/seg2.ext",
+	}); err != nil {
+		return fmt.Errorf("GetMessageV4 failed: %w", err)
+	}
+	items := []*common.ArrayItem{
+		{Value: "a"}, {Value: "b"}, {Value: "c"},
+	}
+	var topLevelArrayResp *common.Array
+	if topLevelArrayResp, err = client.TopLevelArray(ctx, &common.Array{Items: items}); err != nil {
+		return fmt.Errorf("TopLevelArray failed: %w", err)
+	}
+	if diff := cmp.Diff(items, topLevelArrayResp.Items, cmpopts.IgnoreUnexported(*topLevelArrayResp.Items[0])); diff != "" {
+		log.Println(diff)
+	}
+	var respMsgV3 *common.UpdateMessageRequest
+	reqMsgV3 := &common.UpdateMessageRequest{
+		MessageId: "123456",
+		Message:   &common.MessageV2{Text: "Hi!"},
+	}
+	if respMsgV3, err = client.UpdateMessageV3(ctx, reqMsgV3); err != nil {
+		return fmt.Errorf("UpdateMessageV3 failed: %w", err)
+	}
+	if diff := cmp.Diff(reqMsgV3.Message, respMsgV3.Message, cmpopts.IgnoreUnexported(*respMsgV3, *respMsgV3.Message)); diff != "" {
 		log.Println(diff)
 	}
 

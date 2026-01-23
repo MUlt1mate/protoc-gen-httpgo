@@ -32,4 +32,3 @@ enum someOptions {
   SOME_FIRST = 0;
   SOME_SECOND = 1;
 } ;
-
