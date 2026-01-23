@@ -199,3 +199,7 @@ func (h *Handler) GetMessageV4(ctx context.Context, request *proto.GetMessageReq
 	}
 	return &proto.MessageV2{MessageId: request.MessageId}, nil
 }
+
+func (h *Handler) UpdateMessageV3(ctx context.Context, request *proto.UpdateMessageRequest) (*proto.UpdateMessageRequest, error) {
+	return request, nil
+}

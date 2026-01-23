@@ -153,4 +153,11 @@ service ServiceName {
       response_body: "items"
     };
   };
+  rpc UpdateMessageV3(common.UpdateMessageRequest) returns (common.UpdateMessageRequest){
+    option (google.api.http) = {
+      patch: "/v3/messages"
+      body: "*"
+      response_body: "message"
+    };
+  };
 }

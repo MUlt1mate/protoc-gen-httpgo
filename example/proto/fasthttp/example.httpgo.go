@@ -3,21 +3,19 @@
 package proto
 
 import (
-	"bytes"
-	"context"
-	"encoding/json"
-	"fmt"
-	"mime/multipart"
-	"net/url"
-	"strconv"
-	"strings"
-
-	"github.com/fasthttp/router"
-	"github.com/valyala/fasthttp"
-	"google.golang.org/protobuf/types/known/anypb"
-	"google.golang.org/protobuf/types/known/emptypb"
-
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	bytes "bytes"
+	context "context"
+	json "encoding/json"
+	fmt "fmt"
+	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	router "github.com/fasthttp/router"
+	fasthttp "github.com/valyala/fasthttp"
+	anypb "google.golang.org/protobuf/types/known/anypb"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
+	multipart "mime/multipart"
+	url "net/url"
+	strconv "strconv"
+	strings "strings"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -46,6 +44,7 @@ type ServiceNameHTTPGoService interface {
 	GetMessageV3(context.Context, *common.GetMessageRequestV3) (*common.MessageV2, error)
 	GetMessageV4(context.Context, *common.GetMessageRequestV3) (*common.MessageV2, error)
 	TopLevelArray(context.Context, *common.Array) (*common.Array, error)
+	UpdateMessageV3(context.Context, *common.UpdateMessageRequest) (*common.UpdateMessageRequest, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -705,8 +704,43 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		if typedResp, ok := resp.(*common.Array); ok {
+			respJson, _ := json.Marshal(typedResp.Items)
+			_, _ = fastctx.Write(respJson)
+		} else {
+			respJson, _ := json.Marshal(resp)
+			_, _ = fastctx.Write(respJson)
+		}
+	})
+
+	r.PATCH("/v3/messages", func(fastctx *fasthttp.RequestCtx) {
+		fastctx.Response.Header.SetContentType("application/json")
+		input, err := buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(fastctx)
+		if err != nil {
+			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = fastctx.Write(respJson)
+			return
+		}
+		fastctx.SetUserValue("proto_service", "ServiceName")
+		fastctx.SetUserValue("proto_method", "UpdateMessageV3")
+		ctx := context.WithValue(fastctx, "request", fastctx)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.UpdateMessageV3(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		if typedResp, ok := resp.(*common.UpdateMessageRequest); ok {
+			respJson, _ := json.Marshal(typedResp.Message)
+			_, _ = fastctx.Write(respJson)
+		} else {
+			respJson, _ := json.Marshal(resp)
+			_, _ = fastctx.Write(respJson)
+		}
 	})
 
 	return nil
@@ -3051,6 +3085,41 @@ func buildExampleServiceNameTopLevelArrayArray(ctx *fasthttp.RequestCtx) (arg *c
 	return arg, err
 }
 
+func buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(ctx *fasthttp.RequestCtx) (arg *common.UpdateMessageRequest, err error) {
+	arg = &common.UpdateMessageRequest{}
+	var body = ctx.PostBody()
+	if len(body) > 0 {
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
+		}
+	}
+	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+		var key = string(keyB)
+		var value = string(valueB)
+		switch key {
+		case "message_id":
+			arg.MessageId = value
+		case "message":
+			err = fmt.Errorf("unsupported type message for query argument message")
+			return
+		case "message.message_id":
+			if arg.Message == nil {
+				arg.Message = &common.MessageV2{}
+			}
+			arg.Message.MessageId = value
+		case "message.text":
+			if arg.Message == nil {
+				arg.Message = &common.MessageV2{}
+			}
+			arg.Message.Text = value
+		default:
+			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+			return
+		}
+	})
+	return arg, err
+}
+
 func chainServerMiddlewaresExample(
 	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 ) func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
@@ -4318,6 +4387,43 @@ func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *co
 	resp = &common.Array{}
 	var respBody = reqResp.Body()
 	err = json.Unmarshal(respBody, &resp.Items)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) UpdateMessageV3(ctx context.Context, request *common.UpdateMessageRequest) (resp *common.UpdateMessageRequest, err error) {
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+	var queryArgs string
+	var body []byte
+	body, err = json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	req.SetBody(body)
+	req.SetRequestURI(fmt.Sprintf("%s/v3/messages%s", p.host, queryArgs))
+	req.Header.SetMethod("PATCH")
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *fasthttp.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV3")
+	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
+		resp = &fasthttp.Response{}
+		err = p.cl.Do(req, resp)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.UpdateMessageRequest{}
+	var respBody = reqResp.Body()
+	err = json.Unmarshal(respBody, &resp.Message)
 	return resp, err
 }
 

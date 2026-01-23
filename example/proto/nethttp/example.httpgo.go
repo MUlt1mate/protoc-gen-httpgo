@@ -46,6 +46,7 @@ type ServiceNameHTTPGoService interface {
 	GetMessageV3(context.Context, *common.GetMessageRequestV3) (*common.MessageV2, error)
 	GetMessageV4(context.Context, *common.GetMessageRequestV3) (*common.MessageV2, error)
 	TopLevelArray(context.Context, *common.Array) (*common.Array, error)
+	UpdateMessageV3(context.Context, *common.UpdateMessageRequest) (*common.UpdateMessageRequest, error)
 }
 
 func RegisterServiceNameHTTPGoServer(
@@ -757,8 +758,45 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		if typedResp, ok := resp.(*common.Array); ok {
+			respJson, _ := json.Marshal(typedResp.Items)
+			_, _ = w.Write(respJson)
+		} else {
+			respJson, _ := json.Marshal(resp)
+			_, _ = w.Write(respJson)
+		}
+	})
+
+	r.HandleFunc("PATCH /v3/messages", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(r)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = w.Write(respJson)
+			return
+		}
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV3")
+		ctx = context.WithValue(ctx, "writer", w)
+		ctx = context.WithValue(ctx, "request", r)
+		handler := func(ctx context.Context, req any) (resp any, err error) {
+			return h.UpdateMessageV3(ctx, input)
+		}
+		var resp any
+		if middleware == nil {
+			resp, _ = handler(ctx, input)
+		} else {
+			resp, _ = middleware(ctx, input, handler)
+		}
+		if typedResp, ok := resp.(*common.UpdateMessageRequest); ok {
+			respJson, _ := json.Marshal(typedResp.Message)
+			_, _ = w.Write(respJson)
+		} else {
+			respJson, _ := json.Marshal(resp)
+			_, _ = w.Write(respJson)
+		}
 	})
 
 	return nil
@@ -3041,6 +3079,45 @@ func buildExampleServiceNameTopLevelArrayArray(r *http.Request) (arg *common.Arr
 	return arg, err
 }
 
+func buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(r *http.Request) (arg *common.UpdateMessageRequest, err error) {
+	arg = &common.UpdateMessageRequest{}
+	var body []byte
+	if body, err = io.ReadAll(r.Body); err != nil {
+		return nil, err
+	}
+	_ = r.Body.Close()
+	if len(body) > 0 {
+		if err = json.Unmarshal(body, arg); err != nil {
+			return nil, err
+		}
+	}
+	for key, values := range r.URL.Query() {
+		for _, value := range values {
+			switch key {
+			case "message_id":
+				arg.MessageId = value
+			case "message":
+				err = fmt.Errorf("unsupported type message for query argument message")
+				return
+			case "message.message_id":
+				if arg.Message == nil {
+					arg.Message = &common.MessageV2{}
+				}
+				arg.Message.MessageId = value
+			case "message.text":
+				if arg.Message == nil {
+					arg.Message = &common.MessageV2{}
+				}
+				arg.Message.Text = value
+			default:
+				err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
+				return
+			}
+		}
+	}
+	return arg, err
+}
+
 func chainServerMiddlewaresExample(
 	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 ) func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
@@ -4475,6 +4552,50 @@ func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *co
 	}
 	_ = reqResp.Body.Close()
 	err = json.Unmarshal(respBody, &resp.Items)
+	return resp, err
+}
+
+func (p *ServiceNameHTTPGoClient) UpdateMessageV3(ctx context.Context, request *common.UpdateMessageRequest) (resp *common.UpdateMessageRequest, err error) {
+	req := &http.Request{Header: make(http.Header)}
+	var queryArgs string
+	var body []byte
+	body, err = json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	req.Body = io.NopCloser(bytes.NewBuffer(body))
+	u, err := url.Parse(fmt.Sprintf("%s/v3/messages%s", p.host, queryArgs))
+	if err != nil {
+		return nil, err
+	}
+	u.RawQuery = u.Query().Encode()
+	req.URL = u
+	req.Method = http.MethodPatch
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	var reqResp *http.Response
+	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+	ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV3")
+	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
+		resp, err = p.cl.Do(req)
+		return resp, err
+	}
+	if p.middleware == nil {
+		if reqResp, err = handler(ctx, req); err != nil {
+			return nil, err
+		}
+	} else {
+		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
+			return nil, err
+		}
+	}
+	resp = &common.UpdateMessageRequest{}
+	var respBody []byte
+	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
+		return nil, err
+	}
+	_ = reqResp.Body.Close()
+	err = json.Unmarshal(respBody, &resp.Message)
 	return resp, err
 }
 

@@ -185,10 +185,26 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 	}); err != nil {
 		return fmt.Errorf("GetMessageV4 failed: %w", err)
 	}
-	if _, err = client.TopLevelArray(ctx, &common.Array{Items: []*common.ArrayItem{
+	items := []*common.ArrayItem{
 		{Value: "a"}, {Value: "b"}, {Value: "c"},
-	}}); err != nil {
+	}
+	var topLevelArrayResp *common.Array
+	if topLevelArrayResp, err = client.TopLevelArray(ctx, &common.Array{Items: items}); err != nil {
 		return fmt.Errorf("TopLevelArray failed: %w", err)
+	}
+	if diff := cmp.Diff(items, topLevelArrayResp.Items, cmpopts.IgnoreUnexported(*topLevelArrayResp.Items[0])); diff != "" {
+		log.Println(diff)
+	}
+	var respMsgV3 *common.UpdateMessageRequest
+	reqMsgV3 := &common.UpdateMessageRequest{
+		MessageId: "123456",
+		Message:   &common.MessageV2{Text: "Hi!"},
+	}
+	if respMsgV3, err = client.UpdateMessageV3(ctx, reqMsgV3); err != nil {
+		return fmt.Errorf("UpdateMessageV3 failed: %w", err)
+	}
+	if diff := cmp.Diff(reqMsgV3.Message, respMsgV3.Message, cmpopts.IgnoreUnexported(*respMsgV3, *respMsgV3.Message)); diff != "" {
+		log.Println(diff)
 	}
 
 	return nil
