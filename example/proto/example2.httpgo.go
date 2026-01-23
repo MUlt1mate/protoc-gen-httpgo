@@ -3,14 +3,16 @@
 package proto
 
 import (
-	context "context"
-	json "encoding/json"
-	fmt "fmt"
-	router "github.com/fasthttp/router"
-	fasthttp "github.com/valyala/fasthttp"
-	protojson "google.golang.org/protobuf/encoding/protojson"
-	strconv "strconv"
-	strings "strings"
+	"context"
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/fasthttp/router"
+	"github.com/valyala/fasthttp"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 type ServiceName2HTTPGoService interface {
@@ -46,7 +48,7 @@ func RegisterServiceName2HTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
+		respJson, _ := protojson.Marshal(resp.(proto.Message))
 		_, _ = fastctx.Write(respJson)
 	})
 
@@ -121,7 +123,7 @@ func RegisterSecondServiceName2HTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
+		respJson, _ := protojson.Marshal(resp.(proto.Message))
 		_, _ = fastctx.Write(respJson)
 	})
 
