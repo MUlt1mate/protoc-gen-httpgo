@@ -164,14 +164,15 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 }
 
 func (g *generator) genMarshalServerResponse(source string) {
-	if *g.cfg.Library == libraryGin {
+	if *g.cfg.Library == libraryGin && *g.cfg.Marshaller != marshallerProtoJSON {
 		g.gf.P("	ginctx.JSON(ginctx.Writer.Status(), ", source, ")")
 		return
 	}
-	switch *g.cfg.Marshaller {
-	case marshallerProtoJSON:
+
+	// we can't assert interface if source is a field
+	if *g.cfg.Marshaller == marshallerProtoJSON && source == "resp" {
 		g.gf.P("	respJson, _ := ", g.marshaller.Ident("Marshal"), "(", source, ".(", protoPackage.Ident("Message"), "))")
-	default:
+	} else {
 		g.gf.P("	respJson, _ := ", g.marshaller.Ident("Marshal"), "(", source, ")")
 	}
 
@@ -180,6 +181,8 @@ func (g *generator) genMarshalServerResponse(source string) {
 		g.gf.P("	_, _ = fastctx.Write(respJson)")
 	case libraryNetHTTP:
 		g.gf.P("	_, _ = w.Write(respJson)")
+	case libraryGin:
+		g.gf.P("	ginctx.Data(ginctx.Writer.Status(), \"application/json\", respJson)")
 	}
 }
 
