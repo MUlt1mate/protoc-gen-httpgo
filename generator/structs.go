@@ -19,6 +19,7 @@ const (
 	pathRepeatedArgDelimiter = ","
 	libraryNetHTTP           = "nethttp"
 	libraryFastHTTP          = "fasthttp"
+	libraryGin               = "gin"
 	contentTypeJSONApp       = "application/json"
 	contentTypeMultipart     = "multipart/form-data"
 )
@@ -118,6 +119,11 @@ func newGenerator(
 		g.lib = httpPackage
 	case libraryFastHTTP:
 		g.lib = fasthttpPackage
+	case libraryGin:
+		if *cfg.Only != onlyServer {
+			return g, errors.New("gin does not support client, use only=server parameter")
+		}
+		g.lib = ginPackage
 	default:
 		return g, errors.New("unsupported library type: " + *cfg.Library)
 	}
@@ -405,18 +411,31 @@ func (m *methodURI) parseURI(library string) {
 			fieldName = fieldName[:i]
 			// and change uri to messages/{name}
 			if strings.Contains(pattern, "**") {
-				arg.PathTpl = "{" + fieldName + ":*}"
-				if library == libraryNetHTTP {
-					arg.PathTpl = "{" + fieldName + "...}"
-				}
 				arg.DestinationTpl = strings.Replace(pattern, "**", "%s", 1)
+				switch library {
+				case libraryNetHTTP:
+					arg.PathTpl = "{" + fieldName + "...}"
+				case libraryFastHTTP:
+					arg.PathTpl = "{" + fieldName + ":*}"
+				case libraryGin:
+					arg.PathTpl = "*" + fieldName
+					// gin parameter value will have leading slash, so we have to remote it from template
+					arg.DestinationTpl = strings.Replace(arg.DestinationTpl, "/%s", "%s", 1)
+				}
 				path = strings.Replace(pattern, "**", arg.PathTpl, 1)
 			} else {
-				arg.PathTpl = "{" + fieldName + "}"
+				switch library {
+				case libraryGin:
+					arg.PathTpl = ":" + fieldName
+				default:
+					arg.PathTpl = "{" + fieldName + "}"
+				}
 				arg.DestinationTpl = strings.Replace(pattern, "*", "%s", 1)
 				path = strings.Replace(pattern, "*", arg.PathTpl, 1)
 			}
 			m.protoURI = strings.Replace(m.protoURI, match[0], path, 1)
+		} else if library == libraryGin {
+			m.protoURI = strings.Replace(m.protoURI, match[0], ":"+fieldName, 1)
 		}
 		m.argList = append(m.argList, fieldName)
 		m.args[fieldName] = arg

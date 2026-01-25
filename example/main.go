@@ -8,26 +8,31 @@ import (
 	"time"
 
 	"github.com/fasthttp/router"
+	"github.com/gin-gonic/gin"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/valyala/fasthttp"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
-	fasthttpimpl "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/fasthttp"
-	nethttpimpl "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/nethttp"
+	fasthttpmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/fasthttp"
+	ginmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/gin"
+	nethttpmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/nethttp"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
-	fasthttpproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
+	fastproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
+	ginproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/gin"
 	httpproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/nethttp"
 )
 
 const (
 	fasthttpAddr = "localhost:8080"
 	nethttpAddr  = "localhost:8081"
+	ginAddr      = "localhost:8082"
 )
 
 var (
-	fastClient    httpproto.ServiceNameHTTPGoService
-	nethttpClient httpproto.ServiceNameHTTPGoService
+	fastClient          httpproto.ServiceNameHTTPGoService
+	nethttpClient       httpproto.ServiceNameHTTPGoService
+	nethttpClientForGin httpproto.ServiceNameHTTPGoService
 )
 
 func main() {
@@ -51,26 +56,39 @@ func main() {
 	if err = clientRunRequests(ctx, nethttpClient); err != nil {
 		log.Println(err)
 	}
+	if err = clientRunRequests(ctx, nethttpClientForGin); err != nil {
+		log.Println(err)
+	}
 
 	// f := make(chan bool)
 	// <-f
 }
 
 func serverInit(ctx context.Context) (err error) {
+	gin.SetMode(gin.ReleaseMode)
 	var (
-		handler fasthttpproto.ServiceNameHTTPGoService = &implementation.Handler{}
-		r                                              = router.New()
-		rHttp                                          = http.NewServeMux()
+		handler        fastproto.ServiceNameHTTPGoService = &implementation.Handler{}
+		fasthttpRouter                                    = router.New()
+		rHttp                                             = http.NewServeMux()
+		ginRouter                                         = gin.New()
 	)
-	if err = fasthttpproto.RegisterServiceNameHTTPGoServer(ctx, r, handler, fasthttpimpl.ServerMiddlewares); err != nil {
+	if err = fastproto.RegisterServiceNameHTTPGoServer(ctx, fasthttpRouter, handler, fasthttpmdlwr.ServerMiddlewares); err != nil {
 		return err
 	}
-	if err = httpproto.RegisterServiceNameHTTPGoServer(ctx, rHttp, handler, nethttpimpl.ServerMiddlewares); err != nil {
+	if err = httpproto.RegisterServiceNameHTTPGoServer(ctx, rHttp, handler, nethttpmdlwr.ServerMiddlewares); err != nil {
+		return err
+	}
+	/*
+		Gin has its own middleware format, but with this one you can have transport independent handler
+		with context.Context that can be populated with the same keys in both HTTP and GRPC middlewares.
+		And of course if you have only HTTP you can use gin middleware format and pass nil to httpgo middlewares
+	*/
+	if err = ginproto.RegisterServiceNameHTTPGoServer(ctx, ginRouter, handler, ginmdlwr.ServerMiddlewares); err != nil {
 		return err
 	}
 
 	go func() {
-		if err = fasthttp.ListenAndServe(fasthttpAddr, r.Handler); err != nil {
+		if err = fasthttp.ListenAndServe(fasthttpAddr, fasthttpRouter.Handler); err != nil {
 			log.Fatal(err)
 		}
 	}()
@@ -79,16 +97,21 @@ func serverInit(ctx context.Context) (err error) {
 			log.Fatal(err)
 		}
 	}()
+	go func() {
+		if err = ginRouter.Run(ginAddr); err != nil {
+			log.Fatal(err)
+		}
+	}()
 	return nil
 }
 
 func clientInit(ctx context.Context) (err error) {
 	var fasthttpClientTransport = &fasthttp.Client{}
-	if fastClient, err = fasthttpproto.GetServiceNameHTTPGoClient(
+	if fastClient, err = fastproto.GetServiceNameHTTPGoClient(
 		ctx,
 		fasthttpClientTransport,
 		"http://"+fasthttpAddr,
-		fasthttpimpl.ClientMiddlewares,
+		fasthttpmdlwr.ClientMiddlewares,
 	); err != nil {
 		return err
 	}
@@ -98,7 +121,17 @@ func clientInit(ctx context.Context) (err error) {
 		ctx,
 		httpClientTransport,
 		"http://"+nethttpAddr,
-		nethttpimpl.ClientMiddlewares,
+		nethttpmdlwr.ClientMiddlewares,
+	); err != nil {
+		return err
+	}
+
+	// we use other client to check gin server
+	if nethttpClientForGin, err = httpproto.GetServiceNameHTTPGoClient(
+		ctx,
+		httpClientTransport,
+		"http://"+ginAddr,
+		nethttpmdlwr.ClientMiddlewares,
 	); err != nil {
 		return err
 	}

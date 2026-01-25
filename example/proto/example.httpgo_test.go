@@ -15,15 +15,18 @@ import (
 	"time"
 
 	"github.com/fasthttp/router"
+	"github.com/gin-gonic/gin"
 	"github.com/valyala/fasthttp"
 	pb "google.golang.org/protobuf/proto"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
-	fasthttp2 "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/fasthttp"
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/nethttp"
+	fasthttpmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/fasthttp"
+	ginmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/gin"
+	nethttpmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/nethttp"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
-	protoFast "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
-	protoHttp "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/nethttp"
+	fastproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
+	ginproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/gin"
+	httpproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/nethttp"
 )
 
 type testCaseClient struct {
@@ -67,28 +70,28 @@ func TestHTTPGoClient(t *testing.T) {
 	mockServer := httptest.NewServer(http.HandlerFunc(getMockServer(reqCh, respCh)))
 	defer mockServer.Close()
 	var (
-		clientfastHTTP protoFast.ServiceNameHTTPGoService
-		clientNetHTTP  protoFast.ServiceNameHTTPGoService
+		clientfastHTTP fastproto.ServiceNameHTTPGoService
+		clientNetHTTP  fastproto.ServiceNameHTTPGoService
 		err            error
 		ctx            = context.Background()
 	)
-	if clientfastHTTP, err = protoFast.GetServiceNameHTTPGoClient(
+	if clientfastHTTP, err = fastproto.GetServiceNameHTTPGoClient(
 		ctx,
 		&fasthttp.Client{},
 		mockServer.URL,
-		fasthttp2.ClientMiddlewares,
+		fasthttpmdlwr.ClientMiddlewares,
 	); err != nil {
 		t.Fatal(err)
 	}
-	if clientNetHTTP, err = protoHttp.GetServiceNameHTTPGoClient(
+	if clientNetHTTP, err = httpproto.GetServiceNameHTTPGoClient(
 		ctx,
 		&http.Client{},
 		mockServer.URL,
-		nethttp.ClientMiddlewares,
+		nethttpmdlwr.ClientMiddlewares,
 	); err != nil {
 		t.Fatal(err)
 	}
-	var clients = map[string]protoFast.ServiceNameHTTPGoService{
+	var clients = map[string]fastproto.ServiceNameHTTPGoService{
 		"fasthttp": clientfastHTTP,
 		"nethttp":  clientNetHTTP,
 	}
@@ -99,7 +102,7 @@ func TestHTTPGoClient(t *testing.T) {
 				name:                "RPCName Valid Request 1",
 				methodName:          "RPCName",
 				expectedMethod:      http.MethodPost,
-				expectedURI:         "/v1/test/test/1",
+				expectedURI:         "/v1/RPCName/test/1",
 				request:             &common.InputMsgName{Int64Argument: 1, StringArgument: "test"},
 				expectedResponse:    &common.OutputMsgName{StringValue: "StringValue", IntValue: 2},
 				expectedResponseErr: nil,
@@ -117,7 +120,7 @@ func TestHTTPGoClient(t *testing.T) {
 					StringValue:      []string{"1", "2", "3"},
 					StringValueQuery: []string{"a", "b", "c"},
 				},
-				expectedURI:         "/v1/repeated/1,2,3?StringValueQuery%5B%5D=a&StringValueQuery%5B%5D=b&StringValueQuery%5B%5D=c",
+				expectedURI:         "/v2/repeated/1,2,3?StringValueQuery%5B%5D=a&StringValueQuery%5B%5D=b&StringValueQuery%5B%5D=c",
 				expectedRequestBody: nil,
 				mockResponse: responseData{
 					body: []byte(`{"StringValue":["1","2","3"],"StringValueQuery":["a","b","c"]}`),
@@ -202,7 +205,7 @@ func TestHTTPGoClient(t *testing.T) {
 					BytesValue:       [][]byte{[]byte("c"), []byte("d")},
 					StringValueQuery: []string{"e", "f"},
 				},
-				expectedURI:         "/v1/repeated/a,b",
+				expectedURI:         "/v3/repeated/a,b",
 				expectedRequestBody: []byte(`{"BoolValue":[true,true],"EnumValue":[0,1],"Int32Value":[2,3],"Sint32Value":[4,5],"Uint32Value":[6,7],"Int64Value":[8,9],"Sint64Value":[10,11],"Uint64Value":[12,13],"Sfixed32Value":[14,15],"Fixed32Value":[16,17],"FloatValue":[18,19],"Sfixed64Value":[20,21],"Fixed64Value":[22,23],"DoubleValue":[24,25],"StringValue":["a","b"],"BytesValue":["Yw==","ZA=="],"StringValueQuery":["e","f"]}`),
 				mockResponse: responseData{
 					body: []byte(`{"BoolValue":[true,true],"EnumValue":[0,1],"Int32Value":[2,3],"Sint32Value":[4,5],"Uint32Value":[6,7],"Int64Value":[8,9],"Sint64Value":[10,11],"Uint64Value":[12,13],"Sfixed32Value":[14,15],"Fixed32Value":[16,17],"FloatValue":[18,19],"Sfixed64Value":[20,21],"Fixed64Value":[22,23],"DoubleValue":[24,25],"StringValue":["a","b"],"BytesValue":["Yw==","ZA=="],"StringValueQuery":["e","f"]}`),
@@ -309,26 +312,31 @@ func getMockServer(
 }
 
 func TestHTTPGoServer(t *testing.T) {
+	gin.SetMode(gin.ReleaseMode)
 	var (
-		err     error
-		ctx                                        = context.Background()
-		handler protoHttp.ServiceNameHTTPGoService = &implementation.Handler{}
-		rHttp                                      = http.NewServeMux()
-		r                                          = router.New()
+		err            error
+		ctx                                               = context.Background()
+		handler        httpproto.ServiceNameHTTPGoService = &implementation.Handler{}
+		rHttp                                             = http.NewServeMux()
+		fasthttpRouter                                    = router.New()
+		ginRouter                                         = gin.New()
 	)
-	if err = protoFast.RegisterServiceNameHTTPGoServer(ctx, r, handler, fasthttp2.ServerMiddlewares); err != nil {
+	if err = fastproto.RegisterServiceNameHTTPGoServer(ctx, fasthttpRouter, handler, fasthttpmdlwr.ServerMiddlewares); err != nil {
 		t.Fatal(err)
 	}
-	if err = protoHttp.RegisterServiceNameHTTPGoServer(ctx, rHttp, handler, nethttp.ServerMiddlewares); err != nil {
+	if err = httpproto.RegisterServiceNameHTTPGoServer(ctx, rHttp, handler, nethttpmdlwr.ServerMiddlewares); err != nil {
+		t.Fatal(err)
+	}
+	if err = ginproto.RegisterServiceNameHTTPGoServer(ctx, ginRouter, handler, ginmdlwr.ServerMiddlewares); err != nil {
 		t.Fatal(err)
 	}
 
 	lnConfig := net.ListenConfig{}
-	lnHttp, err := lnConfig.Listen(ctx, "tcp4", "127.0.0.1:8081")
+	ln, err := lnConfig.Listen(ctx, "tcp4", "127.0.0.1:8080")
 	if err != nil {
 		t.Fatal(err)
 	}
-	ln, err := lnConfig.Listen(ctx, "tcp4", "127.0.0.1:8080")
+	lnHttp, err := lnConfig.Listen(ctx, "tcp4", "127.0.0.1:8081")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -339,7 +347,13 @@ func TestHTTPGoServer(t *testing.T) {
 		}
 	}()
 	go func() {
-		if err = fasthttp.Serve(ln, r.Handler); err != nil {
+		if err = fasthttp.Serve(ln, fasthttpRouter.Handler); err != nil {
+			errCh <- err
+		}
+	}()
+	ginAddr := "127.0.0.1:8082"
+	go func() {
+		if err = ginRouter.Run(ginAddr); err != nil {
 			errCh <- err
 		}
 	}()
@@ -357,7 +371,7 @@ func TestHTTPGoServer(t *testing.T) {
 		{
 			name:                   "RPCName Valid Request 1",
 			method:                 http.MethodPost,
-			uri:                    "/v1/test/test/1",
+			uri:                    "/v1/RPCName/test/1",
 			requestBody:            []byte(`{"int64Argument":1,"stringArgument":"test"}`),
 			expectedResponseBody:   []byte(`{"stringValue":"test","intValue":1}`),
 			expectedResponseErr:    nil,
@@ -375,7 +389,7 @@ func TestHTTPGoServer(t *testing.T) {
 		{
 			name:                   "all repeated types in query",
 			method:                 http.MethodGet,
-			uri:                    "/v1/repeated/a,b?BoolValue[]=true&BoolValue[]=true&EnumValue[]=FIRST&EnumValue[]=1&Int32Value[]=2&Int32Value[]=3&Sint32Value[]=4&Sint32Value[]=5&Uint32Value[]=6&Uint32Value[]=7&Int64Value[]=8&Int64Value[]=9&Sint64Value[]=10&Sint64Value[]=11&Uint64Value[]=12&Uint64Value[]=13&Sfixed32Value[]=14&Sfixed32Value[]=15&Fixed32Value[]=16&Fixed32Value[]=17&FloatValue[]=18&FloatValue[]=19&Sfixed64Value[]=20&Sfixed64Value[]=21&Fixed64Value[]=22&Fixed64Value[]=23&DoubleValue[]=24&DoubleValue[]=25&BytesValue[]=c&BytesValue[]=d&StringValueQuery[]=e&StringValueQuery[]=f",
+			uri:                    "/v2/repeated/a,b?BoolValue[]=true&BoolValue[]=true&EnumValue[]=FIRST&EnumValue[]=1&Int32Value[]=2&Int32Value[]=3&Sint32Value[]=4&Sint32Value[]=5&Uint32Value[]=6&Uint32Value[]=7&Int64Value[]=8&Int64Value[]=9&Sint64Value[]=10&Sint64Value[]=11&Uint64Value[]=12&Uint64Value[]=13&Sfixed32Value[]=14&Sfixed32Value[]=15&Fixed32Value[]=16&Fixed32Value[]=17&FloatValue[]=18&FloatValue[]=19&Sfixed64Value[]=20&Sfixed64Value[]=21&Fixed64Value[]=22&Fixed64Value[]=23&DoubleValue[]=24&DoubleValue[]=25&BytesValue[]=c&BytesValue[]=d&StringValueQuery[]=e&StringValueQuery[]=f",
 			requestBody:            nil,
 			expectedResponseBody:   []byte(`{"BoolValue":[true,true],"EnumValue":[0,1],"Int32Value":[2,3],"Sint32Value":[4,5],"Uint32Value":[6,7],"Int64Value":[8,9],"Sint64Value":[10,11],"Uint64Value":[12,13],"Sfixed32Value":[14,15],"Fixed32Value":[16,17],"FloatValue":[18,19],"Sfixed64Value":[20,21],"Fixed64Value":[22,23],"DoubleValue":[24,25],"StringValue":["a","b"],"BytesValue":["Yw==","ZA=="],"StringValueQuery":["e","f"]}`),
 			expectedResponseErr:    nil,
@@ -384,7 +398,7 @@ func TestHTTPGoServer(t *testing.T) {
 		{
 			name:                   "all repeated types in body",
 			method:                 http.MethodPost,
-			uri:                    "/v1/repeated/a,b",
+			uri:                    "/v3/repeated/a,b",
 			requestBody:            []byte(`{"BoolValue":[true,true],"EnumValue":[0,1],"Int32Value":[2,3],"Sint32Value":[4,5],"Uint32Value":[6,7],"Int64Value":[8,9],"Sint64Value":[10,11],"Uint64Value":[12,13],"Sfixed32Value":[14,15],"Fixed32Value":[16,17],"FloatValue":[18,19],"Sfixed64Value":[20,21],"Fixed64Value":[22,23],"DoubleValue":[24,25],"BytesValue":["Yw==","ZA=="],"StringValueQuery":["e","f"]}`),
 			expectedResponseBody:   []byte(`{"BoolValue":[true,true],"EnumValue":[0,1],"Int32Value":[2,3],"Sint32Value":[4,5],"Uint32Value":[6,7],"Int64Value":[8,9],"Sint64Value":[10,11],"Uint64Value":[12,13],"Sfixed32Value":[14,15],"Fixed32Value":[16,17],"FloatValue":[18,19],"Sfixed64Value":[20,21],"Fixed64Value":[22,23],"DoubleValue":[24,25],"StringValue":["a","b"],"BytesValue":["Yw==","ZA=="],"StringValueQuery":["e","f"]}`),
 			expectedResponseErr:    nil,
@@ -402,7 +416,7 @@ func TestHTTPGoServer(t *testing.T) {
 		{
 			name:                   "RPCName Invalid Request 1",
 			method:                 http.MethodPost,
-			uri:                    "/v1/test/test/test",
+			uri:                    "/v1/RPCName/test/test",
 			requestBody:            []byte(`{"int64Argument":1,"stringArgument":"test"}`),
 			expectedResponseBody:   []byte(`{"Error":"conversion failed for parameter int64Argument: strconv.ParseInt: parsing \"test\": invalid syntax"}`),
 			expectedResponseErr:    nil,
@@ -427,6 +441,7 @@ func TestHTTPGoServer(t *testing.T) {
 		serverHosts = map[string]string{
 			"fasthttp": ln.Addr().String(),
 			"nethttp":  lnHttp.Addr().String(),
+			"gin":      ginAddr,
 		}
 	)
 

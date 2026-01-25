@@ -313,6 +313,7 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 	if parameters, values, err = g.getQuerySimpleParameters(method); err != nil {
 		return err
 	}
+	// todo add preallocating
 	g.gf.P("var parameters = []string{")
 	for _, q := range parameters {
 		g.gf.P("\"", q, "\",")

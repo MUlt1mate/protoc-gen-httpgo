@@ -21,8 +21,10 @@ install:			## install plugin
 gen:				## generate example
 	@printf "\033[33mGenerating code...\033[0m\n"
 	@go generate ./example/proto/generate.go
-	@sed -i '1d' ./example/proto/*.httpgo.go # mark file as not generated for correct linter check
+	@sed -i '1d' ./example/proto/*.httpgo.go # mark files as not generated for correct linter check
 	@sed -i '1d' ./example/proto/fasthttp/*.httpgo.go
+	@sed -i '1d' ./example/proto/nethttp/*.httpgo.go
+	@sed -i '1d' ./example/proto/gin/*.httpgo.go
 
 test:    			## run tests
 	@printf "\033[35mRunning tests...\033[0m\n"

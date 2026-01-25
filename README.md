@@ -16,8 +16,9 @@ Choose httpgo if you want to:
 ## Features
 
 - Generation of both server and client code
-    - Supports [net/http](https://pkg.go.dev/net/http)
+    - Supports [gin](https://github.com/gin-gonic/gin) (server only)
     - Supports [fasthttp](https://github.com/valyala/fasthttp)
+    - Supports [net/http](https://pkg.go.dev/net/http)
 - Provides multiple options for Marshaling/Unmarshaling:
     - Uses the native `encoding/json` by default
     - Optional usage of [protojson](https://pkg.go.dev/google.golang.org/protobuf/encoding/protojson) for better
@@ -76,7 +77,7 @@ protoc -I=. --httpgo_out=paths=source_relative:. example/proto/example.proto
 | only            | server, client          | Use to generate either the server or client code exclusively                                                     |
 | autoURI         | false, true             | Create method URI if annotation is missing.                                                                      |
 | bodylessMethods | GET;DELETE              | List of semicolon separated http methods that should not have a body.                                            |
-| library         | nethttp, fasthttp       | Server library                                                                                                   |
+| library         | gin, fasthttp, nethttp  | Server library                                                                                                   |
 
 Example of parameters usage:
 
@@ -248,9 +249,7 @@ message FileStruct {
 
 ## TODO
 
-- Implement more web servers
-    - gin
-    - chi
+- implement more web servers
 - dependabot
 - buf
 - benchmark

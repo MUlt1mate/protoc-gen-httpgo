@@ -3,18 +3,13 @@
 package proto
 
 import (
-	bytes "bytes"
 	context "context"
-	json "encoding/json"
-	errors "errors"
 	fmt "fmt"
 	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	gin "github.com/gin-gonic/gin"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	io "io"
 	multipart "mime/multipart"
-	http "net/http"
-	url "net/url"
 	strconv "strconv"
 	strings "strings"
 )
@@ -50,24 +45,20 @@ type ServiceNameHTTPGoService interface {
 
 func RegisterServiceNameHTTPGoServer(
 	_ context.Context,
-	r *http.ServeMux,
+	r *gin.Engine,
 	h ServiceNameHTTPGoService,
 	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 ) error {
 	var middleware = chainServerMiddlewaresExample(middlewares)
 
-	r.HandleFunc("POST /v1/RPCName/{stringArgument}/{int64Argument}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameRPCNameInputMsgName(r)
+	r.POST("/v1/RPCName/:stringArgument/:int64Argument", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameRPCNameInputMsgName(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "RPCName")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -79,22 +70,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("POST /v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameAllTypesTestAllTypesMsg(r)
+	r.POST("/v1/test/:BoolValue/:EnumValue/:Int32Value/:Sint32Value/:Uint32Value/:Int64Value/:Sint64Value/:Uint64Value/:Sfixed32Value/:Fixed32Value/:FloatValue/:Sfixed64Value/:Fixed64Value/:DoubleValue/:StringValue/:BytesValue", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTypesTestAllTypesMsg(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "AllTypesTest")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -106,22 +92,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("POST /v1/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(r)
+	r.POST("/v1/text/:String/:RepeatedString/:Bytes/:RepeatedBytes/:Enum/:RepeatedEnum", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "AllTextTypesPost")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -133,22 +114,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("GET /v2/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(r)
+	r.GET("/v2/text/:String/:RepeatedString/:Bytes/:RepeatedBytes/:Enum/:RepeatedEnum", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "AllTextTypesGet")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -160,22 +136,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("POST /v1/test/commonTypes", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameCommonTypesAny(r)
+	r.POST("/v1/test/commonTypes", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameCommonTypesAny(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "CommonTypes")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -187,23 +158,18 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
 	// same types but different query, we need different query builder function
-	r.HandleFunc("POST /v1/sameInputAndOutput/{stringArgument}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(r)
+	r.POST("/v1/sameInputAndOutput/:stringArgument", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "SameInputAndOutput")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -215,22 +181,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("POST /v1/test/optional", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameOptionalOptionalField(r)
+	r.POST("/v1/test/optional", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameOptionalOptionalField(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "Optional")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -242,22 +203,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("GET /v1/test/get", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameGetMethodInputMsgName(r)
+	r.GET("/v1/test/get", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMethodInputMsgName(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMethod")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -269,22 +225,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("GET /v1/repeated/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}/{StringValueQuery}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r)
+	r.GET("/v1/repeated/:BoolValue/:EnumValue/:Int32Value/:Sint32Value/:Uint32Value/:Int64Value/:Sint64Value/:Uint64Value/:Sfixed32Value/:Fixed32Value/:FloatValue/:Sfixed64Value/:Fixed64Value/:DoubleValue/:StringValue/:BytesValue/:StringValueQuery", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPath")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -296,22 +247,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("GET /v2/repeated/{StringValue}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(r)
+	r.GET("/v2/repeated/:StringValue", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedQuery")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -323,22 +269,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("POST /v3/repeated/{StringValue}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameCheckRepeatedPostRepeatedCheck(r)
+	r.POST("/v3/repeated/:StringValue", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPost")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -350,22 +291,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("GET /v1/emptyGet", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameEmptyGetEmpty(r)
+	r.GET("/v1/emptyGet", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameEmptyGetEmpty(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "EmptyGet")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -377,22 +313,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("POST /v1/emptyPost", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameEmptyPostEmpty(r)
+	r.POST("/v1/emptyPost", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameEmptyPostEmpty(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "EmptyPost")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -404,22 +335,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("POST /v1/onlyStruct", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameOnlyStructInGetOnlyStruct(r)
+	r.POST("/v1/onlyStruct", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameOnlyStructInGetOnlyStruct(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -431,22 +357,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("POST /v1/multipart", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameMultipartFormMultipartFormRequest(r)
+	r.POST("/v1/multipart", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameMultipartFormMultipartFormRequest(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -458,22 +379,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("POST /v1/multipartall", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r)
+	r.POST("/v1/multipartall", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "MultipartFormAllTypes")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -485,22 +401,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("GET /v1/max/{Int32Value}/{Uint32Value}/{Int64Value}/{Uint64Value}/{FloatValue}/{DoubleValue}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(r)
+	r.GET("/v1/max/:Int32Value/:Uint32Value/:Int64Value/:Uint64Value/:FloatValue/:DoubleValue", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxTest")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -512,22 +423,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("GET /v1/maxquery", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(r)
+	r.GET("/v1/maxquery", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxQueryTest")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -539,24 +445,19 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
 	// http rule checks
 	// v1/{name=messages/*}
-	r.HandleFunc("GET /v1/messages/{name}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameGetMessageGetMessageRequest(r)
+	r.GET("/v1/messages/:name", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMessageGetMessageRequest(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMessage")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -568,22 +469,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("GET /v2/messages/{message_id}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameGetMessageV2GetMessageRequestV2(r)
+	r.GET("/v2/messages/:message_id", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMessageV2GetMessageRequestV2(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMessageV2")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -595,22 +491,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("PATCH /v1/messages/{message_id}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameUpdateMessageUpdateMessageRequest(r)
+	r.PATCH("/v1/messages/:message_id", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameUpdateMessageUpdateMessageRequest(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "UpdateMessage")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -622,22 +513,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("PATCH /v2/messages/{message_id}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameUpdateMessageV2MessageV2(r)
+	r.PATCH("/v2/messages/:message_id", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameUpdateMessageV2MessageV2(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV2")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -649,22 +535,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("GET /v3/messages/{message_id}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(r)
+	r.GET("/v3/messages/:message_id", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMessageV3")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -676,22 +557,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("GET /v3/users/{user_id}/messages/{message_id}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(r)
+	r.GET("/v3/users/:user_id/messages/:message_id", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMessageV3")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -703,22 +579,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("GET /v4/messages/base/{message_id...}", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameGetMessageV4GetMessageRequestV3(r)
+	r.GET("/v4/messages/base/*message_id", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMessageV4GetMessageRequestV3(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMessageV4")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -730,22 +601,17 @@ func RegisterServiceNameHTTPGoServer(
 		} else {
 			resp, _ = middleware(ctx, input, handler)
 		}
-		respJson, _ := json.Marshal(resp)
-		_, _ = w.Write(respJson)
+		ginctx.JSON(ginctx.Writer.Status(), resp)
 	})
 
-	r.HandleFunc("POST /v1/array", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameTopLevelArrayArray(r)
+	r.POST("/v1/array", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameTopLevelArrayArray(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "TopLevelArray")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -758,26 +624,20 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		if typedResp, ok := resp.(*common.Array); ok {
-			respJson, _ := json.Marshal(typedResp.Items)
-			_, _ = w.Write(respJson)
+			ginctx.JSON(ginctx.Writer.Status(), typedResp.Items)
 		} else {
-			respJson, _ := json.Marshal(resp)
-			_, _ = w.Write(respJson)
+			ginctx.JSON(ginctx.Writer.Status(), resp)
 		}
 	})
 
-	r.HandleFunc("PATCH /v3/messages", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		input, err := buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(r)
+	r.PATCH("/v3/messages", func(ginctx *gin.Context) {
+		ginctx.Header("Content-Type", "application/json")
+		input, err := buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(ginctx)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
 			return
 		}
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, "writer", w)
-		ctx = context.WithValue(ctx, "request", r)
+		ctx := context.WithValue(ginctx, "request", ginctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV3")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -790,30 +650,21 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		if typedResp, ok := resp.(*common.UpdateMessageRequest); ok {
-			respJson, _ := json.Marshal(typedResp.Message)
-			_, _ = w.Write(respJson)
+			ginctx.JSON(ginctx.Writer.Status(), typedResp.Message)
 		} else {
-			respJson, _ := json.Marshal(resp)
-			_, _ = w.Write(respJson)
+			ginctx.JSON(ginctx.Writer.Status(), resp)
 		}
 	})
 
 	return nil
 }
 
-func buildExampleServiceNameRPCNameInputMsgName(r *http.Request) (arg *common.InputMsgName, err error) {
+func buildExampleServiceNameRPCNameInputMsgName(ctx *gin.Context) (arg *common.InputMsgName, err error) {
 	arg = &common.InputMsgName{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "int64Argument":
@@ -828,12 +679,12 @@ func buildExampleServiceNameRPCNameInputMsgName(r *http.Request) (arg *common.In
 			}
 		}
 	}
-	StringArgumentStr := r.PathValue("stringArgument")
+	StringArgumentStr := ctx.Param("stringArgument")
 	if len(StringArgumentStr) != 0 {
 		arg.StringArgument = StringArgumentStr
 	}
 
-	Int64ArgumentStr := r.PathValue("int64Argument")
+	Int64ArgumentStr := ctx.Param("int64Argument")
 	if len(Int64ArgumentStr) != 0 {
 		arg.Int64Argument, err = strconv.ParseInt(Int64ArgumentStr, 10, 64)
 		if err != nil {
@@ -844,19 +695,12 @@ func buildExampleServiceNameRPCNameInputMsgName(r *http.Request) (arg *common.In
 	return arg, err
 }
 
-func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *common.AllTypesMsg, err error) {
+func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *gin.Context) (arg *common.AllTypesMsg, err error) {
 	arg = &common.AllTypesMsg{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "BoolValue":
@@ -978,7 +822,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 			}
 		}
 	}
-	BoolValueStr := r.PathValue("BoolValue")
+	BoolValueStr := ctx.Param("BoolValue")
 	if len(BoolValueStr) != 0 {
 		switch BoolValueStr {
 		case "true", "t", "1":
@@ -990,7 +834,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		}
 	}
 
-	EnumValueStr := r.PathValue("EnumValue")
+	EnumValueStr := ctx.Param("EnumValue")
 	if len(EnumValueStr) != 0 {
 		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumValueStr)]; optValueOk {
 			arg.EnumValue = common.Options(OptionsValue)
@@ -1005,7 +849,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		}
 	}
 
-	Int32ValueStr := r.PathValue("Int32Value")
+	Int32ValueStr := ctx.Param("Int32Value")
 	if len(Int32ValueStr) != 0 {
 		Int32Value, convErr := strconv.ParseInt(Int32ValueStr, 10, 32)
 		if convErr != nil {
@@ -1014,7 +858,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		arg.Int32Value = int32(Int32Value)
 	}
 
-	Sint32ValueStr := r.PathValue("Sint32Value")
+	Sint32ValueStr := ctx.Param("Sint32Value")
 	if len(Sint32ValueStr) != 0 {
 		Sint32Value, convErr := strconv.ParseInt(Sint32ValueStr, 10, 32)
 		if convErr != nil {
@@ -1023,7 +867,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		arg.Sint32Value = int32(Sint32Value)
 	}
 
-	Uint32ValueStr := r.PathValue("Uint32Value")
+	Uint32ValueStr := ctx.Param("Uint32Value")
 	if len(Uint32ValueStr) != 0 {
 		Uint32Value, convErr := strconv.ParseUint(Uint32ValueStr, 10, 32)
 		if convErr != nil {
@@ -1032,7 +876,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		arg.Uint32Value = uint32(Uint32Value)
 	}
 
-	Int64ValueStr := r.PathValue("Int64Value")
+	Int64ValueStr := ctx.Param("Int64Value")
 	if len(Int64ValueStr) != 0 {
 		arg.Int64Value, err = strconv.ParseInt(Int64ValueStr, 10, 64)
 		if err != nil {
@@ -1040,7 +884,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		}
 	}
 
-	Sint64ValueStr := r.PathValue("Sint64Value")
+	Sint64ValueStr := ctx.Param("Sint64Value")
 	if len(Sint64ValueStr) != 0 {
 		arg.Sint64Value, err = strconv.ParseInt(Sint64ValueStr, 10, 64)
 		if err != nil {
@@ -1048,7 +892,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		}
 	}
 
-	Uint64ValueStr := r.PathValue("Uint64Value")
+	Uint64ValueStr := ctx.Param("Uint64Value")
 	if len(Uint64ValueStr) != 0 {
 		arg.Uint64Value, err = strconv.ParseUint(Uint64ValueStr, 10, 64)
 		if err != nil {
@@ -1056,7 +900,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		}
 	}
 
-	Sfixed32ValueStr := r.PathValue("Sfixed32Value")
+	Sfixed32ValueStr := ctx.Param("Sfixed32Value")
 	if len(Sfixed32ValueStr) != 0 {
 		Sfixed32Value, convErr := strconv.ParseInt(Sfixed32ValueStr, 10, 32)
 		if convErr != nil {
@@ -1065,7 +909,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		arg.Sfixed32Value = int32(Sfixed32Value)
 	}
 
-	Fixed32ValueStr := r.PathValue("Fixed32Value")
+	Fixed32ValueStr := ctx.Param("Fixed32Value")
 	if len(Fixed32ValueStr) != 0 {
 		Fixed32Value, convErr := strconv.ParseUint(Fixed32ValueStr, 10, 32)
 		if convErr != nil {
@@ -1074,7 +918,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		arg.Fixed32Value = uint32(Fixed32Value)
 	}
 
-	FloatValueStr := r.PathValue("FloatValue")
+	FloatValueStr := ctx.Param("FloatValue")
 	if len(FloatValueStr) != 0 {
 		FloatValue, convErr := strconv.ParseFloat(FloatValueStr, 32)
 		if convErr != nil {
@@ -1083,7 +927,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		arg.FloatValue = float32(FloatValue)
 	}
 
-	Sfixed64ValueStr := r.PathValue("Sfixed64Value")
+	Sfixed64ValueStr := ctx.Param("Sfixed64Value")
 	if len(Sfixed64ValueStr) != 0 {
 		arg.Sfixed64Value, err = strconv.ParseInt(Sfixed64ValueStr, 10, 64)
 		if err != nil {
@@ -1091,7 +935,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		}
 	}
 
-	Fixed64ValueStr := r.PathValue("Fixed64Value")
+	Fixed64ValueStr := ctx.Param("Fixed64Value")
 	if len(Fixed64ValueStr) != 0 {
 		arg.Fixed64Value, err = strconv.ParseUint(Fixed64ValueStr, 10, 64)
 		if err != nil {
@@ -1099,7 +943,7 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		}
 	}
 
-	DoubleValueStr := r.PathValue("DoubleValue")
+	DoubleValueStr := ctx.Param("DoubleValue")
 	if len(DoubleValueStr) != 0 {
 		arg.DoubleValue, err = strconv.ParseFloat(DoubleValueStr, 64)
 		if err != nil {
@@ -1107,12 +951,12 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 		}
 	}
 
-	StringValueStr := r.PathValue("StringValue")
+	StringValueStr := ctx.Param("StringValue")
 	if len(StringValueStr) != 0 {
 		arg.StringValue = StringValueStr
 	}
 
-	BytesValueStr := r.PathValue("BytesValue")
+	BytesValueStr := ctx.Param("BytesValue")
 	if len(BytesValueStr) != 0 {
 		arg.BytesValue = []byte(BytesValueStr)
 	}
@@ -1120,19 +964,12 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(r *http.Request) (arg *commo
 	return arg, err
 }
 
-func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(r *http.Request) (arg *common.AllTextTypesMsg, err error) {
+func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *gin.Context) (arg *common.AllTextTypesMsg, err error) {
 	arg = &common.AllTextTypesMsg{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "String":
@@ -1190,22 +1027,22 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(r *http.Request) (ar
 			}
 		}
 	}
-	String_Str := r.PathValue("String")
+	String_Str := ctx.Param("String")
 	if len(String_Str) != 0 {
 		arg.String_ = String_Str
 	}
 
-	RepeatedStringStr := r.PathValue("RepeatedString")
+	RepeatedStringStr := ctx.Param("RepeatedString")
 	if len(RepeatedStringStr) != 0 {
 		arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
 	}
 
-	BytesStr := r.PathValue("Bytes")
+	BytesStr := ctx.Param("Bytes")
 	if len(BytesStr) != 0 {
 		arg.Bytes = []byte(BytesStr)
 	}
 
-	RepeatedBytesStr := r.PathValue("RepeatedBytes")
+	RepeatedBytesStr := ctx.Param("RepeatedBytes")
 	if len(RepeatedBytesStr) != 0 {
 		RepeatedBytesStrs := strings.Split(RepeatedBytesStr, ",")
 		arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
@@ -1214,7 +1051,7 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(r *http.Request) (ar
 		}
 	}
 
-	EnumStr := r.PathValue("Enum")
+	EnumStr := ctx.Param("Enum")
 	if len(EnumStr) != 0 {
 		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
 			arg.Enum = common.Options(OptionsValue)
@@ -1229,7 +1066,7 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(r *http.Request) (ar
 		}
 	}
 
-	RepeatedEnumStr := r.PathValue("RepeatedEnum")
+	RepeatedEnumStr := ctx.Param("RepeatedEnum")
 	if len(RepeatedEnumStr) != 0 {
 		RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
 		arg.RepeatedEnum = make([]common.Options, 0, len(RepeatedEnumStrs))
@@ -1251,9 +1088,9 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(r *http.Request) (ar
 	return arg, err
 }
 
-func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(r *http.Request) (arg *common.AllTextTypesMsg, err error) {
+func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx *gin.Context) (arg *common.AllTextTypesMsg, err error) {
 	arg = &common.AllTextTypesMsg{}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "String":
@@ -1311,22 +1148,22 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(r *http.Request) (arg
 			}
 		}
 	}
-	String_Str := r.PathValue("String")
+	String_Str := ctx.Param("String")
 	if len(String_Str) != 0 {
 		arg.String_ = String_Str
 	}
 
-	RepeatedStringStr := r.PathValue("RepeatedString")
+	RepeatedStringStr := ctx.Param("RepeatedString")
 	if len(RepeatedStringStr) != 0 {
 		arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
 	}
 
-	BytesStr := r.PathValue("Bytes")
+	BytesStr := ctx.Param("Bytes")
 	if len(BytesStr) != 0 {
 		arg.Bytes = []byte(BytesStr)
 	}
 
-	RepeatedBytesStr := r.PathValue("RepeatedBytes")
+	RepeatedBytesStr := ctx.Param("RepeatedBytes")
 	if len(RepeatedBytesStr) != 0 {
 		RepeatedBytesStrs := strings.Split(RepeatedBytesStr, ",")
 		arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
@@ -1335,7 +1172,7 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(r *http.Request) (arg
 		}
 	}
 
-	EnumStr := r.PathValue("Enum")
+	EnumStr := ctx.Param("Enum")
 	if len(EnumStr) != 0 {
 		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
 			arg.Enum = common.Options(OptionsValue)
@@ -1350,7 +1187,7 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(r *http.Request) (arg
 		}
 	}
 
-	RepeatedEnumStr := r.PathValue("RepeatedEnum")
+	RepeatedEnumStr := ctx.Param("RepeatedEnum")
 	if len(RepeatedEnumStr) != 0 {
 		RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
 		arg.RepeatedEnum = make([]common.Options, 0, len(RepeatedEnumStrs))
@@ -1372,19 +1209,12 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(r *http.Request) (arg
 	return arg, err
 }
 
-func buildExampleServiceNameCommonTypesAny(r *http.Request) (arg *anypb.Any, err error) {
+func buildExampleServiceNameCommonTypesAny(ctx *gin.Context) (arg *anypb.Any, err error) {
 	arg = &anypb.Any{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "type_url":
@@ -1399,19 +1229,12 @@ func buildExampleServiceNameCommonTypesAny(r *http.Request) (arg *anypb.Any, err
 	return arg, err
 }
 
-func buildExampleServiceNameSameInputAndOutputInputMsgName(r *http.Request) (arg *common.InputMsgName, err error) {
+func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *gin.Context) (arg *common.InputMsgName, err error) {
 	arg = &common.InputMsgName{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "int64Argument":
@@ -1426,7 +1249,7 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(r *http.Request) (arg
 			}
 		}
 	}
-	StringArgumentStr := r.PathValue("stringArgument")
+	StringArgumentStr := ctx.Param("stringArgument")
 	if len(StringArgumentStr) != 0 {
 		arg.StringArgument = StringArgumentStr
 	}
@@ -1434,19 +1257,12 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(r *http.Request) (arg
 	return arg, err
 }
 
-func buildExampleServiceNameOptionalOptionalField(r *http.Request) (arg *common.OptionalField, err error) {
+func buildExampleServiceNameOptionalOptionalField(ctx *gin.Context) (arg *common.OptionalField, err error) {
 	arg = &common.OptionalField{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "BoolValue":
@@ -1579,9 +1395,9 @@ func buildExampleServiceNameOptionalOptionalField(r *http.Request) (arg *common.
 	return arg, err
 }
 
-func buildExampleServiceNameGetMethodInputMsgName(r *http.Request) (arg *common.InputMsgName, err error) {
+func buildExampleServiceNameGetMethodInputMsgName(ctx *gin.Context) (arg *common.InputMsgName, err error) {
 	arg = &common.InputMsgName{}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "int64Argument":
@@ -1599,9 +1415,9 @@ func buildExampleServiceNameGetMethodInputMsgName(r *http.Request) (arg *common.
 	return arg, err
 }
 
-func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg *common.RepeatedCheck, err error) {
+func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *gin.Context) (arg *common.RepeatedCheck, err error) {
 	arg = &common.RepeatedCheck{}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "BoolValue[]":
@@ -1708,7 +1524,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 			}
 		}
 	}
-	BoolValueStr := r.PathValue("BoolValue")
+	BoolValueStr := ctx.Param("BoolValue")
 	if len(BoolValueStr) != 0 {
 		BoolValueStrs := strings.Split(BoolValueStr, ",")
 		arg.BoolValue = make([]bool, 0, len(BoolValueStrs))
@@ -1724,7 +1540,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	EnumValueStr := r.PathValue("EnumValue")
+	EnumValueStr := ctx.Param("EnumValue")
 	if len(EnumValueStr) != 0 {
 		EnumValueStrs := strings.Split(EnumValueStr, ",")
 		arg.EnumValue = make([]common.Options, 0, len(EnumValueStrs))
@@ -1743,7 +1559,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	Int32ValueStr := r.PathValue("Int32Value")
+	Int32ValueStr := ctx.Param("Int32Value")
 	if len(Int32ValueStr) != 0 {
 		Int32ValueStrs := strings.Split(Int32ValueStr, ",")
 		arg.Int32Value = make([]int32, 0, len(Int32ValueStrs))
@@ -1756,7 +1572,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	Sint32ValueStr := r.PathValue("Sint32Value")
+	Sint32ValueStr := ctx.Param("Sint32Value")
 	if len(Sint32ValueStr) != 0 {
 		Sint32ValueStrs := strings.Split(Sint32ValueStr, ",")
 		arg.Sint32Value = make([]int32, 0, len(Sint32ValueStrs))
@@ -1769,7 +1585,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	Uint32ValueStr := r.PathValue("Uint32Value")
+	Uint32ValueStr := ctx.Param("Uint32Value")
 	if len(Uint32ValueStr) != 0 {
 		Uint32ValueStrs := strings.Split(Uint32ValueStr, ",")
 		arg.Uint32Value = make([]uint32, 0, len(Uint32ValueStrs))
@@ -1782,7 +1598,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	Int64ValueStr := r.PathValue("Int64Value")
+	Int64ValueStr := ctx.Param("Int64Value")
 	if len(Int64ValueStr) != 0 {
 		Int64ValueStrs := strings.Split(Int64ValueStr, ",")
 		arg.Int64Value = make([]int64, 0, len(Int64ValueStrs))
@@ -1795,7 +1611,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	Sint64ValueStr := r.PathValue("Sint64Value")
+	Sint64ValueStr := ctx.Param("Sint64Value")
 	if len(Sint64ValueStr) != 0 {
 		Sint64ValueStrs := strings.Split(Sint64ValueStr, ",")
 		arg.Sint64Value = make([]int64, 0, len(Sint64ValueStrs))
@@ -1808,7 +1624,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	Uint64ValueStr := r.PathValue("Uint64Value")
+	Uint64ValueStr := ctx.Param("Uint64Value")
 	if len(Uint64ValueStr) != 0 {
 		Uint64ValueStrs := strings.Split(Uint64ValueStr, ",")
 		arg.Uint64Value = make([]uint64, 0, len(Uint64ValueStrs))
@@ -1821,7 +1637,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	Sfixed32ValueStr := r.PathValue("Sfixed32Value")
+	Sfixed32ValueStr := ctx.Param("Sfixed32Value")
 	if len(Sfixed32ValueStr) != 0 {
 		Sfixed32ValueStrs := strings.Split(Sfixed32ValueStr, ",")
 		arg.Sfixed32Value = make([]int32, 0, len(Sfixed32ValueStrs))
@@ -1834,7 +1650,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	Fixed32ValueStr := r.PathValue("Fixed32Value")
+	Fixed32ValueStr := ctx.Param("Fixed32Value")
 	if len(Fixed32ValueStr) != 0 {
 		Fixed32ValueStrs := strings.Split(Fixed32ValueStr, ",")
 		arg.Fixed32Value = make([]uint32, 0, len(Fixed32ValueStrs))
@@ -1847,7 +1663,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	FloatValueStr := r.PathValue("FloatValue")
+	FloatValueStr := ctx.Param("FloatValue")
 	if len(FloatValueStr) != 0 {
 		FloatValueStrs := strings.Split(FloatValueStr, ",")
 		arg.FloatValue = make([]float32, 0, len(FloatValueStrs))
@@ -1860,7 +1676,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	Sfixed64ValueStr := r.PathValue("Sfixed64Value")
+	Sfixed64ValueStr := ctx.Param("Sfixed64Value")
 	if len(Sfixed64ValueStr) != 0 {
 		Sfixed64ValueStrs := strings.Split(Sfixed64ValueStr, ",")
 		arg.Sfixed64Value = make([]int64, 0, len(Sfixed64ValueStrs))
@@ -1873,7 +1689,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	Fixed64ValueStr := r.PathValue("Fixed64Value")
+	Fixed64ValueStr := ctx.Param("Fixed64Value")
 	if len(Fixed64ValueStr) != 0 {
 		Fixed64ValueStrs := strings.Split(Fixed64ValueStr, ",")
 		arg.Fixed64Value = make([]uint64, 0, len(Fixed64ValueStrs))
@@ -1886,7 +1702,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	DoubleValueStr := r.PathValue("DoubleValue")
+	DoubleValueStr := ctx.Param("DoubleValue")
 	if len(DoubleValueStr) != 0 {
 		DoubleValueStrs := strings.Split(DoubleValueStr, ",")
 		arg.DoubleValue = make([]float64, 0, len(DoubleValueStrs))
@@ -1899,12 +1715,12 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	StringValueStr := r.PathValue("StringValue")
+	StringValueStr := ctx.Param("StringValue")
 	if len(StringValueStr) != 0 {
 		arg.StringValue = strings.Split(StringValueStr, ",")
 	}
 
-	BytesValueStr := r.PathValue("BytesValue")
+	BytesValueStr := ctx.Param("BytesValue")
 	if len(BytesValueStr) != 0 {
 		BytesValueStrs := strings.Split(BytesValueStr, ",")
 		arg.BytesValue = make([][]byte, 0, len(BytesValueStrs))
@@ -1913,7 +1729,7 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 		}
 	}
 
-	StringValueQueryStr := r.PathValue("StringValueQuery")
+	StringValueQueryStr := ctx.Param("StringValueQuery")
 	if len(StringValueQueryStr) != 0 {
 		arg.StringValueQuery = strings.Split(StringValueQueryStr, ",")
 	}
@@ -1921,9 +1737,9 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(r *http.Request) (arg
 	return arg, err
 }
 
-func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(r *http.Request) (arg *common.RepeatedCheck, err error) {
+func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *gin.Context) (arg *common.RepeatedCheck, err error) {
 	arg = &common.RepeatedCheck{}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "BoolValue[]":
@@ -2030,7 +1846,7 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(r *http.Request) (ar
 			}
 		}
 	}
-	StringValueStr := r.PathValue("StringValue")
+	StringValueStr := ctx.Param("StringValue")
 	if len(StringValueStr) != 0 {
 		arg.StringValue = strings.Split(StringValueStr, ",")
 	}
@@ -2038,19 +1854,12 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(r *http.Request) (ar
 	return arg, err
 }
 
-func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(r *http.Request) (arg *common.RepeatedCheck, err error) {
+func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *gin.Context) (arg *common.RepeatedCheck, err error) {
 	arg = &common.RepeatedCheck{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "BoolValue[]":
@@ -2157,7 +1966,7 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(r *http.Request) (arg
 			}
 		}
 	}
-	StringValueStr := r.PathValue("StringValue")
+	StringValueStr := ctx.Param("StringValue")
 	if len(StringValueStr) != 0 {
 		arg.StringValue = strings.Split(StringValueStr, ",")
 	}
@@ -2165,39 +1974,25 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(r *http.Request) (arg
 	return arg, err
 }
 
-func buildExampleServiceNameEmptyGetEmpty(r *http.Request) (arg *common.Empty, err error) {
+func buildExampleServiceNameEmptyGetEmpty(ctx *gin.Context) (arg *common.Empty, err error) {
 	arg = &common.Empty{}
 	return arg, err
 }
 
-func buildExampleServiceNameEmptyPostEmpty(r *http.Request) (arg *common.Empty, err error) {
+func buildExampleServiceNameEmptyPostEmpty(ctx *gin.Context) (arg *common.Empty, err error) {
 	arg = &common.Empty{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
 	return arg, err
 }
 
-func buildExampleServiceNameOnlyStructInGetOnlyStruct(r *http.Request) (arg *common.OnlyStruct, err error) {
+func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx *gin.Context) (arg *common.OnlyStruct, err error) {
 	arg = &common.OnlyStruct{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "value":
@@ -2215,19 +2010,24 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(r *http.Request) (arg *com
 	return arg, err
 }
 
-func buildExampleServiceNameMultipartFormMultipartFormRequest(r *http.Request) (arg *common.MultipartFormRequest, err error) {
+func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx *gin.Context) (arg *common.MultipartFormRequest, err error) {
 	arg = &common.MultipartFormRequest{}
-	if err = r.ParseMultipartForm(32 << 20); err != nil {
+	form, err := ctx.MultipartForm()
+	if err != nil {
 		return nil, err
 	}
-	f, fh, err := r.FormFile("document")
-	if err == nil && !errors.Is(err, http.ErrMissingFile) {
-		arg.Document = &common.FileEx{
-			File:    make([]byte, fh.Size),
-			Name:    fh.Filename,
-			Headers: make(map[string]string, len(fh.Header)),
+	if file, ok := form.File["document"]; ok && len(file) > 0 {
+		var f multipart.File
+		f, err = file[0].Open()
+		if err != nil {
+			return nil, fmt.Errorf("failed to open file: document: %w", err)
 		}
-		for key, value := range fh.Header {
+		arg.Document = &common.FileEx{
+			File:    make([]byte, file[0].Size),
+			Name:    file[0].Filename,
+			Headers: make(map[string]string, len(file[0].Header)),
+		}
+		for key, value := range file[0].Header {
 			arg.Document.Headers[key] = value[0]
 		}
 		_, err = f.Read(arg.Document.File)
@@ -2235,10 +2035,10 @@ func buildExampleServiceNameMultipartFormMultipartFormRequest(r *http.Request) (
 			return nil, fmt.Errorf("failed to read file: document: %w", err)
 		}
 	}
-	if values := r.Form["otherField"]; len(values) > 0 {
+	if values := form.Value["otherField"]; len(values) > 0 {
 		arg.OtherField = values[0]
 	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "document":
@@ -2253,12 +2053,13 @@ func buildExampleServiceNameMultipartFormMultipartFormRequest(r *http.Request) (
 	return arg, err
 }
 
-func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.Request) (arg *common.MultipartFormAllTypes, err error) {
+func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *gin.Context) (arg *common.MultipartFormAllTypes, err error) {
 	arg = &common.MultipartFormAllTypes{}
-	if err = r.ParseMultipartForm(32 << 20); err != nil {
+	form, err := ctx.MultipartForm()
+	if err != nil {
 		return nil, err
 	}
-	if values := r.Form["BoolValue"]; len(values) > 0 {
+	if values := form.Value["BoolValue"]; len(values) > 0 {
 		switch values[0] {
 		case "true", "t", "1":
 			arg.BoolValue = true
@@ -2268,7 +2069,7 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 			return nil, fmt.Errorf("unknown bool string value %s", values[0])
 		}
 	}
-	if values := r.Form["EnumValue"]; len(values) > 0 {
+	if values := form.Value["EnumValue"]; len(values) > 0 {
 		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(values[0])]; optValueOk {
 			arg.EnumValue = common.Options(OptionsValue)
 		} else {
@@ -2281,21 +2082,21 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 			}
 		}
 	}
-	if values := r.Form["Int32Value"]; len(values) > 0 {
+	if values := form.Value["Int32Value"]; len(values) > 0 {
 		Int32Value, convErr := strconv.ParseInt(values[0], 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
 		}
 		arg.Int32Value = int32(Int32Value)
 	}
-	if values := r.Form["Sint32Value"]; len(values) > 0 {
+	if values := form.Value["Sint32Value"]; len(values) > 0 {
 		Sint32Value, convErr := strconv.ParseInt(values[0], 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sint32Value: %w", convErr)
 		}
 		arg.Sint32Value = int32(Sint32Value)
 	}
-	if values := r.Form["Uint32Value"]; len(values) > 0 {
+	if values := form.Value["Uint32Value"]; len(values) > 0 {
 		for _, value := range values {
 			Uint32Value, convErr := strconv.ParseUint(value, 10, 32)
 			if convErr != nil {
@@ -2304,33 +2105,33 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 			arg.Uint32Value = append(arg.Uint32Value, uint32(Uint32Value))
 		}
 	}
-	if values := r.Form["Int64Value"]; len(values) > 0 {
+	if values := form.Value["Int64Value"]; len(values) > 0 {
 		arg.Int64Value, err = strconv.ParseInt(values[0], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
 		}
 	}
-	if values := r.Form["Sint64Value"]; len(values) > 0 {
+	if values := form.Value["Sint64Value"]; len(values) > 0 {
 		Sint64Value, convErr := strconv.ParseInt(values[0], 10, 64)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
 		}
 		arg.Sint64Value = &Sint64Value
 	}
-	if values := r.Form["Uint64Value"]; len(values) > 0 {
+	if values := form.Value["Uint64Value"]; len(values) > 0 {
 		arg.Uint64Value, err = strconv.ParseUint(values[0], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
 		}
 	}
-	if values := r.Form["Sfixed32Value"]; len(values) > 0 {
+	if values := form.Value["Sfixed32Value"]; len(values) > 0 {
 		Sfixed32Value, convErr := strconv.ParseInt(values[0], 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sfixed32Value: %w", convErr)
 		}
 		arg.Sfixed32Value = int32(Sfixed32Value)
 	}
-	if values := r.Form["Fixed32Value"]; len(values) > 0 {
+	if values := form.Value["Fixed32Value"]; len(values) > 0 {
 		for _, value := range values {
 			Fixed32Value, convErr := strconv.ParseUint(value, 10, 32)
 			if convErr != nil {
@@ -2339,42 +2140,42 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 			arg.Fixed32Value = append(arg.Fixed32Value, uint32(Fixed32Value))
 		}
 	}
-	if values := r.Form["FloatValue"]; len(values) > 0 {
+	if values := form.Value["FloatValue"]; len(values) > 0 {
 		FloatValue, convErr := strconv.ParseFloat(values[0], 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
 		}
 		arg.FloatValue = float32(FloatValue)
 	}
-	if values := r.Form["Sfixed64Value"]; len(values) > 0 {
+	if values := form.Value["Sfixed64Value"]; len(values) > 0 {
 		arg.Sfixed64Value, err = strconv.ParseInt(values[0], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", err)
 		}
 	}
-	if values := r.Form["Fixed64Value"]; len(values) > 0 {
+	if values := form.Value["Fixed64Value"]; len(values) > 0 {
 		Fixed64Value, convErr := strconv.ParseUint(values[0], 10, 64)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Fixed64Value: %w", convErr)
 		}
 		arg.Fixed64Value = &Fixed64Value
 	}
-	if values := r.Form["DoubleValue"]; len(values) > 0 {
+	if values := form.Value["DoubleValue"]; len(values) > 0 {
 		arg.DoubleValue, err = strconv.ParseFloat(values[0], 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
 		}
 	}
-	if values := r.Form["StringValue"]; len(values) > 0 {
+	if values := form.Value["StringValue"]; len(values) > 0 {
 		arg.StringValue = values[0]
 	}
-	if values := r.Form["BytesValue"]; len(values) > 0 {
+	if values := form.Value["BytesValue"]; len(values) > 0 {
 		arg.BytesValue = []byte(values[0])
 	}
-	if values := r.Form["SliceStringValue"]; len(values) > 0 {
+	if values := form.Value["SliceStringValue"]; len(values) > 0 {
 		arg.SliceStringValue = append(arg.SliceStringValue, values...)
 	}
-	if values := r.Form["SliceInt32Value"]; len(values) > 0 {
+	if values := form.Value["SliceInt32Value"]; len(values) > 0 {
 		for _, value := range values {
 			SliceInt32Value, convErr := strconv.ParseInt(value, 10, 32)
 			if convErr != nil {
@@ -2383,14 +2184,18 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 			arg.SliceInt32Value = append(arg.SliceInt32Value, int32(SliceInt32Value))
 		}
 	}
-	f, fh, err := r.FormFile("document")
-	if err == nil && !errors.Is(err, http.ErrMissingFile) {
-		arg.Document = &common.FileEx{
-			File:    make([]byte, fh.Size),
-			Name:    fh.Filename,
-			Headers: make(map[string]string, len(fh.Header)),
+	if file, ok := form.File["document"]; ok && len(file) > 0 {
+		var f multipart.File
+		f, err = file[0].Open()
+		if err != nil {
+			return nil, fmt.Errorf("failed to open file: document: %w", err)
 		}
-		for key, value := range fh.Header {
+		arg.Document = &common.FileEx{
+			File:    make([]byte, file[0].Size),
+			Name:    file[0].Filename,
+			Headers: make(map[string]string, len(file[0].Header)),
+		}
+		for key, value := range file[0].Header {
 			arg.Document.Headers[key] = value[0]
 		}
 		_, err = f.Read(arg.Document.File)
@@ -2398,10 +2203,10 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 			return nil, fmt.Errorf("failed to read file: document: %w", err)
 		}
 	}
-	if values := r.Form["RepeatedStringValue"]; len(values) > 0 {
+	if values := form.Value["RepeatedStringValue"]; len(values) > 0 {
 		arg.RepeatedStringValue = append(arg.RepeatedStringValue, values...)
 	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "BoolValue":
@@ -2517,9 +2322,9 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(r *http.R
 	return arg, err
 }
 
-func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(r *http.Request) (arg *common.AllNumberTypesMsg, err error) {
+func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ctx *gin.Context) (arg *common.AllNumberTypesMsg, err error) {
 	arg = &common.AllNumberTypesMsg{}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "Int32Value":
@@ -2593,7 +2398,7 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(r *http.Request) (a
 			}
 		}
 	}
-	Int32ValueStr := r.PathValue("Int32Value")
+	Int32ValueStr := ctx.Param("Int32Value")
 	if len(Int32ValueStr) != 0 {
 		Int32Value, convErr := strconv.ParseInt(Int32ValueStr, 10, 32)
 		if convErr != nil {
@@ -2602,7 +2407,7 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(r *http.Request) (a
 		arg.Int32Value = int32(Int32Value)
 	}
 
-	Uint32ValueStr := r.PathValue("Uint32Value")
+	Uint32ValueStr := ctx.Param("Uint32Value")
 	if len(Uint32ValueStr) != 0 {
 		Uint32Value, convErr := strconv.ParseUint(Uint32ValueStr, 10, 32)
 		if convErr != nil {
@@ -2611,7 +2416,7 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(r *http.Request) (a
 		arg.Uint32Value = uint32(Uint32Value)
 	}
 
-	Int64ValueStr := r.PathValue("Int64Value")
+	Int64ValueStr := ctx.Param("Int64Value")
 	if len(Int64ValueStr) != 0 {
 		arg.Int64Value, err = strconv.ParseInt(Int64ValueStr, 10, 64)
 		if err != nil {
@@ -2619,7 +2424,7 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(r *http.Request) (a
 		}
 	}
 
-	Uint64ValueStr := r.PathValue("Uint64Value")
+	Uint64ValueStr := ctx.Param("Uint64Value")
 	if len(Uint64ValueStr) != 0 {
 		arg.Uint64Value, err = strconv.ParseUint(Uint64ValueStr, 10, 64)
 		if err != nil {
@@ -2627,7 +2432,7 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(r *http.Request) (a
 		}
 	}
 
-	FloatValueStr := r.PathValue("FloatValue")
+	FloatValueStr := ctx.Param("FloatValue")
 	if len(FloatValueStr) != 0 {
 		FloatValue, convErr := strconv.ParseFloat(FloatValueStr, 32)
 		if convErr != nil {
@@ -2636,7 +2441,7 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(r *http.Request) (a
 		arg.FloatValue = float32(FloatValue)
 	}
 
-	DoubleValueStr := r.PathValue("DoubleValue")
+	DoubleValueStr := ctx.Param("DoubleValue")
 	if len(DoubleValueStr) != 0 {
 		arg.DoubleValue, err = strconv.ParseFloat(DoubleValueStr, 64)
 		if err != nil {
@@ -2647,9 +2452,9 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(r *http.Request) (a
 	return arg, err
 }
 
-func buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(r *http.Request) (arg *common.AllNumberTypesMsg, err error) {
+func buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(ctx *gin.Context) (arg *common.AllNumberTypesMsg, err error) {
 	arg = &common.AllNumberTypesMsg{}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "Int32Value":
@@ -2726,9 +2531,9 @@ func buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(r *http.Reques
 	return arg, err
 }
 
-func buildExampleServiceNameGetMessageGetMessageRequest(r *http.Request) (arg *common.GetMessageRequest, err error) {
+func buildExampleServiceNameGetMessageGetMessageRequest(ctx *gin.Context) (arg *common.GetMessageRequest, err error) {
 	arg = &common.GetMessageRequest{}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "name":
@@ -2738,7 +2543,7 @@ func buildExampleServiceNameGetMessageGetMessageRequest(r *http.Request) (arg *c
 			}
 		}
 	}
-	NameStr := r.PathValue("name")
+	NameStr := ctx.Param("name")
 	if len(NameStr) != 0 {
 		arg.Name = NameStr
 		arg.Name = fmt.Sprintf("messages/%s", arg.Name)
@@ -2747,9 +2552,9 @@ func buildExampleServiceNameGetMessageGetMessageRequest(r *http.Request) (arg *c
 	return arg, err
 }
 
-func buildExampleServiceNameGetMessageV2GetMessageRequestV2(r *http.Request) (arg *common.GetMessageRequestV2, err error) {
+func buildExampleServiceNameGetMessageV2GetMessageRequestV2(ctx *gin.Context) (arg *common.GetMessageRequestV2, err error) {
 	arg = &common.GetMessageRequestV2{}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "message_id":
@@ -2771,7 +2576,7 @@ func buildExampleServiceNameGetMessageV2GetMessageRequestV2(r *http.Request) (ar
 			}
 		}
 	}
-	MessageIdStr := r.PathValue("message_id")
+	MessageIdStr := ctx.Param("message_id")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
 	}
@@ -2779,20 +2584,13 @@ func buildExampleServiceNameGetMessageV2GetMessageRequestV2(r *http.Request) (ar
 	return arg, err
 }
 
-func buildExampleServiceNameUpdateMessageUpdateMessageRequest(r *http.Request) (arg *common.UpdateMessageRequest, err error) {
+func buildExampleServiceNameUpdateMessageUpdateMessageRequest(ctx *gin.Context) (arg *common.UpdateMessageRequest, err error) {
 	arg = &common.UpdateMessageRequest{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	arg.Message = &common.MessageV2{}
+	if err = ctx.ShouldBindBodyWithJSON(arg.Message); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		arg.Message = &common.MessageV2{}
-		if err = json.Unmarshal(body, arg.Message); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "message_id":
@@ -2814,7 +2612,7 @@ func buildExampleServiceNameUpdateMessageUpdateMessageRequest(r *http.Request) (
 			}
 		}
 	}
-	MessageIdStr := r.PathValue("message_id")
+	MessageIdStr := ctx.Param("message_id")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
 	}
@@ -2822,19 +2620,12 @@ func buildExampleServiceNameUpdateMessageUpdateMessageRequest(r *http.Request) (
 	return arg, err
 }
 
-func buildExampleServiceNameUpdateMessageV2MessageV2(r *http.Request) (arg *common.MessageV2, err error) {
+func buildExampleServiceNameUpdateMessageV2MessageV2(ctx *gin.Context) (arg *common.MessageV2, err error) {
 	arg = &common.MessageV2{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "message_id":
@@ -2846,7 +2637,7 @@ func buildExampleServiceNameUpdateMessageV2MessageV2(r *http.Request) (arg *comm
 			}
 		}
 	}
-	MessageIdStr := r.PathValue("message_id")
+	MessageIdStr := ctx.Param("message_id")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
 	}
@@ -2854,9 +2645,9 @@ func buildExampleServiceNameUpdateMessageV2MessageV2(r *http.Request) (arg *comm
 	return arg, err
 }
 
-func buildExampleServiceNameGetMessageV3GetMessageRequestV3(r *http.Request) (arg *common.GetMessageRequestV3, err error) {
+func buildExampleServiceNameGetMessageV3GetMessageRequestV3(ctx *gin.Context) (arg *common.GetMessageRequestV3, err error) {
 	arg = &common.GetMessageRequestV3{}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "message_id":
@@ -2868,12 +2659,12 @@ func buildExampleServiceNameGetMessageV3GetMessageRequestV3(r *http.Request) (ar
 			}
 		}
 	}
-	MessageIdStr := r.PathValue("message_id")
+	MessageIdStr := ctx.Param("message_id")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
 	}
 
-	UserIdStr := r.PathValue("user_id")
+	UserIdStr := ctx.Param("user_id")
 	if len(UserIdStr) != 0 {
 		arg.UserId = UserIdStr
 	}
@@ -2881,9 +2672,9 @@ func buildExampleServiceNameGetMessageV3GetMessageRequestV3(r *http.Request) (ar
 	return arg, err
 }
 
-func buildExampleServiceNameGetMessageV4GetMessageRequestV3(r *http.Request) (arg *common.GetMessageRequestV3, err error) {
+func buildExampleServiceNameGetMessageV4GetMessageRequestV3(ctx *gin.Context) (arg *common.GetMessageRequestV3, err error) {
 	arg = &common.GetMessageRequestV3{}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "message_id":
@@ -2895,28 +2686,21 @@ func buildExampleServiceNameGetMessageV4GetMessageRequestV3(r *http.Request) (ar
 			}
 		}
 	}
-	MessageIdStr := r.PathValue("message_id")
+	MessageIdStr := ctx.Param("message_id")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
-		arg.MessageId = fmt.Sprintf("base/%s", arg.MessageId)
+		arg.MessageId = fmt.Sprintf("base%s", arg.MessageId)
 	}
 
 	return arg, err
 }
 
-func buildExampleServiceNameTopLevelArrayArray(r *http.Request) (arg *common.Array, err error) {
+func buildExampleServiceNameTopLevelArrayArray(ctx *gin.Context) (arg *common.Array, err error) {
 	arg = &common.Array{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "items[]":
@@ -2929,19 +2713,12 @@ func buildExampleServiceNameTopLevelArrayArray(r *http.Request) (arg *common.Arr
 	return arg, err
 }
 
-func buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(r *http.Request) (arg *common.UpdateMessageRequest, err error) {
+func buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(ctx *gin.Context) (arg *common.UpdateMessageRequest, err error) {
 	arg = &common.UpdateMessageRequest{}
-	var body []byte
-	if body, err = io.ReadAll(r.Body); err != nil {
+	if err = ctx.ShouldBindBodyWithJSON(arg); err != nil {
 		return nil, err
 	}
-	_ = r.Body.Close()
-	if len(body) > 0 {
-		if err = json.Unmarshal(body, arg); err != nil {
-			return nil, err
-		}
-	}
-	for key, values := range r.URL.Query() {
+	for key, values := range ctx.Request.URL.Query() {
 		for _, value := range values {
 			switch key {
 			case "message_id":
@@ -2991,1486 +2768,5 @@ func getChainServerMiddlewareHandlerExample(
 	}
 	return func(ctx context.Context, req any) (resp any, err error) {
 		return middlewares[curr+1](ctx, req, getChainServerMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
-	}
-}
-
-var _ ServiceNameHTTPGoService = &ServiceNameHTTPGoClient{}
-
-type ServiceNameHTTPGoClient struct {
-	cl          *http.Client
-	host        string
-	middlewares []func(ctx context.Context, req *http.Request, handler func(ctx context.Context, req *http.Request) (resp *http.Response, err error)) (resp *http.Response, err error)
-	middleware  func(ctx context.Context, req *http.Request, handler func(ctx context.Context, req *http.Request) (resp *http.Response, err error)) (resp *http.Response, err error)
-}
-
-func GetServiceNameHTTPGoClient(
-	_ context.Context,
-	cl *http.Client,
-	host string,
-	middlewares []func(ctx context.Context, req *http.Request, handler func(ctx context.Context, req *http.Request) (resp *http.Response, err error)) (resp *http.Response, err error),
-) (*ServiceNameHTTPGoClient, error) {
-	return &ServiceNameHTTPGoClient{
-		cl:          cl,
-		host:        host,
-		middlewares: middlewares,
-		middleware:  chainClientMiddlewaresExample(middlewares),
-	}, nil
-}
-
-func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/RPCName/%s/%d%s", p.host, request.StringArgument, request.Int64Argument, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "RPCName")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.OutputMsgName{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *common.AllTypesMsg) (resp *common.AllTypesMsg, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/test/%t/%s/%d/%d/%d/%d/%d/%d/%d/%d/%f/%d/%d/%f/%s/%s%s", p.host, request.BoolValue, request.EnumValue, request.Int32Value, request.Sint32Value, request.Uint32Value, request.Int64Value, request.Sint64Value, request.Uint64Value, request.Sfixed32Value, request.Fixed32Value, request.FloatValue, request.Sfixed64Value, request.Fixed64Value, request.DoubleValue, request.StringValue, request.BytesValue, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "AllTypesTest")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.AllTypesMsg{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) AllTextTypesPost(ctx context.Context, request *common.AllTextTypesMsg) (resp *common.AllTextTypesMsg, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	RepeatedStringRequest := strings.Join(request.RepeatedString, ",")
-	RepeatedBytesStrs := make([]string, len(request.RepeatedBytes))
-	for i, v := range request.RepeatedBytes {
-		RepeatedBytesStrs[i] = string(v)
-	}
-	RepeatedBytesRequest := strings.Join(RepeatedBytesStrs, ",")
-	RepeatedEnumStrs := make([]string, len(request.RepeatedEnum))
-	for i, v := range request.RepeatedEnum {
-		RepeatedEnumStrs[i] = v.String()
-	}
-	RepeatedEnumRequest := strings.Join(RepeatedEnumStrs, ",")
-	u, err := url.Parse(fmt.Sprintf("%s/v1/text/%s/%s/%s/%s/%s/%s%s", p.host, request.String_, RepeatedStringRequest, request.Bytes, RepeatedBytesRequest, request.Enum, RepeatedEnumRequest, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesPost")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.AllTextTypesMsg{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) AllTextTypesGet(ctx context.Context, request *common.AllTextTypesMsg) (resp *common.AllTextTypesMsg, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var parameters = []string{}
-	var values = []any{}
-	if request.OptionalString != nil {
-		parameters = append(parameters, "OptionalString=%s")
-		values = append(values, *request.OptionalString)
-	}
-	if request.OptionalBytes != nil {
-		parameters = append(parameters, "OptionalBytes=%s")
-		values = append(values, request.OptionalBytes)
-	}
-	if request.OptionalEnum != nil {
-		parameters = append(parameters, "OptionalEnum=%s")
-		values = append(values, *request.OptionalEnum)
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
-	RepeatedStringRequest := strings.Join(request.RepeatedString, ",")
-	RepeatedBytesStrs := make([]string, len(request.RepeatedBytes))
-	for i, v := range request.RepeatedBytes {
-		RepeatedBytesStrs[i] = string(v)
-	}
-	RepeatedBytesRequest := strings.Join(RepeatedBytesStrs, ",")
-	RepeatedEnumStrs := make([]string, len(request.RepeatedEnum))
-	for i, v := range request.RepeatedEnum {
-		RepeatedEnumStrs[i] = v.String()
-	}
-	RepeatedEnumRequest := strings.Join(RepeatedEnumStrs, ",")
-	u, err := url.Parse(fmt.Sprintf("%s/v2/text/%s/%s/%s/%s/%s/%s%s", p.host, request.String_, RepeatedStringRequest, request.Bytes, RepeatedBytesRequest, request.Enum, RepeatedEnumRequest, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodGet
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesGet")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.AllTextTypesMsg{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anypb.Any) (resp *emptypb.Empty, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/test/commonTypes%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "CommonTypes")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &emptypb.Empty{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-// SameInputAndOutput same types but different query, we need different query builder function
-func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/sameInputAndOutput/%s%s", p.host, request.StringArgument, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "SameInputAndOutput")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.OutputMsgName{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *common.OptionalField) (resp *common.OptionalField, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/test/optional%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "Optional")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.OptionalField{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var parameters = []string{
-		"int64Argument=%d",
-		"stringArgument=%s",
-	}
-	var values = []any{
-		request.Int64Argument,
-		request.StringArgument,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
-	u, err := url.Parse(fmt.Sprintf("%s/v1/test/get%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodGet
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "GetMethod")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.OutputMsgName{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	BoolValueStrs := make([]string, len(request.BoolValue))
-	for i, v := range request.BoolValue {
-		BoolValueStrs[i] = strconv.FormatBool(v)
-	}
-	BoolValueRequest := strings.Join(BoolValueStrs, ",")
-	EnumValueStrs := make([]string, len(request.EnumValue))
-	for i, v := range request.EnumValue {
-		EnumValueStrs[i] = v.String()
-	}
-	EnumValueRequest := strings.Join(EnumValueStrs, ",")
-	Int32ValueStrs := make([]string, len(request.Int32Value))
-	for i, v := range request.Int32Value {
-		Int32ValueStrs[i] = strconv.FormatInt(int64(v), 10)
-	}
-	Int32ValueRequest := strings.Join(Int32ValueStrs, ",")
-	Sint32ValueStrs := make([]string, len(request.Sint32Value))
-	for i, v := range request.Sint32Value {
-		Sint32ValueStrs[i] = strconv.FormatInt(int64(v), 10)
-	}
-	Sint32ValueRequest := strings.Join(Sint32ValueStrs, ",")
-	Uint32ValueStrs := make([]string, len(request.Uint32Value))
-	for i, v := range request.Uint32Value {
-		Uint32ValueStrs[i] = strconv.FormatInt(int64(v), 10)
-	}
-	Uint32ValueRequest := strings.Join(Uint32ValueStrs, ",")
-	Int64ValueStrs := make([]string, len(request.Int64Value))
-	for i, v := range request.Int64Value {
-		Int64ValueStrs[i] = strconv.FormatInt(v, 10)
-	}
-	Int64ValueRequest := strings.Join(Int64ValueStrs, ",")
-	Sint64ValueStrs := make([]string, len(request.Sint64Value))
-	for i, v := range request.Sint64Value {
-		Sint64ValueStrs[i] = strconv.FormatInt(v, 10)
-	}
-	Sint64ValueRequest := strings.Join(Sint64ValueStrs, ",")
-	Uint64ValueStrs := make([]string, len(request.Uint64Value))
-	for i, v := range request.Uint64Value {
-		Uint64ValueStrs[i] = strconv.FormatUint(v, 10)
-	}
-	Uint64ValueRequest := strings.Join(Uint64ValueStrs, ",")
-	Sfixed32ValueStrs := make([]string, len(request.Sfixed32Value))
-	for i, v := range request.Sfixed32Value {
-		Sfixed32ValueStrs[i] = strconv.FormatInt(int64(v), 10)
-	}
-	Sfixed32ValueRequest := strings.Join(Sfixed32ValueStrs, ",")
-	Fixed32ValueStrs := make([]string, len(request.Fixed32Value))
-	for i, v := range request.Fixed32Value {
-		Fixed32ValueStrs[i] = strconv.FormatInt(int64(v), 10)
-	}
-	Fixed32ValueRequest := strings.Join(Fixed32ValueStrs, ",")
-	FloatValueStrs := make([]string, len(request.FloatValue))
-	for i, v := range request.FloatValue {
-		FloatValueStrs[i] = strconv.FormatFloat(float64(v), 'f', -1, 64)
-	}
-	FloatValueRequest := strings.Join(FloatValueStrs, ",")
-	Sfixed64ValueStrs := make([]string, len(request.Sfixed64Value))
-	for i, v := range request.Sfixed64Value {
-		Sfixed64ValueStrs[i] = strconv.FormatInt(v, 10)
-	}
-	Sfixed64ValueRequest := strings.Join(Sfixed64ValueStrs, ",")
-	Fixed64ValueStrs := make([]string, len(request.Fixed64Value))
-	for i, v := range request.Fixed64Value {
-		Fixed64ValueStrs[i] = strconv.FormatUint(v, 10)
-	}
-	Fixed64ValueRequest := strings.Join(Fixed64ValueStrs, ",")
-	DoubleValueStrs := make([]string, len(request.DoubleValue))
-	for i, v := range request.DoubleValue {
-		DoubleValueStrs[i] = strconv.FormatFloat(v, 'f', -1, 64)
-	}
-	DoubleValueRequest := strings.Join(DoubleValueStrs, ",")
-	StringValueRequest := strings.Join(request.StringValue, ",")
-	BytesValueStrs := make([]string, len(request.BytesValue))
-	for i, v := range request.BytesValue {
-		BytesValueStrs[i] = string(v)
-	}
-	BytesValueRequest := strings.Join(BytesValueStrs, ",")
-	StringValueQueryRequest := strings.Join(request.StringValueQuery, ",")
-	u, err := url.Parse(fmt.Sprintf("%s/v1/repeated/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s%s", p.host, BoolValueRequest, EnumValueRequest, Int32ValueRequest, Sint32ValueRequest, Uint32ValueRequest, Int64ValueRequest, Sint64ValueRequest, Uint64ValueRequest, Sfixed32ValueRequest, Fixed32ValueRequest, FloatValueRequest, Sfixed64ValueRequest, Fixed64ValueRequest, DoubleValueRequest, StringValueRequest, BytesValueRequest, StringValueQueryRequest, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodGet
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPath")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.RepeatedCheck{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var parameters = []string{}
-	var values = []any{}
-	for _, v := range request.BoolValue {
-		parameters = append(parameters, "BoolValue[]=%t")
-		values = append(values, v)
-	}
-	for _, v := range request.EnumValue {
-		parameters = append(parameters, "EnumValue[]=%s")
-		values = append(values, v)
-	}
-	for _, v := range request.Int32Value {
-		parameters = append(parameters, "Int32Value[]=%d")
-		values = append(values, v)
-	}
-	for _, v := range request.Sint32Value {
-		parameters = append(parameters, "Sint32Value[]=%d")
-		values = append(values, v)
-	}
-	for _, v := range request.Uint32Value {
-		parameters = append(parameters, "Uint32Value[]=%d")
-		values = append(values, v)
-	}
-	for _, v := range request.Int64Value {
-		parameters = append(parameters, "Int64Value[]=%d")
-		values = append(values, v)
-	}
-	for _, v := range request.Sint64Value {
-		parameters = append(parameters, "Sint64Value[]=%d")
-		values = append(values, v)
-	}
-	for _, v := range request.Uint64Value {
-		parameters = append(parameters, "Uint64Value[]=%d")
-		values = append(values, v)
-	}
-	for _, v := range request.Sfixed32Value {
-		parameters = append(parameters, "Sfixed32Value[]=%d")
-		values = append(values, v)
-	}
-	for _, v := range request.Fixed32Value {
-		parameters = append(parameters, "Fixed32Value[]=%d")
-		values = append(values, v)
-	}
-	for _, v := range request.FloatValue {
-		parameters = append(parameters, "FloatValue[]=%f")
-		values = append(values, v)
-	}
-	for _, v := range request.Sfixed64Value {
-		parameters = append(parameters, "Sfixed64Value[]=%d")
-		values = append(values, v)
-	}
-	for _, v := range request.Fixed64Value {
-		parameters = append(parameters, "Fixed64Value[]=%d")
-		values = append(values, v)
-	}
-	for _, v := range request.DoubleValue {
-		parameters = append(parameters, "DoubleValue[]=%f")
-		values = append(values, v)
-	}
-	for _, v := range request.BytesValue {
-		parameters = append(parameters, "BytesValue[]=%s")
-		values = append(values, v)
-	}
-	for _, v := range request.StringValueQuery {
-		parameters = append(parameters, "StringValueQuery[]=%s")
-		values = append(values, v)
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
-	StringValueRequest := strings.Join(request.StringValue, ",")
-	u, err := url.Parse(fmt.Sprintf("%s/v2/repeated/%s%s", p.host, StringValueRequest, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodGet
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedQuery")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.RepeatedCheck{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	StringValueRequest := strings.Join(request.StringValue, ",")
-	u, err := url.Parse(fmt.Sprintf("%s/v3/repeated/%s%s", p.host, StringValueRequest, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPost")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.RepeatedCheck{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *common.Empty) (resp *common.Empty, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	u, err := url.Parse(fmt.Sprintf("%s/v1/emptyGet%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodGet
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "EmptyGet")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Empty{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *common.Empty) (resp *common.Empty, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/emptyPost%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "EmptyPost")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Empty{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *common.OnlyStruct) (resp *common.Empty, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/onlyStruct%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Empty{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *common.MultipartFormRequest) (resp *common.Empty, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var requestBody bytes.Buffer
-	writer := multipart.NewWriter(&requestBody)
-	part, err := writer.CreateFormFile("document", request.Document.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create form file document:  %w", err)
-	}
-	if _, err = part.Write(request.Document.File); err != nil {
-		return nil, fmt.Errorf("failed to write data to part document: %w", err)
-	}
-	if err = writer.WriteField("otherField", request.OtherField); err != nil {
-		return nil, fmt.Errorf("failed to write field otherField:  %w", err)
-	}
-	if err = writer.Close(); err != nil {
-		return nil, fmt.Errorf("failed to close writer: %w", err)
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(requestBody.Bytes()))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/multipart%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Empty{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) MultipartFormAllTypes(ctx context.Context, request *common.MultipartFormAllTypes) (resp *common.Empty, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var requestBody bytes.Buffer
-	writer := multipart.NewWriter(&requestBody)
-	if err = writer.WriteField("BoolValue", strconv.FormatBool(request.BoolValue)); err != nil {
-		return nil, fmt.Errorf("failed to write field BoolValue:  %w", err)
-	}
-	if err = writer.WriteField("EnumValue", request.EnumValue.String()); err != nil {
-		return nil, fmt.Errorf("failed to write field EnumValue:  %w", err)
-	}
-	if err = writer.WriteField("Int32Value", strconv.FormatInt(int64(request.Int32Value), 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Int32Value:  %w", err)
-	}
-	if err = writer.WriteField("Sint32Value", strconv.FormatInt(int64(request.Sint32Value), 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Sint32Value:  %w", err)
-	}
-	for _, value := range request.Uint32Value {
-		if err = writer.WriteField("Uint32Value", strconv.FormatInt(int64(value), 10)); err != nil {
-			return nil, fmt.Errorf("failed to write field Uint32Value:  %w", err)
-		}
-	}
-	if err = writer.WriteField("Int64Value", strconv.FormatInt(request.Int64Value, 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Int64Value:  %w", err)
-	}
-	if request.Sint64Value != nil {
-		if err = writer.WriteField("Sint64Value", strconv.FormatInt(*request.Sint64Value, 10)); err != nil {
-			return nil, fmt.Errorf("failed to write field Sint64Value:  %w", err)
-		}
-	}
-	if err = writer.WriteField("Uint64Value", strconv.FormatUint(request.Uint64Value, 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Uint64Value:  %w", err)
-	}
-	if err = writer.WriteField("Sfixed32Value", strconv.FormatInt(int64(request.Sfixed32Value), 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Sfixed32Value:  %w", err)
-	}
-	for _, value := range request.Fixed32Value {
-		if err = writer.WriteField("Fixed32Value", strconv.FormatInt(int64(value), 10)); err != nil {
-			return nil, fmt.Errorf("failed to write field Fixed32Value:  %w", err)
-		}
-	}
-	if err = writer.WriteField("FloatValue", strconv.FormatFloat(float64(request.FloatValue), 'f', -1, 64)); err != nil {
-		return nil, fmt.Errorf("failed to write field FloatValue:  %w", err)
-	}
-	if err = writer.WriteField("Sfixed64Value", strconv.FormatInt(request.Sfixed64Value, 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Sfixed64Value:  %w", err)
-	}
-	if request.Fixed64Value != nil {
-		if err = writer.WriteField("Fixed64Value", strconv.FormatUint(*request.Fixed64Value, 10)); err != nil {
-			return nil, fmt.Errorf("failed to write field Fixed64Value:  %w", err)
-		}
-	}
-	if err = writer.WriteField("DoubleValue", strconv.FormatFloat(request.DoubleValue, 'f', -1, 64)); err != nil {
-		return nil, fmt.Errorf("failed to write field DoubleValue:  %w", err)
-	}
-	if err = writer.WriteField("StringValue", request.StringValue); err != nil {
-		return nil, fmt.Errorf("failed to write field StringValue:  %w", err)
-	}
-	if err = writer.WriteField("BytesValue", string(request.BytesValue)); err != nil {
-		return nil, fmt.Errorf("failed to write field BytesValue:  %w", err)
-	}
-	for _, value := range request.SliceStringValue {
-		if err = writer.WriteField("SliceStringValue", value); err != nil {
-			return nil, fmt.Errorf("failed to write field SliceStringValue:  %w", err)
-		}
-	}
-	for _, value := range request.SliceInt32Value {
-		if err = writer.WriteField("SliceInt32Value", strconv.FormatInt(int64(value), 10)); err != nil {
-			return nil, fmt.Errorf("failed to write field SliceInt32Value:  %w", err)
-		}
-	}
-	part, err := writer.CreateFormFile("document", request.Document.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create form file document:  %w", err)
-	}
-	if _, err = part.Write(request.Document.File); err != nil {
-		return nil, fmt.Errorf("failed to write data to part document: %w", err)
-	}
-	for _, value := range request.RepeatedStringValue {
-		if err = writer.WriteField("RepeatedStringValue", value); err != nil {
-			return nil, fmt.Errorf("failed to write field RepeatedStringValue:  %w", err)
-		}
-	}
-	if err = writer.Close(); err != nil {
-		return nil, fmt.Errorf("failed to close writer: %w", err)
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(requestBody.Bytes()))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/multipartall%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "MultipartFormAllTypes")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Empty{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) AllTypesMaxTest(ctx context.Context, request *common.AllNumberTypesMsg) (resp *common.AllNumberTypesMsg, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var parameters = []string{
-		"Sint32Value=%d",
-		"Sint64Value=%d",
-		"Sfixed32Value=%d",
-		"Fixed32Value=%d",
-		"Sfixed64Value=%d",
-		"Fixed64Value=%d",
-	}
-	var values = []any{
-		request.Sint32Value,
-		request.Sint64Value,
-		request.Sfixed32Value,
-		request.Fixed32Value,
-		request.Sfixed64Value,
-		request.Fixed64Value,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
-	u, err := url.Parse(fmt.Sprintf("%s/v1/max/%d/%d/%d/%d/%f/%f%s", p.host, request.Int32Value, request.Uint32Value, request.Int64Value, request.Uint64Value, request.FloatValue, request.DoubleValue, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodGet
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxTest")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.AllNumberTypesMsg{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) AllTypesMaxQueryTest(ctx context.Context, request *common.AllNumberTypesMsg) (resp *common.AllNumberTypesMsg, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var parameters = []string{
-		"Int32Value=%d",
-		"Sint32Value=%d",
-		"Uint32Value=%d",
-		"Int64Value=%d",
-		"Sint64Value=%d",
-		"Uint64Value=%d",
-		"Sfixed32Value=%d",
-		"Fixed32Value=%d",
-		"FloatValue=%f",
-		"Sfixed64Value=%d",
-		"Fixed64Value=%d",
-		"DoubleValue=%f",
-	}
-	var values = []any{
-		request.Int32Value,
-		request.Sint32Value,
-		request.Uint32Value,
-		request.Int64Value,
-		request.Sint64Value,
-		request.Uint64Value,
-		request.Sfixed32Value,
-		request.Fixed32Value,
-		request.FloatValue,
-		request.Sfixed64Value,
-		request.Fixed64Value,
-		request.DoubleValue,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
-	u, err := url.Parse(fmt.Sprintf("%s/v1/maxquery%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodGet
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxQueryTest")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.AllNumberTypesMsg{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-// GetMessage http rule checks
-// v1/{name=messages/*}
-func (p *ServiceNameHTTPGoClient) GetMessage(ctx context.Context, request *common.GetMessageRequest) (resp *common.Message, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	u, err := url.Parse(fmt.Sprintf("%s/v1/messages/%s%s", p.host, request.Name, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodGet
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "GetMessage")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Message{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) GetMessageV2(ctx context.Context, request *common.GetMessageRequestV2) (resp *common.Message, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var parameters = []string{
-		"revision=%d",
-		"sub.subfield=%s",
-	}
-	var values = []any{
-		request.Revision,
-		request.Sub.Subfield,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
-	u, err := url.Parse(fmt.Sprintf("%s/v2/messages/%s%s", p.host, request.MessageId, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodGet
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "GetMessageV2")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Message{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) UpdateMessage(ctx context.Context, request *common.UpdateMessageRequest) (resp *common.Message, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request.Message)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/messages/%s%s", p.host, request.MessageId, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPatch
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "UpdateMessage")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Message{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) UpdateMessageV2(ctx context.Context, request *common.MessageV2) (resp *common.MessageV2, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v2/messages/%s%s", p.host, request.MessageId, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPatch
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV2")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.MessageV2{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) GetMessageV3(ctx context.Context, request *common.GetMessageRequestV3) (resp *common.MessageV2, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var parameters = []string{
-		"user_id=%s",
-	}
-	var values = []any{
-		request.UserId,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
-	u, err := url.Parse(fmt.Sprintf("%s/v3/messages/%s%s", p.host, request.MessageId, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodGet
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "GetMessageV3")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.MessageV2{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) GetMessageV4(ctx context.Context, request *common.GetMessageRequestV3) (resp *common.MessageV2, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var parameters = []string{
-		"user_id=%s",
-	}
-	var values = []any{
-		request.UserId,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
-	u, err := url.Parse(fmt.Sprintf("%s/v4/messages/base/%s%s", p.host, request.MessageId, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodGet
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "GetMessageV4")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.MessageV2{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *common.Array) (resp *common.Array, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v1/array%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPost
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "TopLevelArray")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Array{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, &resp.Items)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) UpdateMessageV3(ctx context.Context, request *common.UpdateMessageRequest) (resp *common.UpdateMessageRequest, err error) {
-	req := &http.Request{Header: make(http.Header)}
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	u, err := url.Parse(fmt.Sprintf("%s/v3/messages%s", p.host, queryArgs))
-	if err != nil {
-		return nil, err
-	}
-	u.RawQuery = u.Query().Encode()
-	req.URL = u
-	req.Method = http.MethodPatch
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *http.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV3")
-	var handler = func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		resp, err = p.cl.Do(req)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.UpdateMessageRequest{}
-	var respBody []byte
-	if respBody, err = io.ReadAll(reqResp.Body); err != nil {
-		return nil, err
-	}
-	_ = reqResp.Body.Close()
-	err = json.Unmarshal(respBody, &resp.Message)
-	return resp, err
-}
-
-func chainClientMiddlewaresExample(
-	middlewares []func(ctx context.Context, req *http.Request, handler func(ctx context.Context, req *http.Request) (resp *http.Response, err error)) (resp *http.Response, err error),
-) func(ctx context.Context, req *http.Request, handler func(ctx context.Context, req *http.Request) (resp *http.Response, err error)) (resp *http.Response, err error) {
-	switch len(middlewares) {
-	case 0:
-		return nil
-	case 1:
-		return middlewares[0]
-	default:
-		return func(ctx context.Context, req *http.Request, handler func(ctx context.Context, req *http.Request) (resp *http.Response, err error)) (resp *http.Response, err error) {
-			return middlewares[0](ctx, req, getChainClientMiddlewareHandlerExample(middlewares, 0, handler))
-		}
-	}
-}
-
-func getChainClientMiddlewareHandlerExample(
-	middlewares []func(ctx context.Context, req *http.Request, handler func(ctx context.Context, req *http.Request) (resp *http.Response, err error)) (resp *http.Response, err error),
-	curr int,
-	finalHandler func(ctx context.Context, req *http.Request) (resp *http.Response, err error),
-) func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-	if curr == len(middlewares)-1 {
-		return finalHandler
-	}
-	return func(ctx context.Context, req *http.Request) (resp *http.Response, err error) {
-		return middlewares[curr+1](ctx, req, getChainClientMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
 	}
 }
