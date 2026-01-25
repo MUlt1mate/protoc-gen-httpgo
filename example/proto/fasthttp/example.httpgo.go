@@ -3,19 +3,21 @@
 package proto
 
 import (
-	bytes "bytes"
-	context "context"
-	json "encoding/json"
-	fmt "fmt"
-	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
-	router "github.com/fasthttp/router"
-	fasthttp "github.com/valyala/fasthttp"
-	anypb "google.golang.org/protobuf/types/known/anypb"
-	emptypb "google.golang.org/protobuf/types/known/emptypb"
-	multipart "mime/multipart"
-	url "net/url"
-	strconv "strconv"
-	strings "strings"
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"mime/multipart"
+	"net/url"
+	"strconv"
+	"strings"
+
+	"github.com/fasthttp/router"
+	"github.com/valyala/fasthttp"
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/emptypb"
+
+	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 )
 
 type ServiceNameHTTPGoService interface {
@@ -55,7 +57,7 @@ func RegisterServiceNameHTTPGoServer(
 ) error {
 	var middleware = chainServerMiddlewaresExample(middlewares)
 
-	r.POST("/v1/test/{stringArgument}/{int64Argument}", func(fastctx *fasthttp.RequestCtx) {
+	r.POST("/v1/RPCName/{stringArgument}/{int64Argument}", func(fastctx *fasthttp.RequestCtx) {
 		fastctx.Response.Header.SetContentType("application/json")
 		input, err := buildExampleServiceNameRPCNameInputMsgName(fastctx)
 		if err != nil {
@@ -64,9 +66,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "RPCName")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "RPCName")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.RPCName(ctx, input)
 		}
@@ -89,9 +91,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "AllTypesTest")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "AllTypesTest")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTypesTest(ctx, input)
 		}
@@ -114,9 +116,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "AllTextTypesPost")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "AllTextTypesPost")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTextTypesPost(ctx, input)
 		}
@@ -139,9 +141,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "AllTextTypesGet")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "AllTextTypesGet")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTextTypesGet(ctx, input)
 		}
@@ -164,9 +166,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "CommonTypes")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "CommonTypes")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CommonTypes(ctx, input)
 		}
@@ -181,7 +183,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	// same types but different query, we need different query builder function
-	r.POST("/v1/test/{stringArgument}", func(fastctx *fasthttp.RequestCtx) {
+	r.POST("/v1/sameInputAndOutput/{stringArgument}", func(fastctx *fasthttp.RequestCtx) {
 		fastctx.Response.Header.SetContentType("application/json")
 		input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(fastctx)
 		if err != nil {
@@ -190,9 +192,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "SameInputAndOutput")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "SameInputAndOutput")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.SameInputAndOutput(ctx, input)
 		}
@@ -215,9 +217,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "Optional")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "Optional")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.Optional(ctx, input)
 		}
@@ -240,9 +242,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "GetMethod")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "GetMethod")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.GetMethod(ctx, input)
 		}
@@ -265,9 +267,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "CheckRepeatedPath")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPath")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CheckRepeatedPath(ctx, input)
 		}
@@ -281,7 +283,7 @@ func RegisterServiceNameHTTPGoServer(
 		_, _ = fastctx.Write(respJson)
 	})
 
-	r.GET("/v1/repeated/{StringValue}", func(fastctx *fasthttp.RequestCtx) {
+	r.GET("/v2/repeated/{StringValue}", func(fastctx *fasthttp.RequestCtx) {
 		fastctx.Response.Header.SetContentType("application/json")
 		input, err := buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(fastctx)
 		if err != nil {
@@ -290,9 +292,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "CheckRepeatedQuery")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedQuery")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CheckRepeatedQuery(ctx, input)
 		}
@@ -306,7 +308,7 @@ func RegisterServiceNameHTTPGoServer(
 		_, _ = fastctx.Write(respJson)
 	})
 
-	r.POST("/v1/repeated/{StringValue}", func(fastctx *fasthttp.RequestCtx) {
+	r.POST("/v3/repeated/{StringValue}", func(fastctx *fasthttp.RequestCtx) {
 		fastctx.Response.Header.SetContentType("application/json")
 		input, err := buildExampleServiceNameCheckRepeatedPostRepeatedCheck(fastctx)
 		if err != nil {
@@ -315,9 +317,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "CheckRepeatedPost")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPost")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.CheckRepeatedPost(ctx, input)
 		}
@@ -340,9 +342,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "EmptyGet")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "EmptyGet")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.EmptyGet(ctx, input)
 		}
@@ -365,9 +367,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "EmptyPost")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "EmptyPost")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.EmptyPost(ctx, input)
 		}
@@ -390,9 +392,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "OnlyStructInGet")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.OnlyStructInGet(ctx, input)
 		}
@@ -415,9 +417,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "MultipartForm")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.MultipartForm(ctx, input)
 		}
@@ -440,9 +442,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "MultipartFormAllTypes")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "MultipartFormAllTypes")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.MultipartFormAllTypes(ctx, input)
 		}
@@ -465,9 +467,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "AllTypesMaxTest")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxTest")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTypesMaxTest(ctx, input)
 		}
@@ -490,9 +492,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "AllTypesMaxQueryTest")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxQueryTest")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.AllTypesMaxQueryTest(ctx, input)
 		}
@@ -517,9 +519,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "GetMessage")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "GetMessage")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.GetMessage(ctx, input)
 		}
@@ -542,9 +544,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "GetMessageV2")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "GetMessageV2")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.GetMessageV2(ctx, input)
 		}
@@ -567,9 +569,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "UpdateMessage")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "UpdateMessage")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.UpdateMessage(ctx, input)
 		}
@@ -592,9 +594,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "UpdateMessageV2")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV2")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.UpdateMessageV2(ctx, input)
 		}
@@ -617,9 +619,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "GetMessageV3")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "GetMessageV3")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.GetMessageV3(ctx, input)
 		}
@@ -642,9 +644,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "GetMessageV3")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "GetMessageV3")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.GetMessageV3(ctx, input)
 		}
@@ -667,9 +669,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "GetMessageV4")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "GetMessageV4")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.GetMessageV4(ctx, input)
 		}
@@ -692,9 +694,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "TopLevelArray")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "TopLevelArray")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.TopLevelArray(ctx, input)
 		}
@@ -722,9 +724,9 @@ func RegisterServiceNameHTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName")
-		fastctx.SetUserValue("proto_method", "UpdateMessageV3")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
+		ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV3")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.UpdateMessageV3(ctx, input)
 		}
@@ -2298,11 +2300,11 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx *fasthttp.RequestCtx) 
 
 func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx *fasthttp.RequestCtx) (arg *common.MultipartFormRequest, err error) {
 	arg = &common.MultipartFormRequest{}
-	body, err := ctx.MultipartForm()
+	form, err := ctx.MultipartForm()
 	if err != nil {
 		return nil, err
 	}
-	if file, ok := body.File["document"]; ok && len(file) > 0 {
+	if file, ok := form.File["document"]; ok && len(file) > 0 {
 		var f multipart.File
 		f, err = file[0].Open()
 		if err != nil {
@@ -2321,7 +2323,7 @@ func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx *fasthttp.Requ
 			return nil, fmt.Errorf("failed to read file: document: %w", err)
 		}
 	}
-	if values, ok := body.Value["otherField"]; ok && len(values) > 0 {
+	if values, ok := form.Value["otherField"]; ok && len(values) > 0 {
 		arg.OtherField = values[0]
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
@@ -2343,11 +2345,11 @@ func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx *fasthttp.Requ
 
 func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fasthttp.RequestCtx) (arg *common.MultipartFormAllTypes, err error) {
 	arg = &common.MultipartFormAllTypes{}
-	body, err := ctx.MultipartForm()
+	form, err := ctx.MultipartForm()
 	if err != nil {
 		return nil, err
 	}
-	if values, ok := body.Value["BoolValue"]; ok && len(values) > 0 {
+	if values, ok := form.Value["BoolValue"]; ok && len(values) > 0 {
 		switch values[0] {
 		case "true", "t", "1":
 			arg.BoolValue = true
@@ -2357,7 +2359,7 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 			return nil, fmt.Errorf("unknown bool string value %s", values[0])
 		}
 	}
-	if values, ok := body.Value["EnumValue"]; ok && len(values) > 0 {
+	if values, ok := form.Value["EnumValue"]; ok && len(values) > 0 {
 		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(values[0])]; optValueOk {
 			arg.EnumValue = common.Options(OptionsValue)
 		} else {
@@ -2370,21 +2372,21 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 			}
 		}
 	}
-	if values, ok := body.Value["Int32Value"]; ok && len(values) > 0 {
+	if values, ok := form.Value["Int32Value"]; ok && len(values) > 0 {
 		Int32Value, convErr := strconv.ParseInt(values[0], 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
 		}
 		arg.Int32Value = int32(Int32Value)
 	}
-	if values, ok := body.Value["Sint32Value"]; ok && len(values) > 0 {
+	if values, ok := form.Value["Sint32Value"]; ok && len(values) > 0 {
 		Sint32Value, convErr := strconv.ParseInt(values[0], 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sint32Value: %w", convErr)
 		}
 		arg.Sint32Value = int32(Sint32Value)
 	}
-	if values, ok := body.Value["Uint32Value"]; ok && len(values) > 0 {
+	if values, ok := form.Value["Uint32Value"]; ok && len(values) > 0 {
 		for _, value := range values {
 			Uint32Value, convErr := strconv.ParseUint(value, 10, 32)
 			if convErr != nil {
@@ -2393,33 +2395,33 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 			arg.Uint32Value = append(arg.Uint32Value, uint32(Uint32Value))
 		}
 	}
-	if values, ok := body.Value["Int64Value"]; ok && len(values) > 0 {
+	if values, ok := form.Value["Int64Value"]; ok && len(values) > 0 {
 		arg.Int64Value, err = strconv.ParseInt(values[0], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
 		}
 	}
-	if values, ok := body.Value["Sint64Value"]; ok && len(values) > 0 {
+	if values, ok := form.Value["Sint64Value"]; ok && len(values) > 0 {
 		Sint64Value, convErr := strconv.ParseInt(values[0], 10, 64)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
 		}
 		arg.Sint64Value = &Sint64Value
 	}
-	if values, ok := body.Value["Uint64Value"]; ok && len(values) > 0 {
+	if values, ok := form.Value["Uint64Value"]; ok && len(values) > 0 {
 		arg.Uint64Value, err = strconv.ParseUint(values[0], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
 		}
 	}
-	if values, ok := body.Value["Sfixed32Value"]; ok && len(values) > 0 {
+	if values, ok := form.Value["Sfixed32Value"]; ok && len(values) > 0 {
 		Sfixed32Value, convErr := strconv.ParseInt(values[0], 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sfixed32Value: %w", convErr)
 		}
 		arg.Sfixed32Value = int32(Sfixed32Value)
 	}
-	if values, ok := body.Value["Fixed32Value"]; ok && len(values) > 0 {
+	if values, ok := form.Value["Fixed32Value"]; ok && len(values) > 0 {
 		for _, value := range values {
 			Fixed32Value, convErr := strconv.ParseUint(value, 10, 32)
 			if convErr != nil {
@@ -2428,42 +2430,42 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 			arg.Fixed32Value = append(arg.Fixed32Value, uint32(Fixed32Value))
 		}
 	}
-	if values, ok := body.Value["FloatValue"]; ok && len(values) > 0 {
+	if values, ok := form.Value["FloatValue"]; ok && len(values) > 0 {
 		FloatValue, convErr := strconv.ParseFloat(values[0], 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
 		}
 		arg.FloatValue = float32(FloatValue)
 	}
-	if values, ok := body.Value["Sfixed64Value"]; ok && len(values) > 0 {
+	if values, ok := form.Value["Sfixed64Value"]; ok && len(values) > 0 {
 		arg.Sfixed64Value, err = strconv.ParseInt(values[0], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", err)
 		}
 	}
-	if values, ok := body.Value["Fixed64Value"]; ok && len(values) > 0 {
+	if values, ok := form.Value["Fixed64Value"]; ok && len(values) > 0 {
 		Fixed64Value, convErr := strconv.ParseUint(values[0], 10, 64)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Fixed64Value: %w", convErr)
 		}
 		arg.Fixed64Value = &Fixed64Value
 	}
-	if values, ok := body.Value["DoubleValue"]; ok && len(values) > 0 {
+	if values, ok := form.Value["DoubleValue"]; ok && len(values) > 0 {
 		arg.DoubleValue, err = strconv.ParseFloat(values[0], 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
 		}
 	}
-	if values, ok := body.Value["StringValue"]; ok && len(values) > 0 {
+	if values, ok := form.Value["StringValue"]; ok && len(values) > 0 {
 		arg.StringValue = values[0]
 	}
-	if values, ok := body.Value["BytesValue"]; ok && len(values) > 0 {
+	if values, ok := form.Value["BytesValue"]; ok && len(values) > 0 {
 		arg.BytesValue = []byte(values[0])
 	}
-	if values, ok := body.Value["SliceStringValue"]; ok && len(values) > 0 {
+	if values, ok := form.Value["SliceStringValue"]; ok && len(values) > 0 {
 		arg.SliceStringValue = append(arg.SliceStringValue, values...)
 	}
-	if values, ok := body.Value["SliceInt32Value"]; ok && len(values) > 0 {
+	if values, ok := form.Value["SliceInt32Value"]; ok && len(values) > 0 {
 		for _, value := range values {
 			SliceInt32Value, convErr := strconv.ParseInt(value, 10, 32)
 			if convErr != nil {
@@ -2472,7 +2474,7 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 			arg.SliceInt32Value = append(arg.SliceInt32Value, int32(SliceInt32Value))
 		}
 	}
-	if file, ok := body.File["document"]; ok && len(file) > 0 {
+	if file, ok := form.File["document"]; ok && len(file) > 0 {
 		var f multipart.File
 		f, err = file[0].Open()
 		if err != nil {
@@ -2491,7 +2493,7 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 			return nil, fmt.Errorf("failed to read file: document: %w", err)
 		}
 	}
-	if values, ok := body.Value["RepeatedStringValue"]; ok && len(values) > 0 {
+	if values, ok := form.Value["RepeatedStringValue"]; ok && len(values) > 0 {
 		arg.RepeatedStringValue = append(arg.RepeatedStringValue, values...)
 	}
 	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
@@ -3181,7 +3183,7 @@ func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *common.I
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/test/%s/%d%s", p.host, request.StringArgument, request.Int64Argument, queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/RPCName/%s/%d%s", p.host, request.StringArgument, request.Int64Argument, queryArgs))
 	req.Header.SetMethod("POST")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
@@ -3399,7 +3401,7 @@ func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, reques
 		return nil, err
 	}
 	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/test/%s%s", p.host, request.StringArgument, queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v1/sameInputAndOutput/%s%s", p.host, request.StringArgument, queryArgs))
 	req.Header.SetMethod("POST")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
@@ -3685,7 +3687,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, reques
 	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
 	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
 	StringValueRequest := strings.Join(request.StringValue, ",")
-	req.SetRequestURI(fmt.Sprintf("%s/v1/repeated/%s%s", p.host, StringValueRequest, queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v2/repeated/%s%s", p.host, StringValueRequest, queryArgs))
 	req.Header.SetMethod("GET")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
@@ -3723,7 +3725,7 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request
 	}
 	req.SetBody(body)
 	StringValueRequest := strings.Join(request.StringValue, ",")
-	req.SetRequestURI(fmt.Sprintf("%s/v1/repeated/%s%s", p.host, StringValueRequest, queryArgs))
+	req.SetRequestURI(fmt.Sprintf("%s/v3/repeated/%s%s", p.host, StringValueRequest, queryArgs))
 	req.Header.SetMethod("POST")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")

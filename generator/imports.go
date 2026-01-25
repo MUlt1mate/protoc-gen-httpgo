@@ -19,4 +19,5 @@ var (
 	routerPackage    = protogen.GoImportPath("github.com/fasthttp/router")
 	protojsonPackage = protogen.GoImportPath("google.golang.org/protobuf/encoding/protojson")
 	protoPackage     = protogen.GoImportPath("google.golang.org/protobuf/proto")
+	ginPackage       = protogen.GoImportPath("github.com/gin-gonic/gin")
 )

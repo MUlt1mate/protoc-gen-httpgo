@@ -25,10 +25,8 @@ type (
 )
 
 var (
-	serviceName = "fasthttp example"
-
+	serviceName      = "fasthttp example"
 	errRequestFailed = errors.New("api request failed")
-	errTimeoutBody   = `{"error":"timeout"}`
 )
 
 var ServerMiddlewares = []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error){
@@ -104,8 +102,7 @@ func TimeoutServerMiddleware(
 	case <-ctx.Done():
 		fastCtx, _ := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx)
 		fastCtx.SetStatusCode(fasthttp.StatusGatewayTimeout)
-		_, _ = fastCtx.WriteString(errTimeoutBody)
-		return resp, err
+		return respError{Error: "timeout"}, nil
 	case <-done:
 		return resp, err
 	}

@@ -3,16 +3,15 @@
 package proto
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"strconv"
-	"strings"
-
-	"github.com/fasthttp/router"
-	"github.com/valyala/fasthttp"
-	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
+	context "context"
+	json "encoding/json"
+	fmt "fmt"
+	router "github.com/fasthttp/router"
+	fasthttp "github.com/valyala/fasthttp"
+	protojson "google.golang.org/protobuf/encoding/protojson"
+	proto "google.golang.org/protobuf/proto"
+	strconv "strconv"
+	strings "strings"
 )
 
 type ServiceName2HTTPGoService interface {
@@ -36,9 +35,9 @@ func RegisterServiceName2HTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "ServiceName2")
-		fastctx.SetUserValue("proto_method", "Imports")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "ServiceName2")
+		ctx = context.WithValue(ctx, "proto_method", "Imports")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.Imports(ctx, input)
 		}
@@ -111,9 +110,9 @@ func RegisterSecondServiceName2HTTPGoServer(
 			_, _ = fastctx.Write(respJson)
 			return
 		}
-		fastctx.SetUserValue("proto_service", "SecondServiceName2")
-		fastctx.SetUserValue("proto_method", "Imports")
 		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx = context.WithValue(ctx, "proto_service", "SecondServiceName2")
+		ctx = context.WithValue(ctx, "proto_method", "Imports")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
 			return h.Imports(ctx, input)
 		}

@@ -12,7 +12,7 @@ import "common/structs.proto";
 service ServiceName {
   rpc RPCName (common.InputMsgName) returns (common.OutputMsgName) {
     option (google.api.http) = {
-      post: "/v1/test/{stringArgument}/{int64Argument}"
+      post: "/v1/RPCName/{stringArgument}/{int64Argument}"
     };
   }
   rpc AllTypesTest (common.AllTypesMsg) returns (common.AllTypesMsg) {
@@ -38,7 +38,7 @@ service ServiceName {
   // same types but different query, we need different query builder function
   rpc sameInputAndOutput (common.InputMsgName) returns (common.OutputMsgName) {
     option (google.api.http) = {
-      post: "/v1/test/{stringArgument}"
+      post: "/v1/sameInputAndOutput/{stringArgument}"
     };
   }
   // should be ignored
@@ -66,12 +66,12 @@ service ServiceName {
   };
   rpc CheckRepeatedQuery(common.RepeatedCheck) returns (common.RepeatedCheck){
     option (google.api.http) = {
-      get: "/v1/repeated/{StringValue}"
+      get: "/v2/repeated/{StringValue}"
     };
   };
   rpc CheckRepeatedPost(common.RepeatedCheck) returns (common.RepeatedCheck){
     option (google.api.http) = {
-      post: "/v1/repeated/{StringValue}"
+      post: "/v3/repeated/{StringValue}"
     };
   };
   rpc EmptyGet(common.Empty) returns (common.Empty){

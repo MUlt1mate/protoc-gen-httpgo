@@ -25,10 +25,8 @@ type (
 )
 
 var (
-	serviceName = "nethttp example"
-
+	serviceName      = "nethttp example"
 	errRequestFailed = errors.New("api request failed")
-	errTimeoutBody   = `{"error":"timeout"}`
 )
 
 var ServerMiddlewares = []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error){
@@ -104,8 +102,7 @@ func TimeoutServerMiddleware(
 	case <-ctx.Done():
 		writer, _ := ctx.Value("writer").(http.ResponseWriter)
 		writer.WriteHeader(http.StatusGatewayTimeout)
-		_, _ = writer.Write([]byte(errTimeoutBody))
-		return resp, err
+		return respError{Error: "timeout"}, nil
 	case <-done:
 		return resp, err
 	}
@@ -120,7 +117,6 @@ func ValidationServerMiddleware(
 		if err = validatorArg.Validate(); err != nil {
 			writer, _ := ctx.Value("writer").(http.ResponseWriter)
 			writer.WriteHeader(http.StatusBadRequest)
-			_, _ = writer.Write([]byte(err.Error()))
 			return nil, err
 		}
 	}
