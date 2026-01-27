@@ -13,6 +13,13 @@ Choose httpgo if you want to:
 - **Dual-Stack Support**: Use HTTP and gRPC simultaneously with minimal performance impact.
 - **Protobuf-First Design**: Define your API in Protobuf while leveraging the full flexibility of the HTTP ecosystem.
 
+## Performance
+
+Check [benchmark](./benchmark)
+
+- 30% faster than grpc-gateway + grpc
+- 95% reduction in memory overhead
+
 ## Features
 
 - Generation of both server and client code
@@ -252,7 +259,6 @@ message FileStruct {
 - implement more web servers
 - dependabot
 - buf
-- benchmark
 - websocket
 - production ready middleware example
 - optionally ignore unknown query parameters

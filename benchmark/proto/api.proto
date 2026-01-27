@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package main;
+option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/benchmark/proto;proto";
+
+import "google/api/annotations.proto";
+
+service APIMeasure {
+  rpc Measure (MeasureRequest) returns (MeasureRequest) {
+    option (google.api.http) = {
+      post: "/v1/measure"
+    };
+  };
+}
+
+message MeasureRequest {
+  bool BoolValue = 1;
+  int32 Int32Value = 2;
+  sint32 Sint32Value = 3;
+  uint32 Uint32Value = 4;
+  int64 Int64Value = 5;
+  sint64 Sint64Value = 6;
+  uint64 Uint64Value = 7;
+  sfixed32 Sfixed32Value = 8;
+  fixed32 Fixed32Value = 9;
+  float FloatValue = 10;
+  sfixed64 Sfixed64Value = 11;
+  fixed64 Fixed64Value = 12;
+  double DoubleValue = 13;
+  string StringValue = 14;
+  bytes BytesValue = 15;
+}
+
+

@@ -1,0 +1,17 @@
+goos: linux
+goarch: amd64
+pkg: github.com/MUlt1mate/protoc-gen-httpgo/benchmark
+cpu: Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz
+BenchmarkSampleHandler-8   	    5000	    265170 ns/op
+BenchmarkSampleHandler-8   	    5000	    234862 ns/op
+BenchmarkSampleHandler-8   	    5000	    291039 ns/op
+BenchmarkSampleHandler-8   	    5000	    244170 ns/op
+BenchmarkSampleHandler-8   	    5000	    227151 ns/op
+BenchmarkSampleHandler-8   	    5000	    230937 ns/op
+BenchmarkSampleHandler-8   	    5000	    231695 ns/op
+BenchmarkSampleHandler-8   	    5000	    265976 ns/op
+BenchmarkSampleHandler-8   	    5000	    249301 ns/op
+BenchmarkSampleHandler-8   	    5000	    250121 ns/op
+PASS
+ok  	github.com/MUlt1mate/protoc-gen-httpgo/benchmark	12.472s
+?   	github.com/MUlt1mate/protoc-gen-httpgo/benchmark/proto	[no test files]
