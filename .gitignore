@@ -3,3 +3,6 @@
 /example/vendor/
 /protoc-gen-httpgo
 /debug/code_generator_request.pb.bin
+/benchmark/vendor/
+/benchmark/benchmark
+/benchmark/allocs.out

@@ -1,0 +1,24 @@
+goos: linux
+goarch: amd64
+pkg: github.com/MUlt1mate/protoc-gen-httpgo/benchmark
+cpu: Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz
+BenchmarkSampleHandler-8   	    5000	    203982 ns/op
+PASS
+ok  	github.com/MUlt1mate/protoc-gen-httpgo/benchmark	1.026s
+?   	github.com/MUlt1mate/protoc-gen-httpgo/benchmark/proto	[no test files]
+ 
+File: benchmark
+Build ID: 086cfe8f246b2464af82beefde5a5030ddf433ad
+Type: alloc_space
+Time: 2026-01-27 14:14:11 CET
+Showing nodes accounting for 3587.49kB, 100% of 3587.49kB total
+      flat  flat%   sum%        cum   cum%
+    1539kB 42.90% 42.90%     1539kB 42.90%  runtime.allocm
+  512.38kB 14.28% 57.18%   512.38kB 14.28%  google.golang.org/genproto/googleapis/api/annotations.init
+  512.08kB 14.27% 71.46%   512.08kB 14.27%  github.com/MUlt1mate/protoc-gen-httpgo/benchmark/proto.buildApiAPIMeasureMeasureMeasureRequest
+  512.02kB 14.27% 85.73%   512.02kB 14.27%  net.sockaddrToTCP
+  512.02kB 14.27%   100%   512.02kB 14.27%  sync.(*Pool).pinSlow
+         0     0%   100%   512.08kB 14.27%  github.com/MUlt1mate/protoc-gen-httpgo/benchmark/proto.RegisterAPIMeasureHTTPGoServer.func1
+         0     0%   100%   512.08kB 14.27%  github.com/fasthttp/router.(*Router).Handler
+         0     0%   100%   512.02kB 14.27%  github.com/valyala/fasthttp.(*Server).ListenAndServe
+         0     0%   100%   512.02kB 14.27%  github.com/valyala/fasthttp.(*Server).Serve
