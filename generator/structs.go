@@ -20,6 +20,7 @@ const (
 	libraryNetHTTP           = "nethttp"
 	libraryFastHTTP          = "fasthttp"
 	libraryGin               = "gin"
+	libraryFiber             = "fiber"
 	contentTypeJSONApp       = "application/json"
 	contentTypeMultipart     = "multipart/form-data"
 )
@@ -124,6 +125,11 @@ func newGenerator(
 			return g, errors.New("gin does not support client, use only=server parameter")
 		}
 		g.lib = ginPackage
+	case libraryFiber:
+		if *cfg.Only != onlyServer {
+			return g, errors.New("fiber does not support client, use only=server parameter")
+		}
+		g.lib = fiberPackage
 	default:
 		return g, errors.New("unsupported library type: " + *cfg.Library)
 	}
@@ -421,11 +427,15 @@ func (m *methodURI) parseURI(library string) {
 					arg.PathTpl = "*" + fieldName
 					// gin parameter value will have leading slash, so we have to remote it from template
 					arg.DestinationTpl = strings.Replace(arg.DestinationTpl, "/%s", "%s", 1)
+				case libraryFiber:
+					arg.PathTpl = ":" + fieldName + "+"
+					// fiber parameter value will have leading slash, so we have to remove it from template
+					arg.DestinationTpl = strings.Replace(arg.DestinationTpl, "/%s", "%s", 1)
 				}
 				path = strings.Replace(pattern, "**", arg.PathTpl, 1)
 			} else {
 				switch library {
-				case libraryGin:
+				case libraryGin, libraryFiber:
 					arg.PathTpl = ":" + fieldName
 				default:
 					arg.PathTpl = "{" + fieldName + "}"
@@ -434,7 +444,7 @@ func (m *methodURI) parseURI(library string) {
 				path = strings.Replace(pattern, "*", arg.PathTpl, 1)
 			}
 			m.protoURI = strings.Replace(m.protoURI, match[0], path, 1)
-		} else if library == libraryGin {
+		} else if library == libraryGin || library == libraryFiber {
 			m.protoURI = strings.Replace(m.protoURI, match[0], ":"+fieldName, 1)
 		}
 		m.argList = append(m.argList, fieldName)

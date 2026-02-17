@@ -55,6 +55,8 @@ func (g *generator) genServiceServer(service serviceParams) (err error) {
 		g.gf.P("	r *", routerPackage.Ident("Router"), ",")
 	case libraryGin:
 		g.gf.P("	r *", ginPackage.Ident("Engine"), ",")
+	case libraryFiber:
+		g.gf.P("	r *", fiberPackage.Ident("App"), ",")
 	}
 	g.gf.P("	h ", service.name, "HTTPGoService,")
 	g.gf.P("	middlewares []func(", g.serverInput, ", handler func(", g.serverInput, ") (", g.serverOutput, ")) (", g.serverOutput, "),")
@@ -120,6 +122,19 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		g.gf.P("	}")
 		// wrap gin.Context further usage
 		g.gf.P("	ctx := context.WithValue(ginctx, \"request\", ginctx)")
+	case libraryFiber:
+		g.gf.P("r.", titleString(method.httpMethodName), "( \"", method.uri.protoURI, "\", func(fiberctx ", fiberPackage.Ident("Ctx"), ") error { ")
+		g.gf.P("	fiberctx.Set(\"Content-Type\", \"application/json\")")
+		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(fiberctx)")
+		g.gf.P("	if err != nil {")
+		g.gf.P("		fiberctx.Status(400)")
+		// can't use protojson on inline structure
+		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
+		g.gf.P("		_, _ = fiberctx.Write(respJson)")
+		g.gf.P("		return nil")
+		g.gf.P("	}")
+		// wrap fiber.Ctx further usage
+		g.gf.P("	ctx := context.WithValue(fiberctx.Context(), \"request\", fiberctx)")
 	}
 	g.gf.P("	ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"proto_service\", \""+serviceName+"\")")
 	g.gf.P("	ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"proto_method\", \""+method.name+"\")")
@@ -145,6 +160,9 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		g.gf.P("}")
 	} else {
 		g.genMarshalServerResponse("resp")
+	}
+	if *g.cfg.Library == libraryFiber {
+		g.gf.P("return nil")
 	}
 	g.gf.P("})")
 	g.gf.P()
@@ -183,6 +201,8 @@ func (g *generator) genMarshalServerResponse(source string) {
 		g.gf.P("	_, _ = w.Write(respJson)")
 	case libraryGin:
 		g.gf.P("	ginctx.Data(ginctx.Writer.Status(), \"application/json\", respJson)")
+	case libraryFiber:
+		g.gf.P("	_, _ = fiberctx.Write(respJson)")
 	}
 }
 
@@ -201,6 +221,8 @@ func (g *generator) genBuildRequestMethod(serviceName string, method methodParam
 		g.gf.P("func build", g.getBuildMethodInputName(serviceName, method), "(ctx *", fasthttpPackage.Ident("RequestCtx"), ") (arg *", method.inputMsgName, ", err error) {")
 	case libraryGin:
 		g.gf.P("func build", g.getBuildMethodInputName(serviceName, method), "(ctx *", ginPackage.Ident("Context"), ") (arg *", method.inputMsgName, ", err error) {")
+	case libraryFiber:
+		g.gf.P("func build", g.getBuildMethodInputName(serviceName, method), "(ctx ", fiberPackage.Ident("Ctx"), ") (arg *", method.inputMsgName, ", err error) {")
 	}
 	g.gf.P("	arg = &", method.inputMsgName, "{}")
 	if method.withFiles {
@@ -266,6 +288,8 @@ func (g *generator) genServerMethodQueryParams(method methodParams) (err error) 
 		g.gf.P("ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {")
 		g.gf.P("	var key = string(keyB)")
 		g.gf.P("	var value = string(valueB)")
+	case libraryFiber:
+		g.gf.P("for key, value := range ctx.Queries() {")
 	case libraryGin:
 		g.gf.P("for key, values := range  ctx.Request.URL.Query() {")
 		g.gf.P("	for _, value := range values {")
@@ -289,6 +313,11 @@ func (g *generator) genServerMethodQueryParams(method methodParams) (err error) 
 		g.gf.P("		return")
 		g.gf.P("	}")
 		g.gf.P("})")
+	case libraryFiber:
+		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"unknown query parameter %s with value %s\", key, value)")
+		g.gf.P("		return")
+		g.gf.P("	}")
+		g.gf.P("}")
 	}
 	return nil
 }
@@ -307,6 +336,9 @@ func (g *generator) genBuildPathArgument(
 		g.gf.P("	if ok && len(", f.goName, "Str) != 0 {")
 	case libraryGin:
 		g.gf.P("	", f.goName, "Str := ctx.Param(\"", f.protoName, "\")")
+		g.gf.P("	if len(", f.goName, "Str) != 0 {")
+	case libraryFiber:
+		g.gf.P("	", f.goName, "Str := ctx.Params(\"", f.protoName, "\")")
 		g.gf.P("	if len(", f.goName, "Str) != 0 {")
 	}
 	if f.cardinality == protoreflect.Repeated {
@@ -444,6 +476,9 @@ func (g *generator) genUnmarshalRequestStruct(method methodParams) (err error) {
 	case libraryFastHTTP:
 		g.gf.P("	var body = ctx.PostBody()")
 		g.gf.P("	if len(body) > 0 { ")
+	case libraryFiber:
+		g.gf.P("	var body = ctx.Body()")
+		g.gf.P("	if len(body) > 0 { ")
 	}
 	destination := "arg"
 	if method.rule != nil && method.rule.Body != "" && method.rule.Body != "*" {
@@ -469,7 +504,7 @@ func (g *generator) genUnmarshalRequestStruct(method methodParams) (err error) {
 
 func (g *generator) genMultipartRequestServer(method methodParams) (err error) {
 	switch *g.cfg.Library {
-	case libraryFastHTTP, libraryGin:
+	case libraryFastHTTP, libraryGin, libraryFiber:
 		g.gf.P("form, err := ctx.MultipartForm()")
 		g.gf.P("if err != nil {")
 		g.gf.P("	return nil, err")
@@ -490,7 +525,7 @@ func (g *generator) genMultipartRequestServer(method methodParams) (err error) {
 			g.gf.P("if values, ok := form.Value[\"", f.protoName, "\"]; ok && len(values) > 0 {")
 		case libraryNetHTTP:
 			g.gf.P("if values := r.Form[\"", f.protoName, "\"]; len(values) > 0 {")
-		case libraryGin:
+		case libraryGin, libraryFiber:
 			g.gf.P("if values := form.Value[\"", f.protoName, "\"]; len(values) > 0 {")
 		}
 		switch {
@@ -536,7 +571,7 @@ func (g *generator) genMultipartServerRequestField(methodField field) {
 		g.gf.P("		Headers: make(map[string]string, len(file[0].Header)),")
 		g.gf.P("	}")
 		g.gf.P("	for key, value := range file[0].Header {")
-	case libraryGin:
+	case libraryGin, libraryFiber:
 		g.gf.P("if file, ok := form.File[\"", methodField.protoName, "\"]; ok && len(file) > 0 {")
 		g.gf.P("	var f ", multipartPackage.Ident("File"))
 		g.gf.P("	f, err = file[0].Open()")
@@ -566,7 +601,7 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 		g.gf.P("	case \"", f.protoName, "\":")
 	}
 
-	nakedReturn := *g.cfg.Library == libraryFastHTTP
+	nakedReturn := *g.cfg.Library == libraryFastHTTP || *g.cfg.Library == libraryFiber
 	switch f.kind {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind,
 		protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind, protoreflect.Uint64Kind, protoreflect.Fixed64Kind,
@@ -583,7 +618,7 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 			return err
 		}
 	default:
-		if *g.cfg.Library == libraryFastHTTP {
+		if *g.cfg.Library == libraryFastHTTP || *g.cfg.Library == libraryFiber {
 			g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"unsupported type "+f.kind.String()+" for query argument "+f.protoName+"\")")
 			g.gf.P("	return")
 		} else {

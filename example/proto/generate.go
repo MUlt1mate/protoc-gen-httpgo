@@ -2,6 +2,7 @@
 //go:generate protoc -I=. -I=../vendor -I=/usr/local/include --httpgo_out=paths=source_relative,library=fasthttp:fasthttp example.proto
 //go:generate protoc -I=. -I=../vendor -I=/usr/local/include --httpgo_out=paths=source_relative,library=nethttp:nethttp example.proto
 //go:generate protoc -I=. -I=../vendor -I=/usr/local/include --httpgo_out=paths=source_relative,library=gin,only=server:gin example.proto
+//go:generate protoc -I=. -I=../vendor -I=/usr/local/include --httpgo_out=paths=source_relative,library=fiber,only=server:fiber example.proto
 //go:generate protoc -I=. -I=../vendor -I=/usr/local/include --httpgo_out=paths=source_relative,marshaller=protojson:. example2.proto
 //go:generate protoc -I=. -I=../vendor -I=/usr/local/include --httpgo_out=paths=source_relative,autoURI=true:. no_url.proto
 

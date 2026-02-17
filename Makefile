@@ -25,6 +25,7 @@ gen:				## generate example
 	@sed -i '1d' ./example/proto/fasthttp/*.httpgo.go
 	@sed -i '1d' ./example/proto/nethttp/*.httpgo.go
 	@sed -i '1d' ./example/proto/gin/*.httpgo.go
+	@sed -i '1d' ./example/proto/fiber/*.httpgo.go
 
 test:    			## run tests
 	@printf "\033[35mRunning tests...\033[0m\n"
