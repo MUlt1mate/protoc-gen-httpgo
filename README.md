@@ -15,7 +15,7 @@ Choose httpgo if you want to:
 
 ## Performance
 
-Check [benchmark](./benchmark)
+Check [benchmark](./benchmark/README.md)
 
 - 30% faster than grpc-gateway + grpc
 - 95% reduction in memory overhead

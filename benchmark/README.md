@@ -1,5 +1,7 @@
 ## Compare performance between gRPC + grpc-gateway vs. httpgo
 
+This package contains benchmark test cases that allow to compare speed and memory allocation
+
 #### Host info
 
 - Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz
