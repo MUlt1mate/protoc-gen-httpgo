@@ -24,6 +24,7 @@ Check [benchmark](./benchmark/README.md)
 
 - Generation of both server and client code
     - Supports [gin](https://github.com/gin-gonic/gin) (server only)
+    - Supports [fiber](https://github.com/gofiber/fiber) (server only)
     - Supports [fasthttp](https://github.com/valyala/fasthttp)
     - Supports [net/http](https://pkg.go.dev/net/http)
 - Provides multiple options for Marshaling/Unmarshaling:
@@ -77,14 +78,14 @@ protoc -I=. --httpgo_out=paths=source_relative:. example/proto/example.proto
 
 #### Parameters
 
-| Name            | Values                  | Description                                                                                                      |
-|-----------------|-------------------------|------------------------------------------------------------------------------------------------------------------|
-| paths           | source_relative, import | Inherited from protogen, see [docs](https://protobuf.dev/reference/go/go-generated/#invocation) for more details |
-| marshaller      | json, protojson         | Specifies the data marshaling/unmarshaling package. Uses `encoding/json` by default.                             |
-| only            | server, client          | Use to generate either the server or client code exclusively                                                     |
-| autoURI         | false, true             | Create method URI if annotation is missing.                                                                      |
-| bodylessMethods | GET;DELETE              | List of semicolon separated http methods that should not have a body.                                            |
-| library         | gin, fasthttp, nethttp  | Server library                                                                                                   |
+| Name            | Values                        | Description                                                                                                      |
+|-----------------|-------------------------------|------------------------------------------------------------------------------------------------------------------|
+| paths           | source_relative, import       | Inherited from protogen, see [docs](https://protobuf.dev/reference/go/go-generated/#invocation) for more details |
+| marshaller      | json, protojson               | Specifies the data marshaling/unmarshaling package. Uses `encoding/json` by default.                             |
+| only            | server, client                | Use to generate either the server or client code exclusively                                                     |
+| autoURI         | false, true                   | Create method URI if annotation is missing.                                                                      |
+| bodylessMethods | GET;DELETE                    | List of semicolon separated http methods that should not have a body.                                            |
+| library         | gin, fiber, fasthttp, nethttp | Server library                                                                                                   |
 
 Example of parameters usage:
 
@@ -160,9 +161,9 @@ func clientExample(ctx context.Context) (err error) {
 
 You can define custom middlewares with specific arguments and return values.  
 Pass a slice of middlewares to the constructor, and they will be invoked in the specified order.  
-There
-are [middleware examples](https://github.com/MUlt1mate/protoc-gen-httpgo/blob/main/example/implementation/fasthttp/middlewares.go)
-for logs, timeout, headers, etc.
+There are middleware examples for logs, timeout, headers, etc:
+[fasthttp](https://github.com/MUlt1mate/protoc-gen-httpgo/blob/main/example/implementation/fasthttp/middlewares.go),
+[fiber](https://github.com/MUlt1mate/protoc-gen-httpgo/blob/main/example/implementation/fiber/middlewares.go).
 
 ```go
 package implementation
