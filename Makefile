@@ -9,7 +9,7 @@ INCLUDEPATH := "/usr/local/include"
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
-all: build install gen test format lint run		## all commands
+all: build install gen test format run lint		## all commands
 
 build:      		## build
 	@printf "\033[32mBuilding...\033[0m\n"
@@ -25,6 +25,7 @@ gen:				## generate example
 	@sed -i '1d' ./example/proto/fasthttp/*.httpgo.go
 	@sed -i '1d' ./example/proto/nethttp/*.httpgo.go
 	@sed -i '1d' ./example/proto/gin/*.httpgo.go
+	@sed -i '1d' ./example/proto/fiber/*.httpgo.go
 
 test:    			## run tests
 	@printf "\033[35mRunning tests...\033[0m\n"

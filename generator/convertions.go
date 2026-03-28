@@ -13,7 +13,6 @@ func (g *generator) genFieldConvertor(
 	destination string,
 	repeatedDestination bool,
 	returnPrefix string,
-	nakedReturn bool,
 ) error {
 	var (
 		reference string
@@ -38,13 +37,13 @@ func (g *generator) genFieldConvertor(
 		}
 		return nil
 	case protoreflect.BoolKind:
-		g.genBoolFieldConvertor(f, source, destination, repeatedDestination, returnPrefix, nakedReturn)
+		g.genBoolFieldConvertor(f, source, destination, repeatedDestination, returnPrefix)
 		return nil
 	case protoreflect.EnumKind:
-		g.genEnumFieldConverter(f, source, destination, repeatedDestination, returnPrefix, nakedReturn)
+		g.genEnumFieldConverter(f, source, destination, repeatedDestination, returnPrefix)
 		return nil
 	default:
-		return g.genNumericFieldConvertor(f, source, destination, repeatedDestination, returnPrefix, nakedReturn)
+		return g.genNumericFieldConvertor(f, source, destination, repeatedDestination, returnPrefix)
 	}
 }
 
@@ -54,7 +53,6 @@ func (g *generator) genNumericFieldConvertor(
 	destination string,
 	repeatedDestination bool,
 	returnPrefix string,
-	nakedReturn bool,
 ) error {
 	convertDestination := f.goName + ", convErr := "
 	errorVar := "convErr"
@@ -81,12 +79,7 @@ func (g *generator) genNumericFieldConvertor(
 	}
 	g.gf.P("if ", errorVar, " != nil {")
 	errValues := []any{fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", ", errorVar, ")"}
-	if nakedReturn {
-		g.gf.P(append([]any{"	err = "}, errValues...)...)
-		g.gf.P("	return")
-	} else {
-		g.gf.P(append([]any{"	return ", returnPrefix}, errValues...)...)
-	}
+	g.gf.P(append([]any{"	return ", returnPrefix}, errValues...)...)
 	g.gf.P("}")
 	if shortConversion {
 		return nil
@@ -120,7 +113,6 @@ func (g *generator) genBoolFieldConvertor(
 	destination string,
 	repeatedDestination bool,
 	returnPrefix string,
-	nakedReturn bool,
 ) {
 	g.gf.P("switch ", source, " {")
 	g.gf.P("case \"true\", \"t\", \"1\":")
@@ -147,12 +139,7 @@ func (g *generator) genBoolFieldConvertor(
 	}
 	g.gf.P("default:")
 	errValues := []any{fmtPackage.Ident("Errorf"), "(\"unknown bool string value %s\", ", source, ")"}
-	if nakedReturn {
-		g.gf.P(append([]any{"	err = "}, errValues...)...)
-		g.gf.P("	return")
-	} else {
-		g.gf.P(append([]any{"	return ", returnPrefix}, errValues...)...)
-	}
+	g.gf.P(append([]any{"	return ", returnPrefix}, errValues...)...)
 	g.gf.P("}")
 }
 
@@ -162,7 +149,6 @@ func (g *generator) genEnumFieldConverter(
 	destination string,
 	repeatedDestination bool,
 	returnPrefix string,
-	nakedReturn bool,
 ) {
 	g.gf.P("if ", f.structTypeIdent.GoName, "Value, optValueOk := ", f.structTypeIdent, "_value[", stringsPackage.Ident("ToUpper"), "(", source, ")]; optValueOk {")
 	if repeatedDestination {
@@ -191,12 +177,7 @@ func (g *generator) genEnumFieldConverter(
 	g.gf.P("		}")
 	g.gf.P("	} else {")
 	errValues := []any{fmtPackage.Ident("Errorf"), "(\"conversion failed for parameter ", f.protoName, ": %w\", convErr)"}
-	if nakedReturn {
-		g.gf.P(append([]any{"		err = "}, errValues...)...)
-		g.gf.P("		return")
-	} else {
-		g.gf.P(append([]any{"		return ", returnPrefix}, errValues...)...)
-	}
+	g.gf.P(append([]any{"		return ", returnPrefix}, errValues...)...)
 	g.gf.P("	}")
 	g.gf.P("}")
 }

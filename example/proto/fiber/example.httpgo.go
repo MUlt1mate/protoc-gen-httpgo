@@ -3,13 +3,11 @@
 package proto
 
 import (
-	bytes "bytes"
 	context "context"
 	json "encoding/json"
 	fmt "fmt"
 	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
-	router "github.com/fasthttp/router"
-	fasthttp "github.com/valyala/fasthttp"
+	v3 "github.com/gofiber/fiber/v3"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	multipart "mime/multipart"
@@ -49,22 +47,22 @@ type ServiceNameHTTPGoService interface {
 
 func RegisterServiceNameHTTPGoServer(
 	_ context.Context,
-	r *router.Router,
+	r *v3.App,
 	h ServiceNameHTTPGoService,
 	middlewares []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error),
 ) error {
 	var middleware = chainServerMiddlewaresExample(middlewares)
 
-	r.POST("/v1/RPCName/{stringArgument}/{int64Argument}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameRPCNameInputMsgName(fastctx)
+	r.Post("/v1/RPCName/:stringArgument/:int64Argument", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameRPCNameInputMsgName(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "RPCName")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -77,19 +75,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.POST("/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameAllTypesTestAllTypesMsg(fastctx)
+	r.Post("/v1/test/:BoolValue/:EnumValue/:Int32Value/:Sint32Value/:Uint32Value/:Int64Value/:Sint64Value/:Uint64Value/:Sfixed32Value/:Fixed32Value/:FloatValue/:Sfixed64Value/:Fixed64Value/:DoubleValue/:StringValue/:BytesValue", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTypesTestAllTypesMsg(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "AllTypesTest")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -102,19 +100,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.POST("/v1/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(fastctx)
+	r.Post("/v1/text/:String/:RepeatedString/:Bytes/:RepeatedBytes/:Enum/:RepeatedEnum", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "AllTextTypesPost")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -127,19 +125,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.GET("/v2/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(fastctx)
+	r.Get("/v2/text/:String/:RepeatedString/:Bytes/:RepeatedBytes/:Enum/:RepeatedEnum", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "AllTextTypesGet")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -152,19 +150,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.POST("/v1/test/commonTypes", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameCommonTypesAny(fastctx)
+	r.Post("/v1/test/commonTypes", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameCommonTypesAny(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "CommonTypes")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -177,20 +175,20 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
 	// same types but different query, we need different query builder function
-	r.POST("/v1/sameInputAndOutput/{stringArgument}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(fastctx)
+	r.Post("/v1/sameInputAndOutput/:stringArgument", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "SameInputAndOutput")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -203,19 +201,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.POST("/v1/test/optional", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameOptionalOptionalField(fastctx)
+	r.Post("/v1/test/optional", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameOptionalOptionalField(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "Optional")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -228,19 +226,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.GET("/v1/test/get", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameGetMethodInputMsgName(fastctx)
+	r.Get("/v1/test/get", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMethodInputMsgName(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMethod")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -253,19 +251,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.GET("/v1/repeated/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}/{StringValueQuery}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameCheckRepeatedPathRepeatedCheck(fastctx)
+	r.Get("/v1/repeated/:BoolValue/:EnumValue/:Int32Value/:Sint32Value/:Uint32Value/:Int64Value/:Sint64Value/:Uint64Value/:Sfixed32Value/:Fixed32Value/:FloatValue/:Sfixed64Value/:Fixed64Value/:DoubleValue/:StringValue/:BytesValue/:StringValueQuery", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameCheckRepeatedPathRepeatedCheck(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPath")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -278,19 +276,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.GET("/v2/repeated/{StringValue}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(fastctx)
+	r.Get("/v2/repeated/:StringValue", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedQuery")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -303,19 +301,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.POST("/v3/repeated/{StringValue}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameCheckRepeatedPostRepeatedCheck(fastctx)
+	r.Post("/v3/repeated/:StringValue", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameCheckRepeatedPostRepeatedCheck(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPost")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -328,19 +326,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.GET("/v1/emptyGet", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameEmptyGetEmpty(fastctx)
+	r.Get("/v1/emptyGet", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameEmptyGetEmpty(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "EmptyGet")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -353,19 +351,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.POST("/v1/emptyPost", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameEmptyPostEmpty(fastctx)
+	r.Post("/v1/emptyPost", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameEmptyPostEmpty(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "EmptyPost")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -378,19 +376,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.POST("/v1/onlyStruct", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameOnlyStructInGetOnlyStruct(fastctx)
+	r.Post("/v1/onlyStruct", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameOnlyStructInGetOnlyStruct(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -403,19 +401,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.POST("/v1/multipart", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameMultipartFormMultipartFormRequest(fastctx)
+	r.Post("/v1/multipart", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameMultipartFormMultipartFormRequest(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -428,19 +426,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.POST("/v1/multipartall", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(fastctx)
+	r.Post("/v1/multipartall", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "MultipartFormAllTypes")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -453,19 +451,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.GET("/v1/max/{Int32Value}/{Uint32Value}/{Int64Value}/{Uint64Value}/{FloatValue}/{DoubleValue}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(fastctx)
+	r.Get("/v1/max/:Int32Value/:Uint32Value/:Int64Value/:Uint64Value/:FloatValue/:DoubleValue", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxTest")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -478,19 +476,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.GET("/v1/maxquery", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(fastctx)
+	r.Get("/v1/maxquery", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxQueryTest")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -503,21 +501,21 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
 	// http rule checks
 	// v1/{name=messages/*}
-	r.GET("/v1/messages/{name}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameGetMessageGetMessageRequest(fastctx)
+	r.Get("/v1/messages/:name", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMessageGetMessageRequest(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMessage")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -530,19 +528,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.GET("/v2/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameGetMessageV2GetMessageRequestV2(fastctx)
+	r.Get("/v2/messages/:message_id", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMessageV2GetMessageRequestV2(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMessageV2")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -555,19 +553,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.PATCH("/v1/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameUpdateMessageUpdateMessageRequest(fastctx)
+	r.Patch("/v1/messages/:message_id", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameUpdateMessageUpdateMessageRequest(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "UpdateMessage")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -580,19 +578,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.PATCH("/v2/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameUpdateMessageV2MessageV2(fastctx)
+	r.Patch("/v2/messages/:message_id", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameUpdateMessageV2MessageV2(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV2")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -605,19 +603,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.GET("/v3/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(fastctx)
+	r.Get("/v3/messages/:message_id", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMessageV3")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -630,19 +628,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.GET("/v3/users/{user_id}/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(fastctx)
+	r.Get("/v3/users/:user_id/messages/:message_id", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMessageV3")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -655,19 +653,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.GET("/v4/messages/base/{message_id:*}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameGetMessageV4GetMessageRequestV3(fastctx)
+	r.Get("/v4/messages/base/+", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameGetMessageV4GetMessageRequestV3(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "GetMessageV4")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -680,19 +678,19 @@ func RegisterServiceNameHTTPGoServer(
 			resp, _ = middleware(ctx, input, handler)
 		}
 		respJson, _ := json.Marshal(resp)
-		_, _ = fastctx.Write(respJson)
+		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.POST("/v1/array", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameTopLevelArrayArray(fastctx)
+	r.Post("/v1/array", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameTopLevelArrayArray(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "TopLevelArray")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -706,23 +704,23 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		if typedResp, ok := resp.(*common.Array); ok {
 			respJson, _ := json.Marshal(typedResp.Items)
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 		} else {
 			respJson, _ := json.Marshal(resp)
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 		}
 	})
 
-	r.PATCH("/v3/messages", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
-		input, err := buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(fastctx)
+	r.Patch("/v3/messages", func(fiberctx v3.Ctx) {
+		fiberctx.Set("Content-Type", "application/json")
+		input, err := buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(fiberctx)
 		if err != nil {
-			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
+			fiberctx.Status(400)
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 			return
 		}
-		ctx := context.WithValue(fastctx, "request", fastctx)
+		ctx := context.WithValue(fiberctx.Context(), "request", fiberctx)
 		ctx = context.WithValue(ctx, "proto_service", "ServiceName")
 		ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV3")
 		handler := func(ctx context.Context, req any) (resp any, err error) {
@@ -736,25 +734,25 @@ func RegisterServiceNameHTTPGoServer(
 		}
 		if typedResp, ok := resp.(*common.UpdateMessageRequest); ok {
 			respJson, _ := json.Marshal(typedResp.Message)
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 		} else {
 			respJson, _ := json.Marshal(resp)
-			_, _ = fastctx.Write(respJson)
+			_, _ = fiberctx.Write(respJson)
 		}
 	})
 
 	return nil
 }
 
-func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *common.InputMsgName, err error) {
+func buildExampleServiceNameRPCNameInputMsgName(ctx v3.Ctx) (arg *common.InputMsgName, err error) {
 	arg = &common.InputMsgName{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -773,16 +771,16 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
-	if ok && len(StringArgumentStr) != 0 {
+	StringArgumentStr := ctx.Params("stringArgument")
+	if len(StringArgumentStr) != 0 {
 		arg.StringArgument = StringArgumentStr
 		if arg.StringArgument, err = url.PathUnescape(arg.StringArgument); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field stringArgument: %w", err)
 		}
 	}
 
-	Int64ArgumentStr, ok := ctx.UserValue("int64Argument").(string)
-	if ok && len(Int64ArgumentStr) != 0 {
+	Int64ArgumentStr := ctx.Params("int64Argument")
+	if len(Int64ArgumentStr) != 0 {
 		arg.Int64Argument, err = strconv.ParseInt(Int64ArgumentStr, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter int64Argument: %w", err)
@@ -792,15 +790,15 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx *fasthttp.RequestCtx) (arg *
 	return arg, err
 }
 
-func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (arg *common.AllTypesMsg, err error) {
+func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx v3.Ctx) (arg *common.AllTypesMsg, err error) {
 	arg = &common.AllTypesMsg{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -926,8 +924,8 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	BoolValueStr, ok := ctx.UserValue("BoolValue").(string)
-	if ok && len(BoolValueStr) != 0 {
+	BoolValueStr := ctx.Params("BoolValue")
+	if len(BoolValueStr) != 0 {
 		switch BoolValueStr {
 		case "true", "t", "1":
 			arg.BoolValue = true
@@ -938,8 +936,8 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		}
 	}
 
-	EnumValueStr, ok := ctx.UserValue("EnumValue").(string)
-	if ok && len(EnumValueStr) != 0 {
+	EnumValueStr := ctx.Params("EnumValue")
+	if len(EnumValueStr) != 0 {
 		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumValueStr)]; optValueOk {
 			arg.EnumValue = common.Options(OptionsValue)
 		} else {
@@ -953,8 +951,8 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		}
 	}
 
-	Int32ValueStr, ok := ctx.UserValue("Int32Value").(string)
-	if ok && len(Int32ValueStr) != 0 {
+	Int32ValueStr := ctx.Params("Int32Value")
+	if len(Int32ValueStr) != 0 {
 		Int32Value, convErr := strconv.ParseInt(Int32ValueStr, 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
@@ -962,8 +960,8 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		arg.Int32Value = int32(Int32Value)
 	}
 
-	Sint32ValueStr, ok := ctx.UserValue("Sint32Value").(string)
-	if ok && len(Sint32ValueStr) != 0 {
+	Sint32ValueStr := ctx.Params("Sint32Value")
+	if len(Sint32ValueStr) != 0 {
 		Sint32Value, convErr := strconv.ParseInt(Sint32ValueStr, 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sint32Value: %w", convErr)
@@ -971,8 +969,8 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		arg.Sint32Value = int32(Sint32Value)
 	}
 
-	Uint32ValueStr, ok := ctx.UserValue("Uint32Value").(string)
-	if ok && len(Uint32ValueStr) != 0 {
+	Uint32ValueStr := ctx.Params("Uint32Value")
+	if len(Uint32ValueStr) != 0 {
 		Uint32Value, convErr := strconv.ParseUint(Uint32ValueStr, 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Uint32Value: %w", convErr)
@@ -980,32 +978,32 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		arg.Uint32Value = uint32(Uint32Value)
 	}
 
-	Int64ValueStr, ok := ctx.UserValue("Int64Value").(string)
-	if ok && len(Int64ValueStr) != 0 {
+	Int64ValueStr := ctx.Params("Int64Value")
+	if len(Int64ValueStr) != 0 {
 		arg.Int64Value, err = strconv.ParseInt(Int64ValueStr, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
 		}
 	}
 
-	Sint64ValueStr, ok := ctx.UserValue("Sint64Value").(string)
-	if ok && len(Sint64ValueStr) != 0 {
+	Sint64ValueStr := ctx.Params("Sint64Value")
+	if len(Sint64ValueStr) != 0 {
 		arg.Sint64Value, err = strconv.ParseInt(Sint64ValueStr, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", err)
 		}
 	}
 
-	Uint64ValueStr, ok := ctx.UserValue("Uint64Value").(string)
-	if ok && len(Uint64ValueStr) != 0 {
+	Uint64ValueStr := ctx.Params("Uint64Value")
+	if len(Uint64ValueStr) != 0 {
 		arg.Uint64Value, err = strconv.ParseUint(Uint64ValueStr, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
 		}
 	}
 
-	Sfixed32ValueStr, ok := ctx.UserValue("Sfixed32Value").(string)
-	if ok && len(Sfixed32ValueStr) != 0 {
+	Sfixed32ValueStr := ctx.Params("Sfixed32Value")
+	if len(Sfixed32ValueStr) != 0 {
 		Sfixed32Value, convErr := strconv.ParseInt(Sfixed32ValueStr, 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sfixed32Value: %w", convErr)
@@ -1013,8 +1011,8 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		arg.Sfixed32Value = int32(Sfixed32Value)
 	}
 
-	Fixed32ValueStr, ok := ctx.UserValue("Fixed32Value").(string)
-	if ok && len(Fixed32ValueStr) != 0 {
+	Fixed32ValueStr := ctx.Params("Fixed32Value")
+	if len(Fixed32ValueStr) != 0 {
 		Fixed32Value, convErr := strconv.ParseUint(Fixed32ValueStr, 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Fixed32Value: %w", convErr)
@@ -1022,8 +1020,8 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		arg.Fixed32Value = uint32(Fixed32Value)
 	}
 
-	FloatValueStr, ok := ctx.UserValue("FloatValue").(string)
-	if ok && len(FloatValueStr) != 0 {
+	FloatValueStr := ctx.Params("FloatValue")
+	if len(FloatValueStr) != 0 {
 		FloatValue, convErr := strconv.ParseFloat(FloatValueStr, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
@@ -1031,40 +1029,40 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 		arg.FloatValue = float32(FloatValue)
 	}
 
-	Sfixed64ValueStr, ok := ctx.UserValue("Sfixed64Value").(string)
-	if ok && len(Sfixed64ValueStr) != 0 {
+	Sfixed64ValueStr := ctx.Params("Sfixed64Value")
+	if len(Sfixed64ValueStr) != 0 {
 		arg.Sfixed64Value, err = strconv.ParseInt(Sfixed64ValueStr, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", err)
 		}
 	}
 
-	Fixed64ValueStr, ok := ctx.UserValue("Fixed64Value").(string)
-	if ok && len(Fixed64ValueStr) != 0 {
+	Fixed64ValueStr := ctx.Params("Fixed64Value")
+	if len(Fixed64ValueStr) != 0 {
 		arg.Fixed64Value, err = strconv.ParseUint(Fixed64ValueStr, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Fixed64Value: %w", err)
 		}
 	}
 
-	DoubleValueStr, ok := ctx.UserValue("DoubleValue").(string)
-	if ok && len(DoubleValueStr) != 0 {
+	DoubleValueStr := ctx.Params("DoubleValue")
+	if len(DoubleValueStr) != 0 {
 		arg.DoubleValue, err = strconv.ParseFloat(DoubleValueStr, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
 		}
 	}
 
-	StringValueStr, ok := ctx.UserValue("StringValue").(string)
-	if ok && len(StringValueStr) != 0 {
+	StringValueStr := ctx.Params("StringValue")
+	if len(StringValueStr) != 0 {
 		arg.StringValue = StringValueStr
 		if arg.StringValue, err = url.PathUnescape(arg.StringValue); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
 		}
 	}
 
-	BytesValueStr, ok := ctx.UserValue("BytesValue").(string)
-	if ok && len(BytesValueStr) != 0 {
+	BytesValueStr := ctx.Params("BytesValue")
+	if len(BytesValueStr) != 0 {
 		arg.BytesValue = []byte(BytesValueStr)
 		if BytesValueStr, err = url.PathUnescape(string(arg.BytesValue)); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field BytesValue: %w", err)
@@ -1075,15 +1073,15 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx *fasthttp.RequestCtx) (a
 	return arg, err
 }
 
-func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *fasthttp.RequestCtx) (arg *common.AllTextTypesMsg, err error) {
+func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx v3.Ctx) (arg *common.AllTextTypesMsg, err error) {
 	arg = &common.AllTextTypesMsg{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -1145,16 +1143,16 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *fasthttp.Reques
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	String_Str, ok := ctx.UserValue("String").(string)
-	if ok && len(String_Str) != 0 {
+	String_Str := ctx.Params("String")
+	if len(String_Str) != 0 {
 		arg.String_ = String_Str
 		if arg.String_, err = url.PathUnescape(arg.String_); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field String: %w", err)
 		}
 	}
 
-	RepeatedStringStr, ok := ctx.UserValue("RepeatedString").(string)
-	if ok && len(RepeatedStringStr) != 0 {
+	RepeatedStringStr := ctx.Params("RepeatedString")
+	if len(RepeatedStringStr) != 0 {
 		arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
 		for i, value := range arg.RepeatedString {
 			if arg.RepeatedString[i], err = url.PathUnescape(value); err != nil {
@@ -1163,8 +1161,8 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *fasthttp.Reques
 		}
 	}
 
-	BytesStr, ok := ctx.UserValue("Bytes").(string)
-	if ok && len(BytesStr) != 0 {
+	BytesStr := ctx.Params("Bytes")
+	if len(BytesStr) != 0 {
 		arg.Bytes = []byte(BytesStr)
 		if BytesStr, err = url.PathUnescape(string(arg.Bytes)); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field Bytes: %w", err)
@@ -1172,8 +1170,8 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *fasthttp.Reques
 		arg.Bytes = []byte(BytesStr)
 	}
 
-	RepeatedBytesStr, ok := ctx.UserValue("RepeatedBytes").(string)
-	if ok && len(RepeatedBytesStr) != 0 {
+	RepeatedBytesStr := ctx.Params("RepeatedBytes")
+	if len(RepeatedBytesStr) != 0 {
 		RepeatedBytesStrs := strings.Split(RepeatedBytesStr, ",")
 		arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
 		for _, str := range RepeatedBytesStrs {
@@ -1187,8 +1185,8 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *fasthttp.Reques
 		}
 	}
 
-	EnumStr, ok := ctx.UserValue("Enum").(string)
-	if ok && len(EnumStr) != 0 {
+	EnumStr := ctx.Params("Enum")
+	if len(EnumStr) != 0 {
 		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
 			arg.Enum = common.Options(OptionsValue)
 		} else {
@@ -1202,8 +1200,8 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *fasthttp.Reques
 		}
 	}
 
-	RepeatedEnumStr, ok := ctx.UserValue("RepeatedEnum").(string)
-	if ok && len(RepeatedEnumStr) != 0 {
+	RepeatedEnumStr := ctx.Params("RepeatedEnum")
+	if len(RepeatedEnumStr) != 0 {
 		RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
 		arg.RepeatedEnum = make([]common.Options, 0, len(RepeatedEnumStrs))
 		for _, str := range RepeatedEnumStrs {
@@ -1224,9 +1222,9 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx *fasthttp.Reques
 	return arg, err
 }
 
-func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx *fasthttp.RequestCtx) (arg *common.AllTextTypesMsg, err error) {
+func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx v3.Ctx) (arg *common.AllTextTypesMsg, err error) {
 	arg = &common.AllTextTypesMsg{}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -1288,16 +1286,16 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx *fasthttp.Request
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	String_Str, ok := ctx.UserValue("String").(string)
-	if ok && len(String_Str) != 0 {
+	String_Str := ctx.Params("String")
+	if len(String_Str) != 0 {
 		arg.String_ = String_Str
 		if arg.String_, err = url.PathUnescape(arg.String_); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field String: %w", err)
 		}
 	}
 
-	RepeatedStringStr, ok := ctx.UserValue("RepeatedString").(string)
-	if ok && len(RepeatedStringStr) != 0 {
+	RepeatedStringStr := ctx.Params("RepeatedString")
+	if len(RepeatedStringStr) != 0 {
 		arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
 		for i, value := range arg.RepeatedString {
 			if arg.RepeatedString[i], err = url.PathUnescape(value); err != nil {
@@ -1306,8 +1304,8 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx *fasthttp.Request
 		}
 	}
 
-	BytesStr, ok := ctx.UserValue("Bytes").(string)
-	if ok && len(BytesStr) != 0 {
+	BytesStr := ctx.Params("Bytes")
+	if len(BytesStr) != 0 {
 		arg.Bytes = []byte(BytesStr)
 		if BytesStr, err = url.PathUnescape(string(arg.Bytes)); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field Bytes: %w", err)
@@ -1315,8 +1313,8 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx *fasthttp.Request
 		arg.Bytes = []byte(BytesStr)
 	}
 
-	RepeatedBytesStr, ok := ctx.UserValue("RepeatedBytes").(string)
-	if ok && len(RepeatedBytesStr) != 0 {
+	RepeatedBytesStr := ctx.Params("RepeatedBytes")
+	if len(RepeatedBytesStr) != 0 {
 		RepeatedBytesStrs := strings.Split(RepeatedBytesStr, ",")
 		arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
 		for _, str := range RepeatedBytesStrs {
@@ -1330,8 +1328,8 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx *fasthttp.Request
 		}
 	}
 
-	EnumStr, ok := ctx.UserValue("Enum").(string)
-	if ok && len(EnumStr) != 0 {
+	EnumStr := ctx.Params("Enum")
+	if len(EnumStr) != 0 {
 		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(EnumStr)]; optValueOk {
 			arg.Enum = common.Options(OptionsValue)
 		} else {
@@ -1345,8 +1343,8 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx *fasthttp.Request
 		}
 	}
 
-	RepeatedEnumStr, ok := ctx.UserValue("RepeatedEnum").(string)
-	if ok && len(RepeatedEnumStr) != 0 {
+	RepeatedEnumStr := ctx.Params("RepeatedEnum")
+	if len(RepeatedEnumStr) != 0 {
 		RepeatedEnumStrs := strings.Split(RepeatedEnumStr, ",")
 		arg.RepeatedEnum = make([]common.Options, 0, len(RepeatedEnumStrs))
 		for _, str := range RepeatedEnumStrs {
@@ -1367,15 +1365,15 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx *fasthttp.Request
 	return arg, err
 }
 
-func buildExampleServiceNameCommonTypesAny(ctx *fasthttp.RequestCtx) (arg *anypb.Any, err error) {
+func buildExampleServiceNameCommonTypesAny(ctx v3.Ctx) (arg *anypb.Any, err error) {
 	arg = &anypb.Any{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -1394,15 +1392,15 @@ func buildExampleServiceNameCommonTypesAny(ctx *fasthttp.RequestCtx) (arg *anypb
 	return arg, err
 }
 
-func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.RequestCtx) (arg *common.InputMsgName, err error) {
+func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx v3.Ctx) (arg *common.InputMsgName, err error) {
 	arg = &common.InputMsgName{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -1421,8 +1419,8 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	StringArgumentStr, ok := ctx.UserValue("stringArgument").(string)
-	if ok && len(StringArgumentStr) != 0 {
+	StringArgumentStr := ctx.Params("stringArgument")
+	if len(StringArgumentStr) != 0 {
 		arg.StringArgument = StringArgumentStr
 		if arg.StringArgument, err = url.PathUnescape(arg.StringArgument); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field stringArgument: %w", err)
@@ -1432,15 +1430,15 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx *fasthttp.Request
 	return arg, err
 }
 
-func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg *common.OptionalField, err error) {
+func buildExampleServiceNameOptionalOptionalField(ctx v3.Ctx) (arg *common.OptionalField, err error) {
 	arg = &common.OptionalField{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -1577,9 +1575,9 @@ func buildExampleServiceNameOptionalOptionalField(ctx *fasthttp.RequestCtx) (arg
 	return arg, err
 }
 
-func buildExampleServiceNameGetMethodInputMsgName(ctx *fasthttp.RequestCtx) (arg *common.InputMsgName, err error) {
+func buildExampleServiceNameGetMethodInputMsgName(ctx v3.Ctx) (arg *common.InputMsgName, err error) {
 	arg = &common.InputMsgName{}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -1601,9 +1599,9 @@ func buildExampleServiceNameGetMethodInputMsgName(ctx *fasthttp.RequestCtx) (arg
 	return arg, err
 }
 
-func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.RequestCtx) (arg *common.RepeatedCheck, err error) {
+func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx v3.Ctx) (arg *common.RepeatedCheck, err error) {
 	arg = &common.RepeatedCheck{}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -1714,8 +1712,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	BoolValueStr, ok := ctx.UserValue("BoolValue").(string)
-	if ok && len(BoolValueStr) != 0 {
+	BoolValueStr := ctx.Params("BoolValue")
+	if len(BoolValueStr) != 0 {
 		BoolValueStrs := strings.Split(BoolValueStr, ",")
 		arg.BoolValue = make([]bool, 0, len(BoolValueStrs))
 		for _, str := range BoolValueStrs {
@@ -1730,8 +1728,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	EnumValueStr, ok := ctx.UserValue("EnumValue").(string)
-	if ok && len(EnumValueStr) != 0 {
+	EnumValueStr := ctx.Params("EnumValue")
+	if len(EnumValueStr) != 0 {
 		EnumValueStrs := strings.Split(EnumValueStr, ",")
 		arg.EnumValue = make([]common.Options, 0, len(EnumValueStrs))
 		for _, str := range EnumValueStrs {
@@ -1749,8 +1747,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	Int32ValueStr, ok := ctx.UserValue("Int32Value").(string)
-	if ok && len(Int32ValueStr) != 0 {
+	Int32ValueStr := ctx.Params("Int32Value")
+	if len(Int32ValueStr) != 0 {
 		Int32ValueStrs := strings.Split(Int32ValueStr, ",")
 		arg.Int32Value = make([]int32, 0, len(Int32ValueStrs))
 		for _, str := range Int32ValueStrs {
@@ -1762,8 +1760,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	Sint32ValueStr, ok := ctx.UserValue("Sint32Value").(string)
-	if ok && len(Sint32ValueStr) != 0 {
+	Sint32ValueStr := ctx.Params("Sint32Value")
+	if len(Sint32ValueStr) != 0 {
 		Sint32ValueStrs := strings.Split(Sint32ValueStr, ",")
 		arg.Sint32Value = make([]int32, 0, len(Sint32ValueStrs))
 		for _, str := range Sint32ValueStrs {
@@ -1775,8 +1773,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	Uint32ValueStr, ok := ctx.UserValue("Uint32Value").(string)
-	if ok && len(Uint32ValueStr) != 0 {
+	Uint32ValueStr := ctx.Params("Uint32Value")
+	if len(Uint32ValueStr) != 0 {
 		Uint32ValueStrs := strings.Split(Uint32ValueStr, ",")
 		arg.Uint32Value = make([]uint32, 0, len(Uint32ValueStrs))
 		for _, str := range Uint32ValueStrs {
@@ -1788,8 +1786,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	Int64ValueStr, ok := ctx.UserValue("Int64Value").(string)
-	if ok && len(Int64ValueStr) != 0 {
+	Int64ValueStr := ctx.Params("Int64Value")
+	if len(Int64ValueStr) != 0 {
 		Int64ValueStrs := strings.Split(Int64ValueStr, ",")
 		arg.Int64Value = make([]int64, 0, len(Int64ValueStrs))
 		for _, str := range Int64ValueStrs {
@@ -1801,8 +1799,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	Sint64ValueStr, ok := ctx.UserValue("Sint64Value").(string)
-	if ok && len(Sint64ValueStr) != 0 {
+	Sint64ValueStr := ctx.Params("Sint64Value")
+	if len(Sint64ValueStr) != 0 {
 		Sint64ValueStrs := strings.Split(Sint64ValueStr, ",")
 		arg.Sint64Value = make([]int64, 0, len(Sint64ValueStrs))
 		for _, str := range Sint64ValueStrs {
@@ -1814,8 +1812,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	Uint64ValueStr, ok := ctx.UserValue("Uint64Value").(string)
-	if ok && len(Uint64ValueStr) != 0 {
+	Uint64ValueStr := ctx.Params("Uint64Value")
+	if len(Uint64ValueStr) != 0 {
 		Uint64ValueStrs := strings.Split(Uint64ValueStr, ",")
 		arg.Uint64Value = make([]uint64, 0, len(Uint64ValueStrs))
 		for _, str := range Uint64ValueStrs {
@@ -1827,8 +1825,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	Sfixed32ValueStr, ok := ctx.UserValue("Sfixed32Value").(string)
-	if ok && len(Sfixed32ValueStr) != 0 {
+	Sfixed32ValueStr := ctx.Params("Sfixed32Value")
+	if len(Sfixed32ValueStr) != 0 {
 		Sfixed32ValueStrs := strings.Split(Sfixed32ValueStr, ",")
 		arg.Sfixed32Value = make([]int32, 0, len(Sfixed32ValueStrs))
 		for _, str := range Sfixed32ValueStrs {
@@ -1840,8 +1838,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	Fixed32ValueStr, ok := ctx.UserValue("Fixed32Value").(string)
-	if ok && len(Fixed32ValueStr) != 0 {
+	Fixed32ValueStr := ctx.Params("Fixed32Value")
+	if len(Fixed32ValueStr) != 0 {
 		Fixed32ValueStrs := strings.Split(Fixed32ValueStr, ",")
 		arg.Fixed32Value = make([]uint32, 0, len(Fixed32ValueStrs))
 		for _, str := range Fixed32ValueStrs {
@@ -1853,8 +1851,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	FloatValueStr, ok := ctx.UserValue("FloatValue").(string)
-	if ok && len(FloatValueStr) != 0 {
+	FloatValueStr := ctx.Params("FloatValue")
+	if len(FloatValueStr) != 0 {
 		FloatValueStrs := strings.Split(FloatValueStr, ",")
 		arg.FloatValue = make([]float32, 0, len(FloatValueStrs))
 		for _, str := range FloatValueStrs {
@@ -1866,8 +1864,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	Sfixed64ValueStr, ok := ctx.UserValue("Sfixed64Value").(string)
-	if ok && len(Sfixed64ValueStr) != 0 {
+	Sfixed64ValueStr := ctx.Params("Sfixed64Value")
+	if len(Sfixed64ValueStr) != 0 {
 		Sfixed64ValueStrs := strings.Split(Sfixed64ValueStr, ",")
 		arg.Sfixed64Value = make([]int64, 0, len(Sfixed64ValueStrs))
 		for _, str := range Sfixed64ValueStrs {
@@ -1879,8 +1877,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	Fixed64ValueStr, ok := ctx.UserValue("Fixed64Value").(string)
-	if ok && len(Fixed64ValueStr) != 0 {
+	Fixed64ValueStr := ctx.Params("Fixed64Value")
+	if len(Fixed64ValueStr) != 0 {
 		Fixed64ValueStrs := strings.Split(Fixed64ValueStr, ",")
 		arg.Fixed64Value = make([]uint64, 0, len(Fixed64ValueStrs))
 		for _, str := range Fixed64ValueStrs {
@@ -1892,8 +1890,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	DoubleValueStr, ok := ctx.UserValue("DoubleValue").(string)
-	if ok && len(DoubleValueStr) != 0 {
+	DoubleValueStr := ctx.Params("DoubleValue")
+	if len(DoubleValueStr) != 0 {
 		DoubleValueStrs := strings.Split(DoubleValueStr, ",")
 		arg.DoubleValue = make([]float64, 0, len(DoubleValueStrs))
 		for _, str := range DoubleValueStrs {
@@ -1905,8 +1903,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	StringValueStr, ok := ctx.UserValue("StringValue").(string)
-	if ok && len(StringValueStr) != 0 {
+	StringValueStr := ctx.Params("StringValue")
+	if len(StringValueStr) != 0 {
 		arg.StringValue = strings.Split(StringValueStr, ",")
 		for i, value := range arg.StringValue {
 			if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
@@ -1915,8 +1913,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	BytesValueStr, ok := ctx.UserValue("BytesValue").(string)
-	if ok && len(BytesValueStr) != 0 {
+	BytesValueStr := ctx.Params("BytesValue")
+	if len(BytesValueStr) != 0 {
 		BytesValueStrs := strings.Split(BytesValueStr, ",")
 		arg.BytesValue = make([][]byte, 0, len(BytesValueStrs))
 		for _, str := range BytesValueStrs {
@@ -1930,8 +1928,8 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 		}
 	}
 
-	StringValueQueryStr, ok := ctx.UserValue("StringValueQuery").(string)
-	if ok && len(StringValueQueryStr) != 0 {
+	StringValueQueryStr := ctx.Params("StringValueQuery")
+	if len(StringValueQueryStr) != 0 {
 		arg.StringValueQuery = strings.Split(StringValueQueryStr, ",")
 		for i, value := range arg.StringValueQuery {
 			if arg.StringValueQuery[i], err = url.PathUnescape(value); err != nil {
@@ -1943,9 +1941,9 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx *fasthttp.Request
 	return arg, err
 }
 
-func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.RequestCtx) (arg *common.RepeatedCheck, err error) {
+func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx v3.Ctx) (arg *common.RepeatedCheck, err error) {
 	arg = &common.RepeatedCheck{}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2056,8 +2054,8 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.Reques
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	StringValueStr, ok := ctx.UserValue("StringValue").(string)
-	if ok && len(StringValueStr) != 0 {
+	StringValueStr := ctx.Params("StringValue")
+	if len(StringValueStr) != 0 {
 		arg.StringValue = strings.Split(StringValueStr, ",")
 		for i, value := range arg.StringValue {
 			if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
@@ -2069,15 +2067,15 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx *fasthttp.Reques
 	return arg, err
 }
 
-func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.RequestCtx) (arg *common.RepeatedCheck, err error) {
+func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx v3.Ctx) (arg *common.RepeatedCheck, err error) {
 	arg = &common.RepeatedCheck{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2188,8 +2186,8 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.Request
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	StringValueStr, ok := ctx.UserValue("StringValue").(string)
-	if ok && len(StringValueStr) != 0 {
+	StringValueStr := ctx.Params("StringValue")
+	if len(StringValueStr) != 0 {
 		arg.StringValue = strings.Split(StringValueStr, ",")
 		for i, value := range arg.StringValue {
 			if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
@@ -2201,14 +2199,14 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx *fasthttp.Request
 	return arg, err
 }
 
-func buildExampleServiceNameEmptyGetEmpty(ctx *fasthttp.RequestCtx) (arg *common.Empty, err error) {
+func buildExampleServiceNameEmptyGetEmpty(ctx v3.Ctx) (arg *common.Empty, err error) {
 	arg = &common.Empty{}
 	return arg, err
 }
 
-func buildExampleServiceNameEmptyPostEmpty(ctx *fasthttp.RequestCtx) (arg *common.Empty, err error) {
+func buildExampleServiceNameEmptyPostEmpty(ctx v3.Ctx) (arg *common.Empty, err error) {
 	arg = &common.Empty{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
@@ -2217,15 +2215,15 @@ func buildExampleServiceNameEmptyPostEmpty(ctx *fasthttp.RequestCtx) (arg *commo
 	return arg, err
 }
 
-func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx *fasthttp.RequestCtx) (arg *common.OnlyStruct, err error) {
+func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx v3.Ctx) (arg *common.OnlyStruct, err error) {
 	arg = &common.OnlyStruct{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2247,7 +2245,7 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx *fasthttp.RequestCtx) 
 	return arg, err
 }
 
-func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx *fasthttp.RequestCtx) (arg *common.MultipartFormRequest, err error) {
+func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx v3.Ctx) (arg *common.MultipartFormRequest, err error) {
 	arg = &common.MultipartFormRequest{}
 	form, err := ctx.MultipartForm()
 	if err != nil {
@@ -2272,10 +2270,10 @@ func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx *fasthttp.Requ
 			return nil, fmt.Errorf("failed to read file: document: %w", err)
 		}
 	}
-	if values, ok := form.Value["otherField"]; ok && len(values) > 0 {
+	if values := form.Value["otherField"]; len(values) > 0 {
 		arg.OtherField = values[0]
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2294,13 +2292,13 @@ func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx *fasthttp.Requ
 	return arg, err
 }
 
-func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fasthttp.RequestCtx) (arg *common.MultipartFormAllTypes, err error) {
+func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx v3.Ctx) (arg *common.MultipartFormAllTypes, err error) {
 	arg = &common.MultipartFormAllTypes{}
 	form, err := ctx.MultipartForm()
 	if err != nil {
 		return nil, err
 	}
-	if values, ok := form.Value["BoolValue"]; ok && len(values) > 0 {
+	if values := form.Value["BoolValue"]; len(values) > 0 {
 		switch values[0] {
 		case "true", "t", "1":
 			arg.BoolValue = true
@@ -2310,7 +2308,7 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 			return nil, fmt.Errorf("unknown bool string value %s", values[0])
 		}
 	}
-	if values, ok := form.Value["EnumValue"]; ok && len(values) > 0 {
+	if values := form.Value["EnumValue"]; len(values) > 0 {
 		if OptionsValue, optValueOk := common.Options_value[strings.ToUpper(values[0])]; optValueOk {
 			arg.EnumValue = common.Options(OptionsValue)
 		} else {
@@ -2323,21 +2321,21 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 			}
 		}
 	}
-	if values, ok := form.Value["Int32Value"]; ok && len(values) > 0 {
+	if values := form.Value["Int32Value"]; len(values) > 0 {
 		Int32Value, convErr := strconv.ParseInt(values[0], 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
 		}
 		arg.Int32Value = int32(Int32Value)
 	}
-	if values, ok := form.Value["Sint32Value"]; ok && len(values) > 0 {
+	if values := form.Value["Sint32Value"]; len(values) > 0 {
 		Sint32Value, convErr := strconv.ParseInt(values[0], 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sint32Value: %w", convErr)
 		}
 		arg.Sint32Value = int32(Sint32Value)
 	}
-	if values, ok := form.Value["Uint32Value"]; ok && len(values) > 0 {
+	if values := form.Value["Uint32Value"]; len(values) > 0 {
 		for _, value := range values {
 			Uint32Value, convErr := strconv.ParseUint(value, 10, 32)
 			if convErr != nil {
@@ -2346,33 +2344,33 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 			arg.Uint32Value = append(arg.Uint32Value, uint32(Uint32Value))
 		}
 	}
-	if values, ok := form.Value["Int64Value"]; ok && len(values) > 0 {
+	if values := form.Value["Int64Value"]; len(values) > 0 {
 		arg.Int64Value, err = strconv.ParseInt(values[0], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
 		}
 	}
-	if values, ok := form.Value["Sint64Value"]; ok && len(values) > 0 {
+	if values := form.Value["Sint64Value"]; len(values) > 0 {
 		Sint64Value, convErr := strconv.ParseInt(values[0], 10, 64)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sint64Value: %w", convErr)
 		}
 		arg.Sint64Value = &Sint64Value
 	}
-	if values, ok := form.Value["Uint64Value"]; ok && len(values) > 0 {
+	if values := form.Value["Uint64Value"]; len(values) > 0 {
 		arg.Uint64Value, err = strconv.ParseUint(values[0], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
 		}
 	}
-	if values, ok := form.Value["Sfixed32Value"]; ok && len(values) > 0 {
+	if values := form.Value["Sfixed32Value"]; len(values) > 0 {
 		Sfixed32Value, convErr := strconv.ParseInt(values[0], 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sfixed32Value: %w", convErr)
 		}
 		arg.Sfixed32Value = int32(Sfixed32Value)
 	}
-	if values, ok := form.Value["Fixed32Value"]; ok && len(values) > 0 {
+	if values := form.Value["Fixed32Value"]; len(values) > 0 {
 		for _, value := range values {
 			Fixed32Value, convErr := strconv.ParseUint(value, 10, 32)
 			if convErr != nil {
@@ -2381,42 +2379,42 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 			arg.Fixed32Value = append(arg.Fixed32Value, uint32(Fixed32Value))
 		}
 	}
-	if values, ok := form.Value["FloatValue"]; ok && len(values) > 0 {
+	if values := form.Value["FloatValue"]; len(values) > 0 {
 		FloatValue, convErr := strconv.ParseFloat(values[0], 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
 		}
 		arg.FloatValue = float32(FloatValue)
 	}
-	if values, ok := form.Value["Sfixed64Value"]; ok && len(values) > 0 {
+	if values := form.Value["Sfixed64Value"]; len(values) > 0 {
 		arg.Sfixed64Value, err = strconv.ParseInt(values[0], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Sfixed64Value: %w", err)
 		}
 	}
-	if values, ok := form.Value["Fixed64Value"]; ok && len(values) > 0 {
+	if values := form.Value["Fixed64Value"]; len(values) > 0 {
 		Fixed64Value, convErr := strconv.ParseUint(values[0], 10, 64)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Fixed64Value: %w", convErr)
 		}
 		arg.Fixed64Value = &Fixed64Value
 	}
-	if values, ok := form.Value["DoubleValue"]; ok && len(values) > 0 {
+	if values := form.Value["DoubleValue"]; len(values) > 0 {
 		arg.DoubleValue, err = strconv.ParseFloat(values[0], 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
 		}
 	}
-	if values, ok := form.Value["StringValue"]; ok && len(values) > 0 {
+	if values := form.Value["StringValue"]; len(values) > 0 {
 		arg.StringValue = values[0]
 	}
-	if values, ok := form.Value["BytesValue"]; ok && len(values) > 0 {
+	if values := form.Value["BytesValue"]; len(values) > 0 {
 		arg.BytesValue = []byte(values[0])
 	}
-	if values, ok := form.Value["SliceStringValue"]; ok && len(values) > 0 {
+	if values := form.Value["SliceStringValue"]; len(values) > 0 {
 		arg.SliceStringValue = append(arg.SliceStringValue, values...)
 	}
-	if values, ok := form.Value["SliceInt32Value"]; ok && len(values) > 0 {
+	if values := form.Value["SliceInt32Value"]; len(values) > 0 {
 		for _, value := range values {
 			SliceInt32Value, convErr := strconv.ParseInt(value, 10, 32)
 			if convErr != nil {
@@ -2444,10 +2442,10 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 			return nil, fmt.Errorf("failed to read file: document: %w", err)
 		}
 	}
-	if values, ok := form.Value["RepeatedStringValue"]; ok && len(values) > 0 {
+	if values := form.Value["RepeatedStringValue"]; len(values) > 0 {
 		arg.RepeatedStringValue = append(arg.RepeatedStringValue, values...)
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2567,9 +2565,9 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx *fast
 	return arg, err
 }
 
-func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ctx *fasthttp.RequestCtx) (arg *common.AllNumberTypesMsg, err error) {
+func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ctx v3.Ctx) (arg *common.AllNumberTypesMsg, err error) {
 	arg = &common.AllNumberTypesMsg{}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2647,8 +2645,8 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ctx *fasthttp.Reque
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	Int32ValueStr, ok := ctx.UserValue("Int32Value").(string)
-	if ok && len(Int32ValueStr) != 0 {
+	Int32ValueStr := ctx.Params("Int32Value")
+	if len(Int32ValueStr) != 0 {
 		Int32Value, convErr := strconv.ParseInt(Int32ValueStr, 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Int32Value: %w", convErr)
@@ -2656,8 +2654,8 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ctx *fasthttp.Reque
 		arg.Int32Value = int32(Int32Value)
 	}
 
-	Uint32ValueStr, ok := ctx.UserValue("Uint32Value").(string)
-	if ok && len(Uint32ValueStr) != 0 {
+	Uint32ValueStr := ctx.Params("Uint32Value")
+	if len(Uint32ValueStr) != 0 {
 		Uint32Value, convErr := strconv.ParseUint(Uint32ValueStr, 10, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Uint32Value: %w", convErr)
@@ -2665,24 +2663,24 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ctx *fasthttp.Reque
 		arg.Uint32Value = uint32(Uint32Value)
 	}
 
-	Int64ValueStr, ok := ctx.UserValue("Int64Value").(string)
-	if ok && len(Int64ValueStr) != 0 {
+	Int64ValueStr := ctx.Params("Int64Value")
+	if len(Int64ValueStr) != 0 {
 		arg.Int64Value, err = strconv.ParseInt(Int64ValueStr, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Int64Value: %w", err)
 		}
 	}
 
-	Uint64ValueStr, ok := ctx.UserValue("Uint64Value").(string)
-	if ok && len(Uint64ValueStr) != 0 {
+	Uint64ValueStr := ctx.Params("Uint64Value")
+	if len(Uint64ValueStr) != 0 {
 		arg.Uint64Value, err = strconv.ParseUint(Uint64ValueStr, 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter Uint64Value: %w", err)
 		}
 	}
 
-	FloatValueStr, ok := ctx.UserValue("FloatValue").(string)
-	if ok && len(FloatValueStr) != 0 {
+	FloatValueStr := ctx.Params("FloatValue")
+	if len(FloatValueStr) != 0 {
 		FloatValue, convErr := strconv.ParseFloat(FloatValueStr, 32)
 		if convErr != nil {
 			return nil, fmt.Errorf("conversion failed for parameter FloatValue: %w", convErr)
@@ -2690,8 +2688,8 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ctx *fasthttp.Reque
 		arg.FloatValue = float32(FloatValue)
 	}
 
-	DoubleValueStr, ok := ctx.UserValue("DoubleValue").(string)
-	if ok && len(DoubleValueStr) != 0 {
+	DoubleValueStr := ctx.Params("DoubleValue")
+	if len(DoubleValueStr) != 0 {
 		arg.DoubleValue, err = strconv.ParseFloat(DoubleValueStr, 64)
 		if err != nil {
 			return nil, fmt.Errorf("conversion failed for parameter DoubleValue: %w", err)
@@ -2701,9 +2699,9 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ctx *fasthttp.Reque
 	return arg, err
 }
 
-func buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(ctx *fasthttp.RequestCtx) (arg *common.AllNumberTypesMsg, err error) {
+func buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(ctx v3.Ctx) (arg *common.AllNumberTypesMsg, err error) {
 	arg = &common.AllNumberTypesMsg{}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2784,9 +2782,9 @@ func buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(ctx *fasthttp.
 	return arg, err
 }
 
-func buildExampleServiceNameGetMessageGetMessageRequest(ctx *fasthttp.RequestCtx) (arg *common.GetMessageRequest, err error) {
+func buildExampleServiceNameGetMessageGetMessageRequest(ctx v3.Ctx) (arg *common.GetMessageRequest, err error) {
 	arg = &common.GetMessageRequest{}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2800,8 +2798,8 @@ func buildExampleServiceNameGetMessageGetMessageRequest(ctx *fasthttp.RequestCtx
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	NameStr, ok := ctx.UserValue("name").(string)
-	if ok && len(NameStr) != 0 {
+	NameStr := ctx.Params("name")
+	if len(NameStr) != 0 {
 		arg.Name = NameStr
 		if arg.Name, err = url.PathUnescape(arg.Name); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field name: %w", err)
@@ -2812,9 +2810,9 @@ func buildExampleServiceNameGetMessageGetMessageRequest(ctx *fasthttp.RequestCtx
 	return arg, err
 }
 
-func buildExampleServiceNameGetMessageV2GetMessageRequestV2(ctx *fasthttp.RequestCtx) (arg *common.GetMessageRequestV2, err error) {
+func buildExampleServiceNameGetMessageV2GetMessageRequestV2(ctx v3.Ctx) (arg *common.GetMessageRequestV2, err error) {
 	arg = &common.GetMessageRequestV2{}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2840,8 +2838,8 @@ func buildExampleServiceNameGetMessageV2GetMessageRequestV2(ctx *fasthttp.Reques
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	MessageIdStr, ok := ctx.UserValue("message_id").(string)
-	if ok && len(MessageIdStr) != 0 {
+	MessageIdStr := ctx.Params("message_id")
+	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
 		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
@@ -2851,16 +2849,16 @@ func buildExampleServiceNameGetMessageV2GetMessageRequestV2(ctx *fasthttp.Reques
 	return arg, err
 }
 
-func buildExampleServiceNameUpdateMessageUpdateMessageRequest(ctx *fasthttp.RequestCtx) (arg *common.UpdateMessageRequest, err error) {
+func buildExampleServiceNameUpdateMessageUpdateMessageRequest(ctx v3.Ctx) (arg *common.UpdateMessageRequest, err error) {
 	arg = &common.UpdateMessageRequest{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		arg.Message = &common.MessageV2{}
 		if err = json.Unmarshal(body, arg.Message); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2886,8 +2884,8 @@ func buildExampleServiceNameUpdateMessageUpdateMessageRequest(ctx *fasthttp.Requ
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	MessageIdStr, ok := ctx.UserValue("message_id").(string)
-	if ok && len(MessageIdStr) != 0 {
+	MessageIdStr := ctx.Params("message_id")
+	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
 		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
@@ -2897,15 +2895,15 @@ func buildExampleServiceNameUpdateMessageUpdateMessageRequest(ctx *fasthttp.Requ
 	return arg, err
 }
 
-func buildExampleServiceNameUpdateMessageV2MessageV2(ctx *fasthttp.RequestCtx) (arg *common.MessageV2, err error) {
+func buildExampleServiceNameUpdateMessageV2MessageV2(ctx v3.Ctx) (arg *common.MessageV2, err error) {
 	arg = &common.MessageV2{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2921,8 +2919,8 @@ func buildExampleServiceNameUpdateMessageV2MessageV2(ctx *fasthttp.RequestCtx) (
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	MessageIdStr, ok := ctx.UserValue("message_id").(string)
-	if ok && len(MessageIdStr) != 0 {
+	MessageIdStr := ctx.Params("message_id")
+	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
 		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
@@ -2932,9 +2930,9 @@ func buildExampleServiceNameUpdateMessageV2MessageV2(ctx *fasthttp.RequestCtx) (
 	return arg, err
 }
 
-func buildExampleServiceNameGetMessageV3GetMessageRequestV3(ctx *fasthttp.RequestCtx) (arg *common.GetMessageRequestV3, err error) {
+func buildExampleServiceNameGetMessageV3GetMessageRequestV3(ctx v3.Ctx) (arg *common.GetMessageRequestV3, err error) {
 	arg = &common.GetMessageRequestV3{}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2950,16 +2948,16 @@ func buildExampleServiceNameGetMessageV3GetMessageRequestV3(ctx *fasthttp.Reques
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	MessageIdStr, ok := ctx.UserValue("message_id").(string)
-	if ok && len(MessageIdStr) != 0 {
+	MessageIdStr := ctx.Params("message_id")
+	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
 		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
 		}
 	}
 
-	UserIdStr, ok := ctx.UserValue("user_id").(string)
-	if ok && len(UserIdStr) != 0 {
+	UserIdStr := ctx.Params("user_id")
+	if len(UserIdStr) != 0 {
 		arg.UserId = UserIdStr
 		if arg.UserId, err = url.PathUnescape(arg.UserId); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field user_id: %w", err)
@@ -2969,9 +2967,9 @@ func buildExampleServiceNameGetMessageV3GetMessageRequestV3(ctx *fasthttp.Reques
 	return arg, err
 }
 
-func buildExampleServiceNameGetMessageV4GetMessageRequestV3(ctx *fasthttp.RequestCtx) (arg *common.GetMessageRequestV3, err error) {
+func buildExampleServiceNameGetMessageV4GetMessageRequestV3(ctx v3.Ctx) (arg *common.GetMessageRequestV3, err error) {
 	arg = &common.GetMessageRequestV3{}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -2987,8 +2985,8 @@ func buildExampleServiceNameGetMessageV4GetMessageRequestV3(ctx *fasthttp.Reques
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	MessageIdStr, ok := ctx.UserValue("message_id").(string)
-	if ok && len(MessageIdStr) != 0 {
+	MessageIdStr := ctx.Params("+")
+	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
 		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
@@ -2999,15 +2997,15 @@ func buildExampleServiceNameGetMessageV4GetMessageRequestV3(ctx *fasthttp.Reques
 	return arg, err
 }
 
-func buildExampleServiceNameTopLevelArrayArray(ctx *fasthttp.RequestCtx) (arg *common.Array, err error) {
+func buildExampleServiceNameTopLevelArrayArray(ctx v3.Ctx) (arg *common.Array, err error) {
 	arg = &common.Array{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -3024,15 +3022,15 @@ func buildExampleServiceNameTopLevelArrayArray(ctx *fasthttp.RequestCtx) (arg *c
 	return arg, err
 }
 
-func buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(ctx *fasthttp.RequestCtx) (arg *common.UpdateMessageRequest, err error) {
+func buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(ctx v3.Ctx) (arg *common.UpdateMessageRequest, err error) {
 	arg = &common.UpdateMessageRequest{}
-	var body = ctx.PostBody()
+	var body = ctx.Body()
 	if len(body) > 0 {
 		if err = json.Unmarshal(body, arg); err != nil {
 			return nil, err
 		}
 	}
-	for keyB, valueB := range ctx.QueryArgs().All() {
+	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
 		var value string
 		value, err = url.QueryUnescape(string(valueB))
@@ -3086,1241 +3084,5 @@ func getChainServerMiddlewareHandlerExample(
 	}
 	return func(ctx context.Context, req any) (resp any, err error) {
 		return middlewares[curr+1](ctx, req, getChainServerMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
-	}
-}
-
-var _ ServiceNameHTTPGoService = &ServiceNameHTTPGoClient{}
-
-type ServiceNameHTTPGoClient struct {
-	cl          *fasthttp.Client
-	host        string
-	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error)
-	middleware  func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error)
-}
-
-func GetServiceNameHTTPGoClient(
-	_ context.Context,
-	cl *fasthttp.Client,
-	host string,
-	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
-) (*ServiceNameHTTPGoClient, error) {
-	return &ServiceNameHTTPGoClient{
-		cl:          cl,
-		host:        host,
-		middlewares: middlewares,
-		middleware:  chainClientMiddlewaresExample(middlewares),
-	}, nil
-}
-
-func (p *ServiceNameHTTPGoClient) RPCName(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/RPCName/%s/%d%s", p.host, request.StringArgument, request.Int64Argument, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "RPCName")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.OutputMsgName{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) AllTypesTest(ctx context.Context, request *common.AllTypesMsg) (resp *common.AllTypesMsg, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/test/%t/%s/%d/%d/%d/%d/%d/%d/%d/%d/%f/%d/%d/%f/%s/%s%s", p.host, request.BoolValue, request.EnumValue, request.Int32Value, request.Sint32Value, request.Uint32Value, request.Int64Value, request.Sint64Value, request.Uint64Value, request.Sfixed32Value, request.Fixed32Value, request.FloatValue, request.Sfixed64Value, request.Fixed64Value, request.DoubleValue, request.StringValue, request.BytesValue, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "AllTypesTest")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.AllTypesMsg{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) AllTextTypesPost(ctx context.Context, request *common.AllTextTypesMsg) (resp *common.AllTextTypesMsg, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	RepeatedStringRequest := strings.Join(request.RepeatedString, ",")
-	RepeatedBytesStrs := make([]string, len(request.RepeatedBytes))
-	for i, v := range request.RepeatedBytes {
-		RepeatedBytesStrs[i] = string(v)
-	}
-	RepeatedBytesRequest := strings.Join(RepeatedBytesStrs, ",")
-	RepeatedEnumStrs := make([]string, len(request.RepeatedEnum))
-	for i, v := range request.RepeatedEnum {
-		RepeatedEnumStrs[i] = v.String()
-	}
-	RepeatedEnumRequest := strings.Join(RepeatedEnumStrs, ",")
-	req.SetRequestURI(fmt.Sprintf("%s/v1/text/%s/%s/%s/%s/%s/%s%s", p.host, request.String_, RepeatedStringRequest, request.Bytes, RepeatedBytesRequest, request.Enum, RepeatedEnumRequest, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesPost")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.AllTextTypesMsg{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) AllTextTypesGet(ctx context.Context, request *common.AllTextTypesMsg) (resp *common.AllTextTypesMsg, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var queryValues = make(url.Values)
-	if request.OptionalString != nil {
-		queryValues.Set("OptionalString", *request.OptionalString)
-	}
-	if request.OptionalBytes != nil {
-		queryValues.Set("OptionalBytes", string(request.OptionalBytes))
-	}
-	if request.OptionalEnum != nil {
-		queryValues.Set("OptionalEnum", request.OptionalEnum.String())
-	}
-	queryArgs = "?" + queryValues.Encode()
-	RepeatedStringRequest := strings.Join(request.RepeatedString, ",")
-	RepeatedBytesStrs := make([]string, len(request.RepeatedBytes))
-	for i, v := range request.RepeatedBytes {
-		RepeatedBytesStrs[i] = string(v)
-	}
-	RepeatedBytesRequest := strings.Join(RepeatedBytesStrs, ",")
-	RepeatedEnumStrs := make([]string, len(request.RepeatedEnum))
-	for i, v := range request.RepeatedEnum {
-		RepeatedEnumStrs[i] = v.String()
-	}
-	RepeatedEnumRequest := strings.Join(RepeatedEnumStrs, ",")
-	req.SetRequestURI(fmt.Sprintf("%s/v2/text/%s/%s/%s/%s/%s/%s%s", p.host, request.String_, RepeatedStringRequest, request.Bytes, RepeatedBytesRequest, request.Enum, RepeatedEnumRequest, queryArgs))
-	req.Header.SetMethod("GET")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "AllTextTypesGet")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.AllTextTypesMsg{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) CommonTypes(ctx context.Context, request *anypb.Any) (resp *emptypb.Empty, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/test/commonTypes%s", p.host, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "CommonTypes")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &emptypb.Empty{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-// SameInputAndOutput same types but different query, we need different query builder function
-func (p *ServiceNameHTTPGoClient) SameInputAndOutput(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/sameInputAndOutput/%s%s", p.host, request.StringArgument, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "SameInputAndOutput")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.OutputMsgName{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *common.OptionalField) (resp *common.OptionalField, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/test/optional%s", p.host, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "Optional")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.OptionalField{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var queryValues = make(url.Values)
-	queryValues.Set("int64Argument", strconv.FormatInt(request.Int64Argument, 10))
-	queryValues.Set("stringArgument", request.StringArgument)
-	queryArgs = "?" + queryValues.Encode()
-	req.SetRequestURI(fmt.Sprintf("%s/v1/test/get%s", p.host, queryArgs))
-	req.Header.SetMethod("GET")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "GetMethod")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.OutputMsgName{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	BoolValueStrs := make([]string, len(request.BoolValue))
-	for i, v := range request.BoolValue {
-		BoolValueStrs[i] = strconv.FormatBool(v)
-	}
-	BoolValueRequest := strings.Join(BoolValueStrs, ",")
-	EnumValueStrs := make([]string, len(request.EnumValue))
-	for i, v := range request.EnumValue {
-		EnumValueStrs[i] = v.String()
-	}
-	EnumValueRequest := strings.Join(EnumValueStrs, ",")
-	Int32ValueStrs := make([]string, len(request.Int32Value))
-	for i, v := range request.Int32Value {
-		Int32ValueStrs[i] = strconv.FormatInt(int64(v), 10)
-	}
-	Int32ValueRequest := strings.Join(Int32ValueStrs, ",")
-	Sint32ValueStrs := make([]string, len(request.Sint32Value))
-	for i, v := range request.Sint32Value {
-		Sint32ValueStrs[i] = strconv.FormatInt(int64(v), 10)
-	}
-	Sint32ValueRequest := strings.Join(Sint32ValueStrs, ",")
-	Uint32ValueStrs := make([]string, len(request.Uint32Value))
-	for i, v := range request.Uint32Value {
-		Uint32ValueStrs[i] = strconv.FormatInt(int64(v), 10)
-	}
-	Uint32ValueRequest := strings.Join(Uint32ValueStrs, ",")
-	Int64ValueStrs := make([]string, len(request.Int64Value))
-	for i, v := range request.Int64Value {
-		Int64ValueStrs[i] = strconv.FormatInt(v, 10)
-	}
-	Int64ValueRequest := strings.Join(Int64ValueStrs, ",")
-	Sint64ValueStrs := make([]string, len(request.Sint64Value))
-	for i, v := range request.Sint64Value {
-		Sint64ValueStrs[i] = strconv.FormatInt(v, 10)
-	}
-	Sint64ValueRequest := strings.Join(Sint64ValueStrs, ",")
-	Uint64ValueStrs := make([]string, len(request.Uint64Value))
-	for i, v := range request.Uint64Value {
-		Uint64ValueStrs[i] = strconv.FormatUint(v, 10)
-	}
-	Uint64ValueRequest := strings.Join(Uint64ValueStrs, ",")
-	Sfixed32ValueStrs := make([]string, len(request.Sfixed32Value))
-	for i, v := range request.Sfixed32Value {
-		Sfixed32ValueStrs[i] = strconv.FormatInt(int64(v), 10)
-	}
-	Sfixed32ValueRequest := strings.Join(Sfixed32ValueStrs, ",")
-	Fixed32ValueStrs := make([]string, len(request.Fixed32Value))
-	for i, v := range request.Fixed32Value {
-		Fixed32ValueStrs[i] = strconv.FormatInt(int64(v), 10)
-	}
-	Fixed32ValueRequest := strings.Join(Fixed32ValueStrs, ",")
-	FloatValueStrs := make([]string, len(request.FloatValue))
-	for i, v := range request.FloatValue {
-		FloatValueStrs[i] = strconv.FormatFloat(float64(v), 'f', -1, 64)
-	}
-	FloatValueRequest := strings.Join(FloatValueStrs, ",")
-	Sfixed64ValueStrs := make([]string, len(request.Sfixed64Value))
-	for i, v := range request.Sfixed64Value {
-		Sfixed64ValueStrs[i] = strconv.FormatInt(v, 10)
-	}
-	Sfixed64ValueRequest := strings.Join(Sfixed64ValueStrs, ",")
-	Fixed64ValueStrs := make([]string, len(request.Fixed64Value))
-	for i, v := range request.Fixed64Value {
-		Fixed64ValueStrs[i] = strconv.FormatUint(v, 10)
-	}
-	Fixed64ValueRequest := strings.Join(Fixed64ValueStrs, ",")
-	DoubleValueStrs := make([]string, len(request.DoubleValue))
-	for i, v := range request.DoubleValue {
-		DoubleValueStrs[i] = strconv.FormatFloat(v, 'f', -1, 64)
-	}
-	DoubleValueRequest := strings.Join(DoubleValueStrs, ",")
-	StringValueRequest := strings.Join(request.StringValue, ",")
-	BytesValueStrs := make([]string, len(request.BytesValue))
-	for i, v := range request.BytesValue {
-		BytesValueStrs[i] = string(v)
-	}
-	BytesValueRequest := strings.Join(BytesValueStrs, ",")
-	StringValueQueryRequest := strings.Join(request.StringValueQuery, ",")
-	req.SetRequestURI(fmt.Sprintf("%s/v1/repeated/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s/%s%s", p.host, BoolValueRequest, EnumValueRequest, Int32ValueRequest, Sint32ValueRequest, Uint32ValueRequest, Int64ValueRequest, Sint64ValueRequest, Uint64ValueRequest, Sfixed32ValueRequest, Fixed32ValueRequest, FloatValueRequest, Sfixed64ValueRequest, Fixed64ValueRequest, DoubleValueRequest, StringValueRequest, BytesValueRequest, StringValueQueryRequest, queryArgs))
-	req.Header.SetMethod("GET")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPath")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.RepeatedCheck{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var queryValues = make(url.Values)
-	for _, v := range request.BoolValue {
-		queryValues.Add("BoolValue[]", strconv.FormatBool(v))
-	}
-	for _, v := range request.EnumValue {
-		queryValues.Add("EnumValue[]", v.String())
-	}
-	for _, v := range request.Int32Value {
-		queryValues.Add("Int32Value[]", strconv.FormatInt(int64(v), 10))
-	}
-	for _, v := range request.Sint32Value {
-		queryValues.Add("Sint32Value[]", strconv.FormatInt(int64(v), 10))
-	}
-	for _, v := range request.Uint32Value {
-		queryValues.Add("Uint32Value[]", strconv.FormatInt(int64(v), 10))
-	}
-	for _, v := range request.Int64Value {
-		queryValues.Add("Int64Value[]", strconv.FormatInt(v, 10))
-	}
-	for _, v := range request.Sint64Value {
-		queryValues.Add("Sint64Value[]", strconv.FormatInt(v, 10))
-	}
-	for _, v := range request.Uint64Value {
-		queryValues.Add("Uint64Value[]", strconv.FormatUint(v, 10))
-	}
-	for _, v := range request.Sfixed32Value {
-		queryValues.Add("Sfixed32Value[]", strconv.FormatInt(int64(v), 10))
-	}
-	for _, v := range request.Fixed32Value {
-		queryValues.Add("Fixed32Value[]", strconv.FormatInt(int64(v), 10))
-	}
-	for _, v := range request.FloatValue {
-		queryValues.Add("FloatValue[]", strconv.FormatFloat(float64(v), 'f', -1, 64))
-	}
-	for _, v := range request.Sfixed64Value {
-		queryValues.Add("Sfixed64Value[]", strconv.FormatInt(v, 10))
-	}
-	for _, v := range request.Fixed64Value {
-		queryValues.Add("Fixed64Value[]", strconv.FormatUint(v, 10))
-	}
-	for _, v := range request.DoubleValue {
-		queryValues.Add("DoubleValue[]", strconv.FormatFloat(v, 'f', -1, 64))
-	}
-	for _, v := range request.BytesValue {
-		queryValues.Add("BytesValue[]", string(v))
-	}
-	for _, v := range request.StringValueQuery {
-		queryValues.Add("StringValueQuery[]", v)
-	}
-	queryArgs = "?" + queryValues.Encode()
-	StringValueRequest := strings.Join(request.StringValue, ",")
-	req.SetRequestURI(fmt.Sprintf("%s/v2/repeated/%s%s", p.host, StringValueRequest, queryArgs))
-	req.Header.SetMethod("GET")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedQuery")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.RepeatedCheck{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) CheckRepeatedPost(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	StringValueRequest := strings.Join(request.StringValue, ",")
-	req.SetRequestURI(fmt.Sprintf("%s/v3/repeated/%s%s", p.host, StringValueRequest, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "CheckRepeatedPost")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.RepeatedCheck{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) EmptyGet(ctx context.Context, request *common.Empty) (resp *common.Empty, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	req.SetRequestURI(fmt.Sprintf("%s/v1/emptyGet%s", p.host, queryArgs))
-	req.Header.SetMethod("GET")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "EmptyGet")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Empty{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) EmptyPost(ctx context.Context, request *common.Empty) (resp *common.Empty, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/emptyPost%s", p.host, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "EmptyPost")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Empty{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) OnlyStructInGet(ctx context.Context, request *common.OnlyStruct) (resp *common.Empty, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/onlyStruct%s", p.host, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "OnlyStructInGet")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Empty{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) MultipartForm(ctx context.Context, request *common.MultipartFormRequest) (resp *common.Empty, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var requestBody bytes.Buffer
-	writer := multipart.NewWriter(&requestBody)
-	part, err := writer.CreateFormFile("document", request.Document.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create form file document:  %w", err)
-	}
-	if _, err = part.Write(request.Document.File); err != nil {
-		return nil, fmt.Errorf("failed to write data to part document: %w", err)
-	}
-	if err = writer.WriteField("otherField", request.OtherField); err != nil {
-		return nil, fmt.Errorf("failed to write field otherField:  %w", err)
-	}
-	if err = writer.Close(); err != nil {
-		return nil, fmt.Errorf("failed to close writer: %w", err)
-	}
-	req.SetBody(requestBody.Bytes())
-	req.SetRequestURI(fmt.Sprintf("%s/v1/multipart%s", p.host, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "MultipartForm")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Empty{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) MultipartFormAllTypes(ctx context.Context, request *common.MultipartFormAllTypes) (resp *common.Empty, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var requestBody bytes.Buffer
-	writer := multipart.NewWriter(&requestBody)
-	if err = writer.WriteField("BoolValue", strconv.FormatBool(request.BoolValue)); err != nil {
-		return nil, fmt.Errorf("failed to write field BoolValue:  %w", err)
-	}
-	if err = writer.WriteField("EnumValue", request.EnumValue.String()); err != nil {
-		return nil, fmt.Errorf("failed to write field EnumValue:  %w", err)
-	}
-	if err = writer.WriteField("Int32Value", strconv.FormatInt(int64(request.Int32Value), 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Int32Value:  %w", err)
-	}
-	if err = writer.WriteField("Sint32Value", strconv.FormatInt(int64(request.Sint32Value), 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Sint32Value:  %w", err)
-	}
-	for _, value := range request.Uint32Value {
-		if err = writer.WriteField("Uint32Value", strconv.FormatInt(int64(value), 10)); err != nil {
-			return nil, fmt.Errorf("failed to write field Uint32Value:  %w", err)
-		}
-	}
-	if err = writer.WriteField("Int64Value", strconv.FormatInt(request.Int64Value, 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Int64Value:  %w", err)
-	}
-	if request.Sint64Value != nil {
-		if err = writer.WriteField("Sint64Value", strconv.FormatInt(*request.Sint64Value, 10)); err != nil {
-			return nil, fmt.Errorf("failed to write field Sint64Value:  %w", err)
-		}
-	}
-	if err = writer.WriteField("Uint64Value", strconv.FormatUint(request.Uint64Value, 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Uint64Value:  %w", err)
-	}
-	if err = writer.WriteField("Sfixed32Value", strconv.FormatInt(int64(request.Sfixed32Value), 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Sfixed32Value:  %w", err)
-	}
-	for _, value := range request.Fixed32Value {
-		if err = writer.WriteField("Fixed32Value", strconv.FormatInt(int64(value), 10)); err != nil {
-			return nil, fmt.Errorf("failed to write field Fixed32Value:  %w", err)
-		}
-	}
-	if err = writer.WriteField("FloatValue", strconv.FormatFloat(float64(request.FloatValue), 'f', -1, 64)); err != nil {
-		return nil, fmt.Errorf("failed to write field FloatValue:  %w", err)
-	}
-	if err = writer.WriteField("Sfixed64Value", strconv.FormatInt(request.Sfixed64Value, 10)); err != nil {
-		return nil, fmt.Errorf("failed to write field Sfixed64Value:  %w", err)
-	}
-	if request.Fixed64Value != nil {
-		if err = writer.WriteField("Fixed64Value", strconv.FormatUint(*request.Fixed64Value, 10)); err != nil {
-			return nil, fmt.Errorf("failed to write field Fixed64Value:  %w", err)
-		}
-	}
-	if err = writer.WriteField("DoubleValue", strconv.FormatFloat(request.DoubleValue, 'f', -1, 64)); err != nil {
-		return nil, fmt.Errorf("failed to write field DoubleValue:  %w", err)
-	}
-	if err = writer.WriteField("StringValue", request.StringValue); err != nil {
-		return nil, fmt.Errorf("failed to write field StringValue:  %w", err)
-	}
-	if err = writer.WriteField("BytesValue", string(request.BytesValue)); err != nil {
-		return nil, fmt.Errorf("failed to write field BytesValue:  %w", err)
-	}
-	for _, value := range request.SliceStringValue {
-		if err = writer.WriteField("SliceStringValue", value); err != nil {
-			return nil, fmt.Errorf("failed to write field SliceStringValue:  %w", err)
-		}
-	}
-	for _, value := range request.SliceInt32Value {
-		if err = writer.WriteField("SliceInt32Value", strconv.FormatInt(int64(value), 10)); err != nil {
-			return nil, fmt.Errorf("failed to write field SliceInt32Value:  %w", err)
-		}
-	}
-	part, err := writer.CreateFormFile("document", request.Document.Name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create form file document:  %w", err)
-	}
-	if _, err = part.Write(request.Document.File); err != nil {
-		return nil, fmt.Errorf("failed to write data to part document: %w", err)
-	}
-	for _, value := range request.RepeatedStringValue {
-		if err = writer.WriteField("RepeatedStringValue", value); err != nil {
-			return nil, fmt.Errorf("failed to write field RepeatedStringValue:  %w", err)
-		}
-	}
-	if err = writer.Close(); err != nil {
-		return nil, fmt.Errorf("failed to close writer: %w", err)
-	}
-	req.SetBody(requestBody.Bytes())
-	req.SetRequestURI(fmt.Sprintf("%s/v1/multipartall%s", p.host, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "MultipartFormAllTypes")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Empty{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) AllTypesMaxTest(ctx context.Context, request *common.AllNumberTypesMsg) (resp *common.AllNumberTypesMsg, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var queryValues = make(url.Values)
-	queryValues.Set("Sint32Value", strconv.FormatInt(int64(request.Sint32Value), 10))
-	queryValues.Set("Sint64Value", strconv.FormatInt(request.Sint64Value, 10))
-	queryValues.Set("Sfixed32Value", strconv.FormatInt(int64(request.Sfixed32Value), 10))
-	queryValues.Set("Fixed32Value", strconv.FormatInt(int64(request.Fixed32Value), 10))
-	queryValues.Set("Sfixed64Value", strconv.FormatInt(request.Sfixed64Value, 10))
-	queryValues.Set("Fixed64Value", strconv.FormatUint(request.Fixed64Value, 10))
-	queryArgs = "?" + queryValues.Encode()
-	req.SetRequestURI(fmt.Sprintf("%s/v1/max/%d/%d/%d/%d/%f/%f%s", p.host, request.Int32Value, request.Uint32Value, request.Int64Value, request.Uint64Value, request.FloatValue, request.DoubleValue, queryArgs))
-	req.Header.SetMethod("GET")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxTest")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.AllNumberTypesMsg{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) AllTypesMaxQueryTest(ctx context.Context, request *common.AllNumberTypesMsg) (resp *common.AllNumberTypesMsg, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var queryValues = make(url.Values)
-	queryValues.Set("Int32Value", strconv.FormatInt(int64(request.Int32Value), 10))
-	queryValues.Set("Sint32Value", strconv.FormatInt(int64(request.Sint32Value), 10))
-	queryValues.Set("Uint32Value", strconv.FormatInt(int64(request.Uint32Value), 10))
-	queryValues.Set("Int64Value", strconv.FormatInt(request.Int64Value, 10))
-	queryValues.Set("Sint64Value", strconv.FormatInt(request.Sint64Value, 10))
-	queryValues.Set("Uint64Value", strconv.FormatUint(request.Uint64Value, 10))
-	queryValues.Set("Sfixed32Value", strconv.FormatInt(int64(request.Sfixed32Value), 10))
-	queryValues.Set("Fixed32Value", strconv.FormatInt(int64(request.Fixed32Value), 10))
-	queryValues.Set("FloatValue", strconv.FormatFloat(float64(request.FloatValue), 'f', -1, 64))
-	queryValues.Set("Sfixed64Value", strconv.FormatInt(request.Sfixed64Value, 10))
-	queryValues.Set("Fixed64Value", strconv.FormatUint(request.Fixed64Value, 10))
-	queryValues.Set("DoubleValue", strconv.FormatFloat(request.DoubleValue, 'f', -1, 64))
-	queryArgs = "?" + queryValues.Encode()
-	req.SetRequestURI(fmt.Sprintf("%s/v1/maxquery%s", p.host, queryArgs))
-	req.Header.SetMethod("GET")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "AllTypesMaxQueryTest")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.AllNumberTypesMsg{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-// GetMessage http rule checks
-// v1/{name=messages/*}
-func (p *ServiceNameHTTPGoClient) GetMessage(ctx context.Context, request *common.GetMessageRequest) (resp *common.Message, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	req.SetRequestURI(fmt.Sprintf("%s/v1/messages/%s%s", p.host, request.Name, queryArgs))
-	req.Header.SetMethod("GET")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "GetMessage")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Message{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) GetMessageV2(ctx context.Context, request *common.GetMessageRequestV2) (resp *common.Message, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var queryValues = make(url.Values)
-	queryValues.Set("revision", strconv.FormatInt(request.Revision, 10))
-	queryValues.Set("sub.subfield", request.Sub.Subfield)
-	queryArgs = "?" + queryValues.Encode()
-	req.SetRequestURI(fmt.Sprintf("%s/v2/messages/%s%s", p.host, request.MessageId, queryArgs))
-	req.Header.SetMethod("GET")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "GetMessageV2")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Message{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) UpdateMessage(ctx context.Context, request *common.UpdateMessageRequest) (resp *common.Message, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request.Message)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/messages/%s%s", p.host, request.MessageId, queryArgs))
-	req.Header.SetMethod("PATCH")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "UpdateMessage")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Message{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) UpdateMessageV2(ctx context.Context, request *common.MessageV2) (resp *common.MessageV2, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v2/messages/%s%s", p.host, request.MessageId, queryArgs))
-	req.Header.SetMethod("PATCH")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV2")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.MessageV2{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) GetMessageV3(ctx context.Context, request *common.GetMessageRequestV3) (resp *common.MessageV2, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var queryValues = make(url.Values)
-	queryValues.Set("user_id", request.UserId)
-	queryArgs = "?" + queryValues.Encode()
-	req.SetRequestURI(fmt.Sprintf("%s/v3/messages/%s%s", p.host, request.MessageId, queryArgs))
-	req.Header.SetMethod("GET")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "GetMessageV3")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.MessageV2{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) GetMessageV4(ctx context.Context, request *common.GetMessageRequestV3) (resp *common.MessageV2, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var queryValues = make(url.Values)
-	queryValues.Set("user_id", request.UserId)
-	queryArgs = "?" + queryValues.Encode()
-	req.SetRequestURI(fmt.Sprintf("%s/v4/messages/base/%s%s", p.host, request.MessageId, queryArgs))
-	req.Header.SetMethod("GET")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "GetMessageV4")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.MessageV2{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, resp)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) TopLevelArray(ctx context.Context, request *common.Array) (resp *common.Array, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v1/array%s", p.host, queryArgs))
-	req.Header.SetMethod("POST")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "TopLevelArray")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.Array{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, &resp.Items)
-	return resp, err
-}
-
-func (p *ServiceNameHTTPGoClient) UpdateMessageV3(ctx context.Context, request *common.UpdateMessageRequest) (resp *common.UpdateMessageRequest, err error) {
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-	var queryArgs string
-	var body []byte
-	body, err = json.Marshal(request)
-	if err != nil {
-		return nil, err
-	}
-	req.SetBody(body)
-	req.SetRequestURI(fmt.Sprintf("%s/v3/messages%s", p.host, queryArgs))
-	req.Header.SetMethod("PATCH")
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-	var reqResp *fasthttp.Response
-	ctx = context.WithValue(ctx, "proto_service", "ServiceName")
-	ctx = context.WithValue(ctx, "proto_method", "UpdateMessageV3")
-	var handler = func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		resp = &fasthttp.Response{}
-		err = p.cl.Do(req, resp)
-		return resp, err
-	}
-	if p.middleware == nil {
-		if reqResp, err = handler(ctx, req); err != nil {
-			return nil, err
-		}
-	} else {
-		if reqResp, err = p.middleware(ctx, req, handler); err != nil {
-			return nil, err
-		}
-	}
-	resp = &common.UpdateMessageRequest{}
-	var respBody = reqResp.Body()
-	err = json.Unmarshal(respBody, &resp.Message)
-	return resp, err
-}
-
-func chainClientMiddlewaresExample(
-	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
-) func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error) {
-	switch len(middlewares) {
-	case 0:
-		return nil
-	case 1:
-		return middlewares[0]
-	default:
-		return func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error) {
-			return middlewares[0](ctx, req, getChainClientMiddlewareHandlerExample(middlewares, 0, handler))
-		}
-	}
-}
-
-func getChainClientMiddlewareHandlerExample(
-	middlewares []func(ctx context.Context, req *fasthttp.Request, handler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error)) (resp *fasthttp.Response, err error),
-	curr int,
-	finalHandler func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error),
-) func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-	if curr == len(middlewares)-1 {
-		return finalHandler
-	}
-	return func(ctx context.Context, req *fasthttp.Request) (resp *fasthttp.Response, err error) {
-		return middlewares[curr+1](ctx, req, getChainClientMiddlewareHandlerExample(middlewares, curr+1, finalHandler))
 	}
 }

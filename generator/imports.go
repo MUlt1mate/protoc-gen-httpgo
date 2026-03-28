@@ -20,4 +20,5 @@ var (
 	protojsonPackage = protogen.GoImportPath("google.golang.org/protobuf/encoding/protojson")
 	protoPackage     = protogen.GoImportPath("google.golang.org/protobuf/proto")
 	ginPackage       = protogen.GoImportPath("github.com/gin-gonic/gin")
+	fiberPackage     = protogen.GoImportPath("github.com/gofiber/fiber/v3")
 )
