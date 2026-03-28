@@ -48,6 +48,9 @@ jobs:
       - name: Install protoc-gen-go
         run: go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 
+      - name: Vendor
+        run: go mod vendor
+
       - name: Build
         run: go build .
 
@@ -89,9 +92,9 @@ jobs:
       - name: golangci-lint plugin
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.6
+          version: v2.11
       - name: golangci-lint example
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.6
+          version: v2.11
           working-directory: ./example
