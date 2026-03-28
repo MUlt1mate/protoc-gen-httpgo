@@ -156,7 +156,12 @@ func ErrorClientMiddleware(
 ) (resp *http.Response, err error) {
 	resp, err = next(ctx, req)
 	if err == nil && resp.StatusCode > http.StatusBadRequest {
-		return resp, fmt.Errorf("%w, code: %d", errRequestFailed, resp.StatusCode)
+		var body []byte
+		var errB error
+		if body, errB = io.ReadAll(resp.Body); errB != nil {
+			return resp, fmt.Errorf("%w: %w", err, errB)
+		}
+		return resp, fmt.Errorf("%w, code: %d, body %s", errRequestFailed, resp.StatusCode, string(body))
 	}
 	return resp, err
 }

@@ -428,9 +428,7 @@ func (m *methodURI) parseURI(library string) {
 					// gin parameter value will have leading slash, so we have to remote it from template
 					arg.DestinationTpl = strings.Replace(arg.DestinationTpl, "/%s", "%s", 1)
 				case libraryFiber:
-					arg.PathTpl = ":" + fieldName + "+"
-					// fiber parameter value will have leading slash, so we have to remove it from template
-					arg.DestinationTpl = strings.Replace(arg.DestinationTpl, "/%s", "%s", 1)
+					arg.PathTpl = "+"
 				}
 				path = strings.Replace(pattern, "**", arg.PathTpl, 1)
 			} else {

@@ -656,7 +656,7 @@ func RegisterServiceNameHTTPGoServer(
 		_, _ = fiberctx.Write(respJson)
 	})
 
-	r.Get("/v4/messages/base/:message_id+", func(fiberctx v3.Ctx) {
+	r.Get("/v4/messages/base/+", func(fiberctx v3.Ctx) {
 		fiberctx.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageV4GetMessageRequestV3(fiberctx)
 		if err != nil {
@@ -2985,13 +2985,13 @@ func buildExampleServiceNameGetMessageV4GetMessageRequestV3(ctx v3.Ctx) (arg *co
 			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
 	}
-	MessageIdStr := ctx.Params("message_id")
+	MessageIdStr := ctx.Params("+")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
 		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
 			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
 		}
-		arg.MessageId = fmt.Sprintf("base%s", arg.MessageId)
+		arg.MessageId = fmt.Sprintf("base/%s", arg.MessageId)
 	}
 
 	return arg, err

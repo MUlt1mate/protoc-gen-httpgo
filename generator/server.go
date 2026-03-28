@@ -335,7 +335,11 @@ func (g *generator) genBuildPathArgument(
 		g.gf.P("	", f.goName, "Str := ctx.Param(\"", f.protoName, "\")")
 		g.gf.P("	if len(", f.goName, "Str) != 0 {")
 	case libraryFiber:
-		g.gf.P("	", f.goName, "Str := ctx.Params(\"", f.protoName, "\")")
+		fiberParamName := f.protoName
+		if uriArg.PathTpl == "+" {
+			fiberParamName = "+"
+		}
+		g.gf.P("	", f.goName, "Str := ctx.Params(\"", fiberParamName, "\")")
 		g.gf.P("	if len(", f.goName, "Str) != 0 {")
 	}
 	if f.cardinality == protoreflect.Repeated {
