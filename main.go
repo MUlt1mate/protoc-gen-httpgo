@@ -18,7 +18,7 @@ func main() {
 		Only:               flags.String("only", "", "generate only server or client"),
 		AutoURI:            flags.Bool("autoURI", false, "create method URI if annotation is missing"),
 		BodylessMethodsStr: flags.String("bodylessMethods", "", "list of semicolon separated http methods that should not have a body"),
-		Library:            flags.String("library", "fasthttp", "implementation library (nethttp|fasthttp)"),
+		Library:            flags.String("library", "fasthttp", "implementation library (nethttp|fasthttp|gin|fiber)"),
 	}
 	opts := protogen.Options{
 		ParamFunc: flags.Set,
