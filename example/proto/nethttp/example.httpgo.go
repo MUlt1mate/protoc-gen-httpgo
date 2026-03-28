@@ -3163,21 +3163,17 @@ func (p *ServiceNameHTTPGoClient) AllTextTypesPost(ctx context.Context, request 
 func (p *ServiceNameHTTPGoClient) AllTextTypesGet(ctx context.Context, request *common.AllTextTypesMsg) (resp *common.AllTextTypesMsg, err error) {
 	req := &http.Request{Header: make(http.Header)}
 	var queryArgs string
-	var parameters = []string{}
-	var values = []any{}
+	var queryValues = make(url.Values)
 	if request.OptionalString != nil {
-		parameters = append(parameters, "OptionalString=%s")
-		values = append(values, *request.OptionalString)
+		queryValues.Set("OptionalString", *request.OptionalString)
 	}
 	if request.OptionalBytes != nil {
-		parameters = append(parameters, "OptionalBytes=%s")
-		values = append(values, request.OptionalBytes)
+		queryValues.Set("OptionalBytes", string(request.OptionalBytes))
 	}
 	if request.OptionalEnum != nil {
-		parameters = append(parameters, "OptionalEnum=%s")
-		values = append(values, *request.OptionalEnum)
+		queryValues.Set("OptionalEnum", request.OptionalEnum.String())
 	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	queryArgs = "?" + queryValues.Encode()
 	RepeatedStringRequest := strings.Join(request.RepeatedString, ",")
 	RepeatedBytesStrs := make([]string, len(request.RepeatedBytes))
 	for i, v := range request.RepeatedBytes {
@@ -3360,15 +3356,10 @@ func (p *ServiceNameHTTPGoClient) Optional(ctx context.Context, request *common.
 func (p *ServiceNameHTTPGoClient) GetMethod(ctx context.Context, request *common.InputMsgName) (resp *common.OutputMsgName, err error) {
 	req := &http.Request{Header: make(http.Header)}
 	var queryArgs string
-	var parameters = []string{
-		"int64Argument=%d",
-		"stringArgument=%s",
-	}
-	var values = []any{
-		request.Int64Argument,
-		request.StringArgument,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	var queryValues = make(url.Values)
+	queryValues.Set("int64Argument", strconv.FormatInt(request.Int64Argument, 10))
+	queryValues.Set("stringArgument", request.StringArgument)
+	queryArgs = "?" + queryValues.Encode()
 	u, err := url.Parse(fmt.Sprintf("%s/v1/test/get%s", p.host, queryArgs))
 	if err != nil {
 		return nil, err
@@ -3522,73 +3513,56 @@ func (p *ServiceNameHTTPGoClient) CheckRepeatedPath(ctx context.Context, request
 func (p *ServiceNameHTTPGoClient) CheckRepeatedQuery(ctx context.Context, request *common.RepeatedCheck) (resp *common.RepeatedCheck, err error) {
 	req := &http.Request{Header: make(http.Header)}
 	var queryArgs string
-	var parameters = []string{}
-	var values = []any{}
+	var queryValues = make(url.Values)
 	for _, v := range request.BoolValue {
-		parameters = append(parameters, "BoolValue[]=%t")
-		values = append(values, v)
+		queryValues.Add("BoolValue[]", strconv.FormatBool(v))
 	}
 	for _, v := range request.EnumValue {
-		parameters = append(parameters, "EnumValue[]=%s")
-		values = append(values, v)
+		queryValues.Add("EnumValue[]", v.String())
 	}
 	for _, v := range request.Int32Value {
-		parameters = append(parameters, "Int32Value[]=%d")
-		values = append(values, v)
+		queryValues.Add("Int32Value[]", strconv.FormatInt(int64(v), 10))
 	}
 	for _, v := range request.Sint32Value {
-		parameters = append(parameters, "Sint32Value[]=%d")
-		values = append(values, v)
+		queryValues.Add("Sint32Value[]", strconv.FormatInt(int64(v), 10))
 	}
 	for _, v := range request.Uint32Value {
-		parameters = append(parameters, "Uint32Value[]=%d")
-		values = append(values, v)
+		queryValues.Add("Uint32Value[]", strconv.FormatInt(int64(v), 10))
 	}
 	for _, v := range request.Int64Value {
-		parameters = append(parameters, "Int64Value[]=%d")
-		values = append(values, v)
+		queryValues.Add("Int64Value[]", strconv.FormatInt(v, 10))
 	}
 	for _, v := range request.Sint64Value {
-		parameters = append(parameters, "Sint64Value[]=%d")
-		values = append(values, v)
+		queryValues.Add("Sint64Value[]", strconv.FormatInt(v, 10))
 	}
 	for _, v := range request.Uint64Value {
-		parameters = append(parameters, "Uint64Value[]=%d")
-		values = append(values, v)
+		queryValues.Add("Uint64Value[]", strconv.FormatUint(v, 10))
 	}
 	for _, v := range request.Sfixed32Value {
-		parameters = append(parameters, "Sfixed32Value[]=%d")
-		values = append(values, v)
+		queryValues.Add("Sfixed32Value[]", strconv.FormatInt(int64(v), 10))
 	}
 	for _, v := range request.Fixed32Value {
-		parameters = append(parameters, "Fixed32Value[]=%d")
-		values = append(values, v)
+		queryValues.Add("Fixed32Value[]", strconv.FormatInt(int64(v), 10))
 	}
 	for _, v := range request.FloatValue {
-		parameters = append(parameters, "FloatValue[]=%f")
-		values = append(values, v)
+		queryValues.Add("FloatValue[]", strconv.FormatFloat(float64(v), 'f', -1, 64))
 	}
 	for _, v := range request.Sfixed64Value {
-		parameters = append(parameters, "Sfixed64Value[]=%d")
-		values = append(values, v)
+		queryValues.Add("Sfixed64Value[]", strconv.FormatInt(v, 10))
 	}
 	for _, v := range request.Fixed64Value {
-		parameters = append(parameters, "Fixed64Value[]=%d")
-		values = append(values, v)
+		queryValues.Add("Fixed64Value[]", strconv.FormatUint(v, 10))
 	}
 	for _, v := range request.DoubleValue {
-		parameters = append(parameters, "DoubleValue[]=%f")
-		values = append(values, v)
+		queryValues.Add("DoubleValue[]", strconv.FormatFloat(v, 'f', -1, 64))
 	}
 	for _, v := range request.BytesValue {
-		parameters = append(parameters, "BytesValue[]=%s")
-		values = append(values, v)
+		queryValues.Add("BytesValue[]", string(v))
 	}
 	for _, v := range request.StringValueQuery {
-		parameters = append(parameters, "StringValueQuery[]=%s")
-		values = append(values, v)
+		queryValues.Add("StringValueQuery[]", v)
 	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	queryArgs = "?" + queryValues.Encode()
 	StringValueRequest := strings.Join(request.StringValue, ",")
 	u, err := url.Parse(fmt.Sprintf("%s/v2/repeated/%s%s", p.host, StringValueRequest, queryArgs))
 	if err != nil {
@@ -3975,23 +3949,14 @@ func (p *ServiceNameHTTPGoClient) MultipartFormAllTypes(ctx context.Context, req
 func (p *ServiceNameHTTPGoClient) AllTypesMaxTest(ctx context.Context, request *common.AllNumberTypesMsg) (resp *common.AllNumberTypesMsg, err error) {
 	req := &http.Request{Header: make(http.Header)}
 	var queryArgs string
-	var parameters = []string{
-		"Sint32Value=%d",
-		"Sint64Value=%d",
-		"Sfixed32Value=%d",
-		"Fixed32Value=%d",
-		"Sfixed64Value=%d",
-		"Fixed64Value=%d",
-	}
-	var values = []any{
-		request.Sint32Value,
-		request.Sint64Value,
-		request.Sfixed32Value,
-		request.Fixed32Value,
-		request.Sfixed64Value,
-		request.Fixed64Value,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	var queryValues = make(url.Values)
+	queryValues.Set("Sint32Value", strconv.FormatInt(int64(request.Sint32Value), 10))
+	queryValues.Set("Sint64Value", strconv.FormatInt(request.Sint64Value, 10))
+	queryValues.Set("Sfixed32Value", strconv.FormatInt(int64(request.Sfixed32Value), 10))
+	queryValues.Set("Fixed32Value", strconv.FormatInt(int64(request.Fixed32Value), 10))
+	queryValues.Set("Sfixed64Value", strconv.FormatInt(request.Sfixed64Value, 10))
+	queryValues.Set("Fixed64Value", strconv.FormatUint(request.Fixed64Value, 10))
+	queryArgs = "?" + queryValues.Encode()
 	u, err := url.Parse(fmt.Sprintf("%s/v1/max/%d/%d/%d/%d/%f/%f%s", p.host, request.Int32Value, request.Uint32Value, request.Int64Value, request.Uint64Value, request.FloatValue, request.DoubleValue, queryArgs))
 	if err != nil {
 		return nil, err
@@ -4030,35 +3995,20 @@ func (p *ServiceNameHTTPGoClient) AllTypesMaxTest(ctx context.Context, request *
 func (p *ServiceNameHTTPGoClient) AllTypesMaxQueryTest(ctx context.Context, request *common.AllNumberTypesMsg) (resp *common.AllNumberTypesMsg, err error) {
 	req := &http.Request{Header: make(http.Header)}
 	var queryArgs string
-	var parameters = []string{
-		"Int32Value=%d",
-		"Sint32Value=%d",
-		"Uint32Value=%d",
-		"Int64Value=%d",
-		"Sint64Value=%d",
-		"Uint64Value=%d",
-		"Sfixed32Value=%d",
-		"Fixed32Value=%d",
-		"FloatValue=%f",
-		"Sfixed64Value=%d",
-		"Fixed64Value=%d",
-		"DoubleValue=%f",
-	}
-	var values = []any{
-		request.Int32Value,
-		request.Sint32Value,
-		request.Uint32Value,
-		request.Int64Value,
-		request.Sint64Value,
-		request.Uint64Value,
-		request.Sfixed32Value,
-		request.Fixed32Value,
-		request.FloatValue,
-		request.Sfixed64Value,
-		request.Fixed64Value,
-		request.DoubleValue,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	var queryValues = make(url.Values)
+	queryValues.Set("Int32Value", strconv.FormatInt(int64(request.Int32Value), 10))
+	queryValues.Set("Sint32Value", strconv.FormatInt(int64(request.Sint32Value), 10))
+	queryValues.Set("Uint32Value", strconv.FormatInt(int64(request.Uint32Value), 10))
+	queryValues.Set("Int64Value", strconv.FormatInt(request.Int64Value, 10))
+	queryValues.Set("Sint64Value", strconv.FormatInt(request.Sint64Value, 10))
+	queryValues.Set("Uint64Value", strconv.FormatUint(request.Uint64Value, 10))
+	queryValues.Set("Sfixed32Value", strconv.FormatInt(int64(request.Sfixed32Value), 10))
+	queryValues.Set("Fixed32Value", strconv.FormatInt(int64(request.Fixed32Value), 10))
+	queryValues.Set("FloatValue", strconv.FormatFloat(float64(request.FloatValue), 'f', -1, 64))
+	queryValues.Set("Sfixed64Value", strconv.FormatInt(request.Sfixed64Value, 10))
+	queryValues.Set("Fixed64Value", strconv.FormatUint(request.Fixed64Value, 10))
+	queryValues.Set("DoubleValue", strconv.FormatFloat(request.DoubleValue, 'f', -1, 64))
+	queryArgs = "?" + queryValues.Encode()
 	u, err := url.Parse(fmt.Sprintf("%s/v1/maxquery%s", p.host, queryArgs))
 	if err != nil {
 		return nil, err
@@ -4137,15 +4087,10 @@ func (p *ServiceNameHTTPGoClient) GetMessage(ctx context.Context, request *commo
 func (p *ServiceNameHTTPGoClient) GetMessageV2(ctx context.Context, request *common.GetMessageRequestV2) (resp *common.Message, err error) {
 	req := &http.Request{Header: make(http.Header)}
 	var queryArgs string
-	var parameters = []string{
-		"revision=%d",
-		"sub.subfield=%s",
-	}
-	var values = []any{
-		request.Revision,
-		request.Sub.Subfield,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	var queryValues = make(url.Values)
+	queryValues.Set("revision", strconv.FormatInt(request.Revision, 10))
+	queryValues.Set("sub.subfield", request.Sub.Subfield)
+	queryArgs = "?" + queryValues.Encode()
 	u, err := url.Parse(fmt.Sprintf("%s/v2/messages/%s%s", p.host, request.MessageId, queryArgs))
 	if err != nil {
 		return nil, err
@@ -4272,13 +4217,9 @@ func (p *ServiceNameHTTPGoClient) UpdateMessageV2(ctx context.Context, request *
 func (p *ServiceNameHTTPGoClient) GetMessageV3(ctx context.Context, request *common.GetMessageRequestV3) (resp *common.MessageV2, err error) {
 	req := &http.Request{Header: make(http.Header)}
 	var queryArgs string
-	var parameters = []string{
-		"user_id=%s",
-	}
-	var values = []any{
-		request.UserId,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	var queryValues = make(url.Values)
+	queryValues.Set("user_id", request.UserId)
+	queryArgs = "?" + queryValues.Encode()
 	u, err := url.Parse(fmt.Sprintf("%s/v3/messages/%s%s", p.host, request.MessageId, queryArgs))
 	if err != nil {
 		return nil, err
@@ -4317,13 +4258,9 @@ func (p *ServiceNameHTTPGoClient) GetMessageV3(ctx context.Context, request *com
 func (p *ServiceNameHTTPGoClient) GetMessageV4(ctx context.Context, request *common.GetMessageRequestV3) (resp *common.MessageV2, err error) {
 	req := &http.Request{Header: make(http.Header)}
 	var queryArgs string
-	var parameters = []string{
-		"user_id=%s",
-	}
-	var values = []any{
-		request.UserId,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
+	var queryValues = make(url.Values)
+	queryValues.Set("user_id", request.UserId)
+	queryArgs = "?" + queryValues.Encode()
 	u, err := url.Parse(fmt.Sprintf("%s/v4/messages/base/%s%s", p.host, request.MessageId, queryArgs))
 	if err != nil {
 		return nil, err

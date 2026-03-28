@@ -10,6 +10,7 @@ import (
 	fasthttp "github.com/valyala/fasthttp"
 	protojson "google.golang.org/protobuf/encoding/protojson"
 	proto "google.golang.org/protobuf/proto"
+	url "net/url"
 	strconv "strconv"
 	strings "strings"
 )
@@ -64,7 +65,11 @@ func buildExample2ServiceName2ImportsSomeCustomMsg(ctx *fasthttp.RequestCtx) (ar
 	}
 	for keyB, valueB := range ctx.QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "val":
 			arg.Val = value
@@ -131,7 +136,11 @@ func buildExample2SecondServiceName2ImportsSomeCustomMsg(ctx *fasthttp.RequestCt
 	arg = &SomeCustomMsg{}
 	for keyB, valueB := range ctx.QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "val":
 			arg.Val = value
@@ -269,16 +278,10 @@ func (p *SecondServiceName2HTTPGoClient) Imports(ctx context.Context, request *S
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
 	var queryArgs string
-	var parameters = []string{
-		"val=%s",
-		"option=%s",
-	}
-	var values = []any{
-		request.Val,
-		request.Option,
-	}
-	queryArgs = fmt.Sprintf("?"+strings.Join(parameters, "&"), values...)
-	queryArgs = strings.ReplaceAll(queryArgs, "[]", "%5B%5D")
+	var queryValues = make(url.Values)
+	queryValues.Set("val", request.Val)
+	queryValues.Set("option", request.Option.String())
+	queryArgs = "?" + queryValues.Encode()
 	req.SetRequestURI(fmt.Sprintf("%s/v1/test/imports%s", p.host, queryArgs))
 	req.Header.SetMethod("GET")
 	req.Header.Set("Content-Type", "application/json")

@@ -11,6 +11,7 @@ import (
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
 	multipart "mime/multipart"
+	url "net/url"
 	strconv "strconv"
 	strings "strings"
 )
@@ -753,7 +754,11 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx v3.Ctx) (arg *common.InputMs
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "int64Argument":
 			arg.Int64Argument, err = strconv.ParseInt(value, 10, 64)
@@ -769,6 +774,9 @@ func buildExampleServiceNameRPCNameInputMsgName(ctx v3.Ctx) (arg *common.InputMs
 	StringArgumentStr := ctx.Params("stringArgument")
 	if len(StringArgumentStr) != 0 {
 		arg.StringArgument = StringArgumentStr
+		if arg.StringArgument, err = url.PathUnescape(arg.StringArgument); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field stringArgument: %w", err)
+		}
 	}
 
 	Int64ArgumentStr := ctx.Params("int64Argument")
@@ -792,7 +800,11 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx v3.Ctx) (arg *common.All
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "BoolValue":
 			switch value {
@@ -1044,10 +1056,17 @@ func buildExampleServiceNameAllTypesTestAllTypesMsg(ctx v3.Ctx) (arg *common.All
 	StringValueStr := ctx.Params("StringValue")
 	if len(StringValueStr) != 0 {
 		arg.StringValue = StringValueStr
+		if arg.StringValue, err = url.PathUnescape(arg.StringValue); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+		}
 	}
 
 	BytesValueStr := ctx.Params("BytesValue")
 	if len(BytesValueStr) != 0 {
+		arg.BytesValue = []byte(BytesValueStr)
+		if BytesValueStr, err = url.PathUnescape(string(arg.BytesValue)); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field BytesValue: %w", err)
+		}
 		arg.BytesValue = []byte(BytesValueStr)
 	}
 
@@ -1064,7 +1083,11 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx v3.Ctx) (arg *co
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "String":
 			arg.String_ = value
@@ -1123,15 +1146,27 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx v3.Ctx) (arg *co
 	String_Str := ctx.Params("String")
 	if len(String_Str) != 0 {
 		arg.String_ = String_Str
+		if arg.String_, err = url.PathUnescape(arg.String_); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field String: %w", err)
+		}
 	}
 
 	RepeatedStringStr := ctx.Params("RepeatedString")
 	if len(RepeatedStringStr) != 0 {
 		arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
+		for i, value := range arg.RepeatedString {
+			if arg.RepeatedString[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field RepeatedString: %w", err)
+			}
+		}
 	}
 
 	BytesStr := ctx.Params("Bytes")
 	if len(BytesStr) != 0 {
+		arg.Bytes = []byte(BytesStr)
+		if BytesStr, err = url.PathUnescape(string(arg.Bytes)); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field Bytes: %w", err)
+		}
 		arg.Bytes = []byte(BytesStr)
 	}
 
@@ -1141,6 +1176,12 @@ func buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ctx v3.Ctx) (arg *co
 		arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
 		for _, str := range RepeatedBytesStrs {
 			arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(str))
+		}
+		for i, value := range arg.RepeatedBytes {
+			if RepeatedBytesStr, err = url.PathUnescape(string(value)); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field RepeatedBytes: %w", err)
+			}
+			arg.RepeatedBytes[i] = []byte(RepeatedBytesStr)
 		}
 	}
 
@@ -1185,7 +1226,11 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx v3.Ctx) (arg *com
 	arg = &common.AllTextTypesMsg{}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "String":
 			arg.String_ = value
@@ -1244,15 +1289,27 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx v3.Ctx) (arg *com
 	String_Str := ctx.Params("String")
 	if len(String_Str) != 0 {
 		arg.String_ = String_Str
+		if arg.String_, err = url.PathUnescape(arg.String_); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field String: %w", err)
+		}
 	}
 
 	RepeatedStringStr := ctx.Params("RepeatedString")
 	if len(RepeatedStringStr) != 0 {
 		arg.RepeatedString = strings.Split(RepeatedStringStr, ",")
+		for i, value := range arg.RepeatedString {
+			if arg.RepeatedString[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field RepeatedString: %w", err)
+			}
+		}
 	}
 
 	BytesStr := ctx.Params("Bytes")
 	if len(BytesStr) != 0 {
+		arg.Bytes = []byte(BytesStr)
+		if BytesStr, err = url.PathUnescape(string(arg.Bytes)); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field Bytes: %w", err)
+		}
 		arg.Bytes = []byte(BytesStr)
 	}
 
@@ -1262,6 +1319,12 @@ func buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ctx v3.Ctx) (arg *com
 		arg.RepeatedBytes = make([][]byte, 0, len(RepeatedBytesStrs))
 		for _, str := range RepeatedBytesStrs {
 			arg.RepeatedBytes = append(arg.RepeatedBytes, []byte(str))
+		}
+		for i, value := range arg.RepeatedBytes {
+			if RepeatedBytesStr, err = url.PathUnescape(string(value)); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field RepeatedBytes: %w", err)
+			}
+			arg.RepeatedBytes[i] = []byte(RepeatedBytesStr)
 		}
 	}
 
@@ -1312,7 +1375,11 @@ func buildExampleServiceNameCommonTypesAny(ctx v3.Ctx) (arg *anypb.Any, err erro
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "type_url":
 			arg.TypeUrl = value
@@ -1335,7 +1402,11 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx v3.Ctx) (arg *com
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "int64Argument":
 			arg.Int64Argument, err = strconv.ParseInt(value, 10, 64)
@@ -1351,6 +1422,9 @@ func buildExampleServiceNameSameInputAndOutputInputMsgName(ctx v3.Ctx) (arg *com
 	StringArgumentStr := ctx.Params("stringArgument")
 	if len(StringArgumentStr) != 0 {
 		arg.StringArgument = StringArgumentStr
+		if arg.StringArgument, err = url.PathUnescape(arg.StringArgument); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field stringArgument: %w", err)
+		}
 	}
 
 	return arg, err
@@ -1366,7 +1440,11 @@ func buildExampleServiceNameOptionalOptionalField(ctx v3.Ctx) (arg *common.Optio
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "BoolValue":
 			switch value {
@@ -1501,7 +1579,11 @@ func buildExampleServiceNameGetMethodInputMsgName(ctx v3.Ctx) (arg *common.Input
 	arg = &common.InputMsgName{}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "int64Argument":
 			arg.Int64Argument, err = strconv.ParseInt(value, 10, 64)
@@ -1521,7 +1603,11 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx v3.Ctx) (arg *com
 	arg = &common.RepeatedCheck{}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "BoolValue[]":
 			switch value {
@@ -1820,6 +1906,11 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx v3.Ctx) (arg *com
 	StringValueStr := ctx.Params("StringValue")
 	if len(StringValueStr) != 0 {
 		arg.StringValue = strings.Split(StringValueStr, ",")
+		for i, value := range arg.StringValue {
+			if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+			}
+		}
 	}
 
 	BytesValueStr := ctx.Params("BytesValue")
@@ -1829,11 +1920,22 @@ func buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ctx v3.Ctx) (arg *com
 		for _, str := range BytesValueStrs {
 			arg.BytesValue = append(arg.BytesValue, []byte(str))
 		}
+		for i, value := range arg.BytesValue {
+			if BytesValueStr, err = url.PathUnescape(string(value)); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field BytesValue: %w", err)
+			}
+			arg.BytesValue[i] = []byte(BytesValueStr)
+		}
 	}
 
 	StringValueQueryStr := ctx.Params("StringValueQuery")
 	if len(StringValueQueryStr) != 0 {
 		arg.StringValueQuery = strings.Split(StringValueQueryStr, ",")
+		for i, value := range arg.StringValueQuery {
+			if arg.StringValueQuery[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field StringValueQuery: %w", err)
+			}
+		}
 	}
 
 	return arg, err
@@ -1843,7 +1945,11 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx v3.Ctx) (arg *co
 	arg = &common.RepeatedCheck{}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "BoolValue[]":
 			switch value {
@@ -1951,6 +2057,11 @@ func buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ctx v3.Ctx) (arg *co
 	StringValueStr := ctx.Params("StringValue")
 	if len(StringValueStr) != 0 {
 		arg.StringValue = strings.Split(StringValueStr, ",")
+		for i, value := range arg.StringValue {
+			if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+			}
+		}
 	}
 
 	return arg, err
@@ -1966,7 +2077,11 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx v3.Ctx) (arg *com
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "BoolValue[]":
 			switch value {
@@ -2074,6 +2189,11 @@ func buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ctx v3.Ctx) (arg *com
 	StringValueStr := ctx.Params("StringValue")
 	if len(StringValueStr) != 0 {
 		arg.StringValue = strings.Split(StringValueStr, ",")
+		for i, value := range arg.StringValue {
+			if arg.StringValue[i], err = url.PathUnescape(value); err != nil {
+				return nil, fmt.Errorf("PathUnescape failed for field StringValue: %w", err)
+			}
+		}
 	}
 
 	return arg, err
@@ -2105,7 +2225,11 @@ func buildExampleServiceNameOnlyStructInGetOnlyStruct(ctx v3.Ctx) (arg *common.O
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "value":
 			return nil, fmt.Errorf("unsupported type message for query argument value")
@@ -2151,7 +2275,11 @@ func buildExampleServiceNameMultipartFormMultipartFormRequest(ctx v3.Ctx) (arg *
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "document":
 			return nil, fmt.Errorf("unsupported type message for query argument document")
@@ -2319,7 +2447,11 @@ func buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ctx v3.Ct
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "BoolValue":
 			switch value {
@@ -2437,7 +2569,11 @@ func buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ctx v3.Ctx) (arg *c
 	arg = &common.AllNumberTypesMsg{}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "Int32Value":
 			Int32Value, convErr := strconv.ParseInt(value, 10, 32)
@@ -2567,7 +2703,11 @@ func buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(ctx v3.Ctx) (a
 	arg = &common.AllNumberTypesMsg{}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "Int32Value":
 			Int32Value, convErr := strconv.ParseInt(value, 10, 32)
@@ -2646,7 +2786,11 @@ func buildExampleServiceNameGetMessageGetMessageRequest(ctx v3.Ctx) (arg *common
 	arg = &common.GetMessageRequest{}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "name":
 			arg.Name = value
@@ -2657,6 +2801,9 @@ func buildExampleServiceNameGetMessageGetMessageRequest(ctx v3.Ctx) (arg *common
 	NameStr := ctx.Params("name")
 	if len(NameStr) != 0 {
 		arg.Name = NameStr
+		if arg.Name, err = url.PathUnescape(arg.Name); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field name: %w", err)
+		}
 		arg.Name = fmt.Sprintf("messages/%s", arg.Name)
 	}
 
@@ -2667,7 +2814,11 @@ func buildExampleServiceNameGetMessageV2GetMessageRequestV2(ctx v3.Ctx) (arg *co
 	arg = &common.GetMessageRequestV2{}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "message_id":
 			arg.MessageId = value
@@ -2690,6 +2841,9 @@ func buildExampleServiceNameGetMessageV2GetMessageRequestV2(ctx v3.Ctx) (arg *co
 	MessageIdStr := ctx.Params("message_id")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
+		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
+		}
 	}
 
 	return arg, err
@@ -2706,7 +2860,11 @@ func buildExampleServiceNameUpdateMessageUpdateMessageRequest(ctx v3.Ctx) (arg *
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "message_id":
 			arg.MessageId = value
@@ -2729,6 +2887,9 @@ func buildExampleServiceNameUpdateMessageUpdateMessageRequest(ctx v3.Ctx) (arg *
 	MessageIdStr := ctx.Params("message_id")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
+		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
+		}
 	}
 
 	return arg, err
@@ -2744,7 +2905,11 @@ func buildExampleServiceNameUpdateMessageV2MessageV2(ctx v3.Ctx) (arg *common.Me
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "message_id":
 			arg.MessageId = value
@@ -2757,6 +2922,9 @@ func buildExampleServiceNameUpdateMessageV2MessageV2(ctx v3.Ctx) (arg *common.Me
 	MessageIdStr := ctx.Params("message_id")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
+		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
+		}
 	}
 
 	return arg, err
@@ -2766,7 +2934,11 @@ func buildExampleServiceNameGetMessageV3GetMessageRequestV3(ctx v3.Ctx) (arg *co
 	arg = &common.GetMessageRequestV3{}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "message_id":
 			arg.MessageId = value
@@ -2779,11 +2951,17 @@ func buildExampleServiceNameGetMessageV3GetMessageRequestV3(ctx v3.Ctx) (arg *co
 	MessageIdStr := ctx.Params("message_id")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
+		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
+		}
 	}
 
 	UserIdStr := ctx.Params("user_id")
 	if len(UserIdStr) != 0 {
 		arg.UserId = UserIdStr
+		if arg.UserId, err = url.PathUnescape(arg.UserId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field user_id: %w", err)
+		}
 	}
 
 	return arg, err
@@ -2793,7 +2971,11 @@ func buildExampleServiceNameGetMessageV4GetMessageRequestV3(ctx v3.Ctx) (arg *co
 	arg = &common.GetMessageRequestV3{}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "message_id":
 			arg.MessageId = value
@@ -2806,6 +2988,9 @@ func buildExampleServiceNameGetMessageV4GetMessageRequestV3(ctx v3.Ctx) (arg *co
 	MessageIdStr := ctx.Params("message_id")
 	if len(MessageIdStr) != 0 {
 		arg.MessageId = MessageIdStr
+		if arg.MessageId, err = url.PathUnescape(arg.MessageId); err != nil {
+			return nil, fmt.Errorf("PathUnescape failed for field message_id: %w", err)
+		}
 		arg.MessageId = fmt.Sprintf("base%s", arg.MessageId)
 	}
 
@@ -2822,7 +3007,11 @@ func buildExampleServiceNameTopLevelArrayArray(ctx v3.Ctx) (arg *common.Array, e
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "items[]":
 			return nil, fmt.Errorf("unsupported type message for query argument items")
@@ -2843,7 +3032,11 @@ func buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(ctx v3.Ctx) (arg
 	}
 	for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {
 		var key = string(keyB)
-		var value = string(valueB)
+		var value string
+		value, err = url.QueryUnescape(string(valueB))
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode query parameter %s: %w", key, err)
+		}
 		switch key {
 		case "message_id":
 			arg.MessageId = value

@@ -309,36 +309,21 @@ func (g *generator) genQueryRequestParameters(method methodParams) (err error) {
 	if len(method.uri.argList) == len(method.inputFieldList) {
 		return nil
 	}
-	var parameters, values []string
-	if parameters, values, err = g.getQuerySimpleParameters(method); err != nil {
+	g.gf.P("var queryValues = make(", urlPackage.Ident("Values"), ")")
+	if err = g.genQuerySimpleParameters(method); err != nil {
 		return err
 	}
-	// todo add preallocating
-	g.gf.P("var parameters = []string{")
-	for _, q := range parameters {
-		g.gf.P("\"", q, "\",")
-	}
-	g.gf.P("}")
-	g.gf.P("var values = []any{")
-	for _, q := range values {
-		g.gf.P(q, ",")
-	}
-	g.gf.P("}")
 	if err = g.genQueryOptionalParameters(method); err != nil {
 		return err
 	}
 	if err = g.genQueryRepeatedParameters(method); err != nil {
 		return err
 	}
-	g.gf.P("queryArgs = ", fmtPackage.Ident("Sprintf"), "(\"?\"+", stringsPackage.Ident("Join"), "(parameters, \"&\"),values...)")
-	if *g.cfg.Library == libraryFastHTTP {
-		g.gf.P("queryArgs = ", stringsPackage.Ident("ReplaceAll"), "(queryArgs, \"[]\", \"%5B%5D\")")
-	}
+	g.gf.P("queryArgs = \"?\" + queryValues.Encode()")
 	return nil
 }
 
-func (g *generator) getQuerySimpleParameters(method methodParams) (parameters []string, values []string, err error) {
-	var placeholder string
+func (g *generator) genQuerySimpleParameters(method methodParams) (err error) {
 	for _, fieldName := range method.inputFieldList {
 		if _, ok := method.uri.args[fieldName]; ok {
 			continue
@@ -348,41 +333,38 @@ func (g *generator) getQuerySimpleParameters(method methodParams) (parameters []
 			continue
 		}
 		if f.kind == protoreflect.MessageKind {
-			if err = g.getMessageSubParameters(f, &parameters, &values); err != nil {
-				return nil, nil, err
+			if err = g.genMessageSubParameters(f); err != nil {
+				return err
 			}
 			continue
 		}
-		if placeholder, err = getVariablePlaceholder(f.kind); err != nil {
-			return nil, nil, fmt.Errorf("field %s: %w", f.goName, err)
+		if err = g.genQuerySetValue("Set", f.protoName, f, "request."+f.goName); err != nil {
+			return err
 		}
-		parameters = append(parameters, f.protoName+"="+placeholder)
-		values = append(values, "request."+f.goName)
 	}
-	return parameters, values, nil
+	return nil
 }
 
-func (g *generator) getMessageSubParameters(f field, parameters *[]string, values *[]string) (err error) {
-	var placeholder string
+func (g *generator) genMessageSubParameters(f field) (err error) {
 	for _, sf := range f.structFields {
 		if sf.Desc.Cardinality() == protoreflect.Repeated ||
 			sf.Desc.HasOptionalKeyword() || // todo add optional sub fields
 			sf.Desc.Kind() == protoreflect.MessageKind { // for now support first sublevel fields only
 			continue
 		}
-		if placeholder, err = getVariablePlaceholder(sf.Desc.Kind()); err != nil {
-			return fmt.Errorf("field %s: %w", f.goName, err)
+		subField := field{
+			goName: sf.GoName,
+			kind:   sf.Desc.Kind(),
 		}
-		*parameters = append(*parameters, f.protoName+"."+sf.Desc.TextName()+"="+placeholder)
-		*values = append(*values, "request."+f.goName+"."+sf.GoName)
+		if err = g.genQuerySetValue("Set", f.protoName+"."+sf.Desc.TextName(), subField, "request."+f.goName+"."+sf.GoName); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
 func (g *generator) genQueryOptionalParameters(method methodParams) (err error) {
-	var placeholder string
 	for _, fieldName := range method.inputFieldList {
-		dereference := "*"
 		if _, ok := method.uri.args[fieldName]; ok {
 			continue
 		}
@@ -390,24 +372,23 @@ func (g *generator) genQueryOptionalParameters(method methodParams) (err error) 
 		if f.cardinality == protoreflect.Repeated || !f.optional {
 			continue
 		}
-		if placeholder, err = getVariablePlaceholder(f.kind); err != nil {
-			return fmt.Errorf("field %s: %w", f.goName, err)
-		}
-
-		if f.kind == protoreflect.BytesKind {
-			// no need to dereference for slice
-			dereference = ""
+		source := "request." + f.goName
+		switch f.kind {
+		case protoreflect.BytesKind, protoreflect.EnumKind:
+			// bytes is a slice, enum has pointer receiver for .String()
+		default:
+			source = "*" + source
 		}
 		g.gf.P("if request.", f.goName, " != nil {")
-		g.gf.P("	parameters = append(parameters, \"", f.protoName, "=", placeholder, "\")")
-		g.gf.P("	values = append(values, ", dereference, "request.", f.goName, ")")
+		if err = g.genQuerySetValue("Set", f.protoName, f, source); err != nil {
+			return err
+		}
 		g.gf.P("}")
 	}
 	return nil
 }
 
 func (g *generator) genQueryRepeatedParameters(method methodParams) (err error) {
-	var placeholder string
 	for _, fieldName := range method.inputFieldList {
 		if _, ok := method.uri.args[fieldName]; ok {
 			continue
@@ -416,13 +397,10 @@ func (g *generator) genQueryRepeatedParameters(method methodParams) (err error) 
 		if f.cardinality != protoreflect.Repeated {
 			continue
 		}
-		if placeholder, err = getVariablePlaceholder(f.kind); err != nil {
-			return fmt.Errorf("field %s: %w", f.goName, err)
+		g.gf.P("for _, v := range request.", f.goName, " {")
+		if err = g.genQuerySetValue("Add", f.protoName+"[]", f, "v"); err != nil {
+			return err
 		}
-		uriName := f.protoName + "[]"
-		g.gf.P("for _,v := range request.", f.goName, " {")
-		g.gf.P("	parameters = append(parameters, \"", uriName, "=", placeholder, "\")")
-		g.gf.P("	values = append(values, v)")
 		g.gf.P("}")
 	}
 	return nil
@@ -452,6 +430,21 @@ func (g *generator) genUnmarshalResponseStruct(method methodParams) error {
 		reference = "&"
 	}
 	g.gf.P("	err = ", g.marshaller.Ident("Unmarshal"), "(respBody, ", reference, respStruct, ")")
+	return nil
+}
+
+// genQuerySetValue generates a queryValues.Set or queryValues.Add call, converting the source value to string
+func (g *generator) genQuerySetValue(method string, key string, f field, source string) (err error) {
+	switch f.kind {
+	case protoreflect.StringKind:
+		g.gf.P("	queryValues.", method, "(\"", key, "\", ", source, ")")
+	default:
+		var convertFunc string
+		if convertFunc, err = g.convertFuncToString(f, source); err != nil {
+			return fmt.Errorf("field %s: %w", f.goName, err)
+		}
+		g.gf.P("	queryValues.", method, "(\"", key, "\", ", convertFunc, ")")
+	}
 	return nil
 }
 

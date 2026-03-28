@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/fasthttp/router"
@@ -55,17 +56,21 @@ func main() {
 
 	time.Sleep(time.Millisecond * 100)
 
-	if err = clientRunRequests(ctx, fastClient); err != nil {
-		log.Println(err)
+	if err = clientRunRequests(ctx, fastClient, "fasthttp"); err != nil {
+		log.Println(fmt.Errorf("fasthttp client request failed: %w", err))
+		os.Exit(1)
 	}
-	if err = clientRunRequests(ctx, nethttpClient); err != nil {
-		log.Println(err)
+	if err = clientRunRequests(ctx, nethttpClient, "nethttp"); err != nil {
+		log.Println(fmt.Errorf("nethttp client request failed: %w", err))
+		os.Exit(1)
 	}
-	if err = clientRunRequests(ctx, nethttpClientForGin); err != nil {
-		log.Println(err)
+	if err = clientRunRequests(ctx, nethttpClientForGin, "gin"); err != nil {
+		log.Println(fmt.Errorf("gin client request failed: %w", err))
+		os.Exit(1)
 	}
-	if err = clientRunRequests(ctx, nethttpClientForFiber); err != nil {
-		log.Println(err)
+	if err = clientRunRequests(ctx, nethttpClientForFiber, "fiber"); err != nil {
+		log.Println(fmt.Errorf("fiber client request failed: %w", err))
+		os.Exit(1)
 	}
 
 	// f := make(chan bool)
@@ -115,7 +120,7 @@ func serverInit(ctx context.Context) (err error) {
 		}
 	}()
 	go func() {
-		if err = fiberApp.Listen(fiberAddr); err != nil {
+		if err = fiberApp.Listen(fiberAddr, v3.ListenConfig{DisableStartupMessage: true}); err != nil {
 			log.Fatal(err)
 		}
 	}()
@@ -165,7 +170,7 @@ func clientInit(ctx context.Context) (err error) {
 	return nil
 }
 
-func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoService) (err error) {
+func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoService, library string) (err error) {
 	if _, err = client.RPCName(ctx, &common.InputMsgName{Int64Argument: 999, StringArgument: "rand"}); err != nil {
 		return fmt.Errorf("RPCName failed: %w", err)
 	}
@@ -175,20 +180,20 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 		return fmt.Errorf("AllTypesTest failed: %w", err)
 	}
 	if diff := cmp.Diff(&implementation.AllTypesMsg, allTypesResp, cmpopts.IgnoreUnexported(implementation.AllTypesMsg)); diff != "" {
-		log.Println(diff)
+		log.Println(library, diff)
 	}
 	var allNumberTypesResp *common.AllNumberTypesMsg
 	if allNumberTypesResp, err = client.AllTypesMaxTest(ctx, &implementation.NumberTypesMaxMsg); err != nil {
 		return fmt.Errorf("AllTypesTest failed: %w", err)
 	}
 	if diff := cmp.Diff(&implementation.NumberTypesMaxMsg, allNumberTypesResp, cmpopts.IgnoreUnexported(implementation.NumberTypesMaxMsg)); diff != "" {
-		log.Println(diff)
+		log.Println(library, diff)
 	}
 	if allNumberTypesResp, err = client.AllTypesMaxQueryTest(ctx, &implementation.NumberTypesMaxMsg); err != nil {
 		return fmt.Errorf("AllTypesTest failed: %w", err)
 	}
 	if diff := cmp.Diff(&implementation.NumberTypesMaxMsg, allNumberTypesResp, cmpopts.IgnoreUnexported(implementation.NumberTypesMaxMsg)); diff != "" {
-		log.Println(diff)
+		log.Println(library, diff)
 	}
 
 	if _, err = client.MultipartForm(ctx, &implementation.MultipartFormRequestMsg); err != nil {
@@ -203,13 +208,13 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 		return fmt.Errorf("AllTextTypesGet failed: %w", err)
 	}
 	if diff := cmp.Diff(&implementation.AllTextTypesMsg, allTextTypesResp, cmpopts.IgnoreUnexported(implementation.AllTextTypesMsg)); diff != "" {
-		log.Println(diff)
+		log.Println(library, diff)
 	}
 	if allTextTypesResp, err = client.AllTextTypesPost(ctx, &implementation.AllTextTypesMsg); err != nil {
 		return fmt.Errorf("AllTextTypesPost failed: %w", err)
 	}
 	if diff := cmp.Diff(&implementation.AllTextTypesMsg, allTextTypesResp, cmpopts.IgnoreUnexported(implementation.AllTextTypesMsg)); diff != "" {
-		log.Println(diff)
+		log.Println(library, diff)
 	}
 
 	// http rule checks
@@ -253,7 +258,7 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 		return fmt.Errorf("TopLevelArray failed: %w", err)
 	}
 	if diff := cmp.Diff(items, topLevelArrayResp.Items, cmpopts.IgnoreUnexported(*topLevelArrayResp.Items[0])); diff != "" {
-		log.Println(diff)
+		log.Println(library, diff)
 	}
 	var respMsgV3 *common.UpdateMessageRequest
 	reqMsgV3 := &common.UpdateMessageRequest{
@@ -264,7 +269,7 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 		return fmt.Errorf("UpdateMessageV3 failed: %w", err)
 	}
 	if diff := cmp.Diff(reqMsgV3.Message, respMsgV3.Message, cmpopts.IgnoreUnexported(*respMsgV3, *respMsgV3.Message)); diff != "" {
-		log.Println(diff)
+		log.Println(library, diff)
 	}
 
 	return nil

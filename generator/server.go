@@ -284,12 +284,20 @@ func (g *generator) genServerMethodQueryParams(method methodParams) (err error) 
 	case libraryFastHTTP:
 		g.gf.P("for keyB, valueB := range ctx.QueryArgs().All() {")
 		g.gf.P("	var key = string(keyB)")
-		g.gf.P("	var value = string(valueB)")
+		g.gf.P("	var value string")
+		g.gf.P("	value, err = ", urlPackage.Ident("QueryUnescape"), "(string(valueB))")
+		g.gf.P("	if err != nil {")
+		g.gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"failed to decode query parameter %s: %w\", key, err)")
+		g.gf.P("	}")
 	case libraryFiber:
 		// we can't use ctx.Queries() because it doesn't support repeated query parameters
 		g.gf.P("for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {")
 		g.gf.P("	var key = string(keyB)")
-		g.gf.P("	var value = string(valueB)")
+		g.gf.P("	var value string")
+		g.gf.P("	value, err = ", urlPackage.Ident("QueryUnescape"), "(string(valueB))")
+		g.gf.P("	if err != nil {")
+		g.gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"failed to decode query parameter %s: %w\", key, err)")
+		g.gf.P("	}")
 	case libraryGin:
 		g.gf.P("for key, values := range  ctx.Request.URL.Query() {")
 		g.gf.P("	for _, value := range values {")
@@ -349,7 +357,7 @@ func (g *generator) genBuildPathArgument(
 	default:
 		return fmt.Errorf("unsupported type %s for path variable", f.kind.String())
 	}
-	if *g.cfg.Library == libraryFastHTTP {
+	if *g.cfg.Library == libraryFastHTTP || *g.cfg.Library == libraryFiber {
 		switch f.kind {
 		case protoreflect.StringKind:
 			g.gf.P("if arg.", f.goName, ", err = ", urlPackage.Ident("PathUnescape"), "(arg.", f.goName, "); err != nil {")
@@ -401,7 +409,7 @@ func (g *generator) genRepeatedPathArgCheck(f field) (err error) {
 		g.gf.P("err = ", fmtPackage.Ident("Errorf"), "(\"unsupported type repeated ", f.kind.String(), " for path argument ", f.goName, "\")")
 		g.gf.P("return nil, err")
 	}
-	if *g.cfg.Library == libraryFastHTTP {
+	if *g.cfg.Library == libraryFastHTTP || *g.cfg.Library == libraryFiber {
 		switch f.kind {
 		case protoreflect.StringKind:
 			g.gf.P("for i, value := range arg.", f.goName, " {")
