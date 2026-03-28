@@ -62,7 +62,7 @@ func buildExample2ServiceName2ImportsSomeCustomMsg(ctx *fasthttp.RequestCtx) (ar
 			return nil, err
 		}
 	}
-	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+	for keyB, valueB := range ctx.QueryArgs().All() {
 		var key = string(keyB)
 		var value = string(valueB)
 		switch key {
@@ -77,15 +77,13 @@ func buildExample2ServiceName2ImportsSomeCustomMsg(ctx *fasthttp.RequestCtx) (ar
 						arg.Option = SomeOptions(intOptionValue)
 					}
 				} else {
-					err = fmt.Errorf("conversion failed for parameter option: %w", convErr)
-					return
+					return nil, fmt.Errorf("conversion failed for parameter option: %w", convErr)
 				}
 			}
 		default:
-			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
-			return
+			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
-	})
+	}
 	return arg, err
 }
 
@@ -131,7 +129,7 @@ func RegisterSecondServiceName2HTTPGoServer(
 
 func buildExample2SecondServiceName2ImportsSomeCustomMsg(ctx *fasthttp.RequestCtx) (arg *SomeCustomMsg, err error) {
 	arg = &SomeCustomMsg{}
-	ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {
+	for keyB, valueB := range ctx.QueryArgs().All() {
 		var key = string(keyB)
 		var value = string(valueB)
 		switch key {
@@ -146,15 +144,13 @@ func buildExample2SecondServiceName2ImportsSomeCustomMsg(ctx *fasthttp.RequestCt
 						arg.Option = SomeOptions(intOptionValue)
 					}
 				} else {
-					err = fmt.Errorf("conversion failed for parameter option: %w", convErr)
-					return
+					return nil, fmt.Errorf("conversion failed for parameter option: %w", convErr)
 				}
 			}
 		default:
-			err = fmt.Errorf("unknown query parameter %s with value %s", key, value)
-			return
+			return nil, fmt.Errorf("unknown query parameter %s with value %s", key, value)
 		}
-	})
+	}
 	return arg, err
 }
 

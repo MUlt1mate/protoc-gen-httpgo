@@ -123,7 +123,7 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		// wrap gin.Context further usage
 		g.gf.P("	ctx := context.WithValue(ginctx, \"request\", ginctx)")
 	case libraryFiber:
-		g.gf.P("r.", titleString(method.httpMethodName), "( \"", method.uri.protoURI, "\", func(fiberctx ", fiberPackage.Ident("Ctx"), ") error { ")
+		g.gf.P("r.", titleString(method.httpMethodName), "( \"", method.uri.protoURI, "\", func(fiberctx ", fiberPackage.Ident("Ctx"), ") { ")
 		g.gf.P("	fiberctx.Set(\"Content-Type\", \"application/json\")")
 		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(fiberctx)")
 		g.gf.P("	if err != nil {")
@@ -131,7 +131,7 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		// can't use protojson on inline structure
 		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
 		g.gf.P("		_, _ = fiberctx.Write(respJson)")
-		g.gf.P("		return nil")
+		g.gf.P("		return")
 		g.gf.P("	}")
 		// wrap fiber.Ctx further usage
 		g.gf.P("	ctx := context.WithValue(fiberctx.Context(), \"request\", fiberctx)")
@@ -160,9 +160,6 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		g.gf.P("}")
 	} else {
 		g.genMarshalServerResponse("resp")
-	}
-	if *g.cfg.Library == libraryFiber {
-		g.gf.P("return nil")
 	}
 	g.gf.P("})")
 	g.gf.P()
@@ -285,11 +282,14 @@ func (g *generator) genServerMethodQueryParams(method methodParams) (err error) 
 		g.gf.P("for key, values := range r.URL.Query() {")
 		g.gf.P("	for _, value := range values {")
 	case libraryFastHTTP:
-		g.gf.P("ctx.QueryArgs().VisitAll(func(keyB, valueB []byte) {")
+		g.gf.P("for keyB, valueB := range ctx.QueryArgs().All() {")
 		g.gf.P("	var key = string(keyB)")
 		g.gf.P("	var value = string(valueB)")
 	case libraryFiber:
-		g.gf.P("for key, value := range ctx.Queries() {")
+		// we can't use ctx.Queries() because it doesn't support repeated query parameters
+		g.gf.P("for keyB, valueB := range ctx.RequestCtx().URI().QueryArgs().All() {")
+		g.gf.P("	var key = string(keyB)")
+		g.gf.P("	var value = string(valueB)")
 	case libraryGin:
 		g.gf.P("for key, values := range  ctx.Request.URL.Query() {")
 		g.gf.P("	for _, value := range values {")
@@ -301,22 +301,11 @@ func (g *generator) genServerMethodQueryParams(method methodParams) (err error) 
 		}
 	}
 	g.gf.P("	default:")
-
+	g.gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"unknown query parameter %s with value %s\", key, value)")
+	g.gf.P("	}")
+	g.gf.P("}")
 	switch *g.cfg.Library {
 	case libraryNetHTTP, libraryGin:
-		g.gf.P("		return nil, ", fmtPackage.Ident("Errorf"), "(\"unknown query parameter %s with value %s\", key, value)")
-		g.gf.P("	}")
-		g.gf.P("}")
-		g.gf.P("}")
-	case libraryFastHTTP:
-		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"unknown query parameter %s with value %s\", key, value)")
-		g.gf.P("		return")
-		g.gf.P("	}")
-		g.gf.P("})")
-	case libraryFiber:
-		g.gf.P("		err = ", fmtPackage.Ident("Errorf"), "(\"unknown query parameter %s with value %s\", key, value)")
-		g.gf.P("		return")
-		g.gf.P("	}")
 		g.gf.P("}")
 	}
 	return nil
@@ -354,7 +343,7 @@ func (g *generator) genBuildPathArgument(
 		protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind, protoreflect.Uint64Kind, protoreflect.Fixed64Kind,
 		protoreflect.DoubleKind, protoreflect.FloatKind, protoreflect.StringKind, protoreflect.BytesKind, protoreflect.BoolKind,
 		protoreflect.EnumKind:
-		if err = g.genFieldConvertor(f, f.goName+"Str", "arg."+f.goName, false, "nil, ", false); err != nil {
+		if err = g.genFieldConvertor(f, f.goName+"Str", "arg."+f.goName, false, "nil, "); err != nil {
 			return err
 		}
 	default:
@@ -390,13 +379,13 @@ func (g *generator) genRepeatedPathArgCheck(f field) (err error) {
 		// allocate space and override values if it was passed in a body or other way
 		g.gf.P("arg.", f.goName, " = make([]", getFieldConversionFuncName(f), ", 0, len(", f.goName, "Strs))")
 		g.gf.P("for _, str := range ", f.goName, "Strs {")
-		if err = g.genFieldConvertor(f, "str", "arg."+f.goName, true, "nil, ", false); err != nil {
+		if err = g.genFieldConvertor(f, "str", "arg."+f.goName, true, "nil, "); err != nil {
 			return err
 		}
 		g.gf.P("}")
 	case protoreflect.StringKind:
 		source := g.gf.QualifiedGoIdent(stringsPackage.Ident("Split")) + "(" + f.goName + "Str, \"" + pathRepeatedArgDelimiter + "\")"
-		if err = g.genFieldConvertor(f, source, "arg."+f.goName, false, "", false); err != nil {
+		if err = g.genFieldConvertor(f, source, "arg."+f.goName, false, ""); err != nil {
 			return err
 		}
 	case protoreflect.BytesKind:
@@ -404,7 +393,7 @@ func (g *generator) genRepeatedPathArgCheck(f field) (err error) {
 		// allocate space and override values if it was passed in a body or other way
 		g.gf.P("arg.", f.goName, " = make([][]byte, 0, len(", f.goName, "Strs))")
 		g.gf.P("for _, str := range ", f.goName, "Strs {")
-		if err = g.genFieldConvertor(f, "str", "arg."+f.goName, true, "", false); err != nil {
+		if err = g.genFieldConvertor(f, "str", "arg."+f.goName, true, ""); err != nil {
 			return err
 		}
 		g.gf.P("}")
@@ -533,12 +522,12 @@ func (g *generator) genMultipartRequestServer(method methodParams) (err error) {
 			g.gf.P("	arg."+f.goName, " = append(arg."+f.goName, ", values...)")
 		case f.cardinality == protoreflect.Repeated:
 			g.gf.P("	for _, value := range values {")
-			if err = g.genFieldConvertor(f, "value", "arg."+f.goName, true, "nil, ", false); err != nil {
+			if err = g.genFieldConvertor(f, "value", "arg."+f.goName, true, "nil, "); err != nil {
 				return err
 			}
 			g.gf.P("	}")
 		default:
-			if err = g.genFieldConvertor(f, "values[0]", "arg."+f.goName, false, "nil, ", false); err != nil {
+			if err = g.genFieldConvertor(f, "values[0]", "arg."+f.goName, false, "nil, "); err != nil {
 				return err
 			}
 		}
@@ -601,7 +590,6 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 		g.gf.P("	case \"", f.protoName, "\":")
 	}
 
-	nakedReturn := *g.cfg.Library == libraryFastHTTP || *g.cfg.Library == libraryFiber
 	switch f.kind {
 	case protoreflect.Int32Kind, protoreflect.Sint32Kind, protoreflect.Uint32Kind, protoreflect.Sfixed32Kind, protoreflect.Fixed32Kind,
 		protoreflect.Int64Kind, protoreflect.Sint64Kind, protoreflect.Sfixed64Kind, protoreflect.Uint64Kind, protoreflect.Fixed64Kind,
@@ -613,17 +601,11 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 			"arg."+f.goName,
 			f.cardinality == protoreflect.Repeated,
 			"nil, ",
-			nakedReturn,
 		); err != nil {
 			return err
 		}
 	default:
-		if *g.cfg.Library == libraryFastHTTP || *g.cfg.Library == libraryFiber {
-			g.gf.P("	err = ", fmtPackage.Ident("Errorf"), "(\"unsupported type "+f.kind.String()+" for query argument "+f.protoName+"\")")
-			g.gf.P("	return")
-		} else {
-			g.gf.P("	return nil, ", fmtPackage.Ident("Errorf"), "(\"unsupported type "+f.kind.String()+" for query argument "+f.protoName+"\")")
-		}
+		g.gf.P("	return nil, ", fmtPackage.Ident("Errorf"), "(\"unsupported type "+f.kind.String()+" for query argument "+f.protoName+"\")")
 	}
 
 	if f.kind == protoreflect.MessageKind && !f.isFile && f.cardinality != protoreflect.Repeated {
@@ -643,7 +625,6 @@ func (g *generator) genQueryArgCheck(f field) (err error) {
 				"arg."+f.goName+"."+sf.GoName,
 				f.cardinality == protoreflect.Repeated,
 				"nil, ",
-				nakedReturn,
 			); err != nil {
 				return err
 			}

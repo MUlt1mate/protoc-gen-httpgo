@@ -9,16 +9,19 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/gin-gonic/gin"
+	v3 "github.com/gofiber/fiber/v3"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/valyala/fasthttp"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
 	fasthttpmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/fasthttp"
+	fibermdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/fiber"
 	ginmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/gin"
 	nethttpmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/nethttp"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 	fastproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
+	fiberproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fiber"
 	ginproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/gin"
 	httpproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/nethttp"
 )
@@ -27,12 +30,14 @@ const (
 	fasthttpAddr = "localhost:8080"
 	nethttpAddr  = "localhost:8081"
 	ginAddr      = "localhost:8082"
+	fiberAddr    = "localhost:8083"
 )
 
 var (
-	fastClient          httpproto.ServiceNameHTTPGoService
-	nethttpClient       httpproto.ServiceNameHTTPGoService
-	nethttpClientForGin httpproto.ServiceNameHTTPGoService
+	fastClient            httpproto.ServiceNameHTTPGoService
+	nethttpClient         httpproto.ServiceNameHTTPGoService
+	nethttpClientForGin   httpproto.ServiceNameHTTPGoService
+	nethttpClientForFiber httpproto.ServiceNameHTTPGoService
 )
 
 func main() {
@@ -59,6 +64,9 @@ func main() {
 	if err = clientRunRequests(ctx, nethttpClientForGin); err != nil {
 		log.Println(err)
 	}
+	if err = clientRunRequests(ctx, nethttpClientForFiber); err != nil {
+		log.Println(err)
+	}
 
 	// f := make(chan bool)
 	// <-f
@@ -71,6 +79,7 @@ func serverInit(ctx context.Context) (err error) {
 		fasthttpRouter                                    = router.New()
 		rHttp                                             = http.NewServeMux()
 		ginRouter                                         = gin.New()
+		fiberApp                                          = v3.New()
 	)
 	if err = fastproto.RegisterServiceNameHTTPGoServer(ctx, fasthttpRouter, handler, fasthttpmdlwr.ServerMiddlewares); err != nil {
 		return err
@@ -86,6 +95,9 @@ func serverInit(ctx context.Context) (err error) {
 	if err = ginproto.RegisterServiceNameHTTPGoServer(ctx, ginRouter, handler, ginmdlwr.ServerMiddlewares); err != nil {
 		return err
 	}
+	if err = fiberproto.RegisterServiceNameHTTPGoServer(ctx, fiberApp, handler, fibermdlwr.ServerMiddlewares); err != nil {
+		return err
+	}
 
 	go func() {
 		if err = fasthttp.ListenAndServe(fasthttpAddr, fasthttpRouter.Handler); err != nil {
@@ -99,6 +111,11 @@ func serverInit(ctx context.Context) (err error) {
 	}()
 	go func() {
 		if err = ginRouter.Run(ginAddr); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	go func() {
+		if err = fiberApp.Listen(fiberAddr); err != nil {
 			log.Fatal(err)
 		}
 	}()
@@ -131,6 +148,16 @@ func clientInit(ctx context.Context) (err error) {
 		ctx,
 		httpClientTransport,
 		"http://"+ginAddr,
+		nethttpmdlwr.ClientMiddlewares,
+	); err != nil {
+		return err
+	}
+
+	// we use other client to check fiber server
+	if nethttpClientForFiber, err = httpproto.GetServiceNameHTTPGoClient(
+		ctx,
+		httpClientTransport,
+		"http://"+fiberAddr,
 		nethttpmdlwr.ClientMiddlewares,
 	); err != nil {
 		return err

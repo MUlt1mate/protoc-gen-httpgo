@@ -16,15 +16,18 @@ import (
 
 	"github.com/fasthttp/router"
 	"github.com/gin-gonic/gin"
+	v3 "github.com/gofiber/fiber/v3"
 	"github.com/valyala/fasthttp"
 	pb "google.golang.org/protobuf/proto"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
 	fasthttpmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/fasthttp"
+	fibermdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/fiber"
 	ginmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/gin"
 	nethttpmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/nethttp"
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 	fastproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fasthttp"
+	fiberproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/fiber"
 	ginproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/gin"
 	httpproto "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/nethttp"
 )
@@ -46,7 +49,6 @@ type testCaseServer struct {
 	method                 string
 	uri                    string
 	expectedResponseBody   []byte
-	expectedResponseErr    error
 	requestBody            []byte
 	expectedRespStatusCode int
 }
@@ -320,6 +322,7 @@ func TestHTTPGoServer(t *testing.T) {
 		rHttp                                             = http.NewServeMux()
 		fasthttpRouter                                    = router.New()
 		ginRouter                                         = gin.New()
+		fiberApp                                          = v3.New()
 	)
 	if err = fastproto.RegisterServiceNameHTTPGoServer(ctx, fasthttpRouter, handler, fasthttpmdlwr.ServerMiddlewares); err != nil {
 		t.Fatal(err)
@@ -328,6 +331,9 @@ func TestHTTPGoServer(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err = ginproto.RegisterServiceNameHTTPGoServer(ctx, ginRouter, handler, ginmdlwr.ServerMiddlewares); err != nil {
+		t.Fatal(err)
+	}
+	if err = fiberproto.RegisterServiceNameHTTPGoServer(ctx, fiberApp, handler, fibermdlwr.ServerMiddlewares); err != nil {
 		t.Fatal(err)
 	}
 
@@ -357,6 +363,12 @@ func TestHTTPGoServer(t *testing.T) {
 			errCh <- err
 		}
 	}()
+	fiberAddr := "127.0.0.1:8083"
+	go func() {
+		if err = fiberApp.Listen(fiberAddr); err != nil {
+			errCh <- err
+		}
+	}()
 
 	// Give the server a moment to start or perform your logic
 	// Then check if an error occurred
@@ -374,7 +386,6 @@ func TestHTTPGoServer(t *testing.T) {
 			uri:                    "/v1/RPCName/test/1",
 			requestBody:            []byte(`{"int64Argument":1,"stringArgument":"test"}`),
 			expectedResponseBody:   []byte(`{"stringValue":"test","intValue":1}`),
-			expectedResponseErr:    nil,
 			expectedRespStatusCode: http.StatusOK,
 		},
 		{
@@ -383,7 +394,6 @@ func TestHTTPGoServer(t *testing.T) {
 			uri:                    "/v1/test/get?int64Argument=1&stringArgument=stringValue",
 			requestBody:            nil,
 			expectedResponseBody:   []byte(`{"stringValue":"stringValue","intValue":1}`),
-			expectedResponseErr:    nil,
 			expectedRespStatusCode: http.StatusOK,
 		},
 		{
@@ -392,7 +402,6 @@ func TestHTTPGoServer(t *testing.T) {
 			uri:                    "/v2/repeated/a,b?BoolValue[]=true&BoolValue[]=true&EnumValue[]=FIRST&EnumValue[]=1&Int32Value[]=2&Int32Value[]=3&Sint32Value[]=4&Sint32Value[]=5&Uint32Value[]=6&Uint32Value[]=7&Int64Value[]=8&Int64Value[]=9&Sint64Value[]=10&Sint64Value[]=11&Uint64Value[]=12&Uint64Value[]=13&Sfixed32Value[]=14&Sfixed32Value[]=15&Fixed32Value[]=16&Fixed32Value[]=17&FloatValue[]=18&FloatValue[]=19&Sfixed64Value[]=20&Sfixed64Value[]=21&Fixed64Value[]=22&Fixed64Value[]=23&DoubleValue[]=24&DoubleValue[]=25&BytesValue[]=c&BytesValue[]=d&StringValueQuery[]=e&StringValueQuery[]=f",
 			requestBody:            nil,
 			expectedResponseBody:   []byte(`{"BoolValue":[true,true],"EnumValue":[0,1],"Int32Value":[2,3],"Sint32Value":[4,5],"Uint32Value":[6,7],"Int64Value":[8,9],"Sint64Value":[10,11],"Uint64Value":[12,13],"Sfixed32Value":[14,15],"Fixed32Value":[16,17],"FloatValue":[18,19],"Sfixed64Value":[20,21],"Fixed64Value":[22,23],"DoubleValue":[24,25],"StringValue":["a","b"],"BytesValue":["Yw==","ZA=="],"StringValueQuery":["e","f"]}`),
-			expectedResponseErr:    nil,
 			expectedRespStatusCode: http.StatusOK,
 		},
 		{
@@ -401,7 +410,6 @@ func TestHTTPGoServer(t *testing.T) {
 			uri:                    "/v3/repeated/a,b",
 			requestBody:            []byte(`{"BoolValue":[true,true],"EnumValue":[0,1],"Int32Value":[2,3],"Sint32Value":[4,5],"Uint32Value":[6,7],"Int64Value":[8,9],"Sint64Value":[10,11],"Uint64Value":[12,13],"Sfixed32Value":[14,15],"Fixed32Value":[16,17],"FloatValue":[18,19],"Sfixed64Value":[20,21],"Fixed64Value":[22,23],"DoubleValue":[24,25],"BytesValue":["Yw==","ZA=="],"StringValueQuery":["e","f"]}`),
 			expectedResponseBody:   []byte(`{"BoolValue":[true,true],"EnumValue":[0,1],"Int32Value":[2,3],"Sint32Value":[4,5],"Uint32Value":[6,7],"Int64Value":[8,9],"Sint64Value":[10,11],"Uint64Value":[12,13],"Sfixed32Value":[14,15],"Fixed32Value":[16,17],"FloatValue":[18,19],"Sfixed64Value":[20,21],"Fixed64Value":[22,23],"DoubleValue":[24,25],"StringValue":["a","b"],"BytesValue":["Yw==","ZA=="],"StringValueQuery":["e","f"]}`),
-			expectedResponseErr:    nil,
 			expectedRespStatusCode: http.StatusOK,
 		},
 		{
@@ -410,7 +418,6 @@ func TestHTTPGoServer(t *testing.T) {
 			uri:                    "/v1/repeated/t,true/FIRST,1/2,3/4,5/6,7/8,9/10,11/12,13/14,15/16,17/18,19/20,21/22,23/24,25/a,b/c,d/e,f",
 			requestBody:            nil,
 			expectedResponseBody:   []byte(`{"BoolValue":[true,true],"EnumValue":[0,1],"Int32Value":[2,3],"Sint32Value":[4,5],"Uint32Value":[6,7],"Int64Value":[8,9],"Sint64Value":[10,11],"Uint64Value":[12,13],"Sfixed32Value":[14,15],"Fixed32Value":[16,17],"FloatValue":[18,19],"Sfixed64Value":[20,21],"Fixed64Value":[22,23],"DoubleValue":[24,25],"StringValue":["a","b"],"BytesValue":["Yw==","ZA=="],"StringValueQuery":["e","f"]}`),
-			expectedResponseErr:    nil,
 			expectedRespStatusCode: http.StatusOK,
 		},
 		{
@@ -419,7 +426,6 @@ func TestHTTPGoServer(t *testing.T) {
 			uri:                    "/v1/RPCName/test/test",
 			requestBody:            []byte(`{"int64Argument":1,"stringArgument":"test"}`),
 			expectedResponseBody:   []byte(`{"Error":"conversion failed for parameter int64Argument: strconv.ParseInt: parsing \"test\": invalid syntax"}`),
-			expectedResponseErr:    nil,
 			expectedRespStatusCode: http.StatusBadRequest,
 		},
 		{
@@ -428,7 +434,6 @@ func TestHTTPGoServer(t *testing.T) {
 			uri:                    "/v3/users/me/messages/123456",
 			requestBody:            []byte(`{}`),
 			expectedResponseBody:   []byte(`{}`),
-			expectedResponseErr:    nil,
 			expectedRespStatusCode: http.StatusOK,
 		},
 	}
@@ -442,6 +447,7 @@ func TestHTTPGoServer(t *testing.T) {
 			"fasthttp": ln.Addr().String(),
 			"nethttp":  lnHttp.Addr().String(),
 			"gin":      ginAddr,
+			"fiber":    fiberAddr,
 		}
 	)
 
@@ -469,9 +475,6 @@ func TestHTTPGoServer(t *testing.T) {
 				}
 				if body, err = io.ReadAll(resp.Body); err != nil {
 					t.Fatal(err)
-				}
-				if !errors.Is(test.expectedResponseErr, err) {
-					t.Errorf("%s: %s: Expected error method '%v', \nbut got '%v'", host, test.name, test.expectedResponseErr, err)
 				}
 
 				if resp.StatusCode != test.expectedRespStatusCode {

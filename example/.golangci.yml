@@ -106,6 +106,9 @@ linters:
           - gosec
         text: 'G114: Use of net/http serve function that has no support for setting timeouts' # no need for example
       - linters:
+          - gosec
+        text: 'G704: SSRF via taint analysis' # false positive
+      - linters:
           - revive
         text: 'context-keys-type:' # intensional use of string type
       - linters:
