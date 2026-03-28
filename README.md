@@ -163,10 +163,12 @@ You can define custom middlewares with specific arguments and return values.
 Pass a slice of middlewares to the constructor, and they will be invoked in the specified order.  
 There are middleware examples for logs, timeout, headers, etc:
 [fasthttp](https://github.com/MUlt1mate/protoc-gen-httpgo/blob/main/example/implementation/fasthttp/middlewares.go),
-[fiber](https://github.com/MUlt1mate/protoc-gen-httpgo/blob/main/example/implementation/fiber/middlewares.go).
+[fiber](https://github.com/MUlt1mate/protoc-gen-httpgo/blob/main/example/implementation/fiber/middlewares.go),
+[gin](https://github.com/MUlt1mate/protoc-gen-httpgo/blob/main/example/implementation/gin/middlewares.go),
+[nethttp](https://github.com/MUlt1mate/protoc-gen-httpgo/blob/main/example/implementation/nethttp/middlewares.go).
 
 ```go
-package implementation
+package fasthttp
 
 import (
 	"context"
@@ -240,15 +242,16 @@ with proto names.
 
 #### Files
 
-To send and receive files you need to define file field as a struct with given fields
+To send and receive files you need to define file field as a message with the following fields.
+The message name can be anything — the plugin identifies file fields by their structure, not by name.
 
 ```protobuf
 message Request {
-  FileStruct document = 1;
-  FileStruct anotherDocument = 2;
+  FileMsg document = 1;
+  FileMsg anotherDocument = 2;
 }
 
-message FileStruct {
+message FileMsg {
   bytes file = 1;
   string name = 2;
   map<string, string> headers = 3;
@@ -258,8 +261,7 @@ message FileStruct {
 ## TODO
 
 - implement more web servers
-- dependabot
 - buf
-- websocket
+- streaming
 - production ready middleware example
 - optionally ignore unknown query parameters

@@ -49,7 +49,7 @@ jobs:
         run: go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 
       - name: Vendor
-        run: go mod vendor
+        run: (cd ./example/ && go mod vendor)
 
       - name: Build
         run: go build .
