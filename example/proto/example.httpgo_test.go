@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -17,7 +18,9 @@ import (
 	"github.com/fasthttp/router"
 	"github.com/gin-gonic/gin"
 	v3 "github.com/gofiber/fiber/v3"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/valyala/fasthttp"
+	"go.opentelemetry.io/otel/trace/noop"
 	pb "google.golang.org/protobuf/proto"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
@@ -68,6 +71,9 @@ func TestHTTPGoClient(t *testing.T) {
 	var (
 		reqCh  = make(chan requestData)
 		respCh = make(chan responseData)
+		logger = slog.Default()
+		tracer = noop.NewTracerProvider().Tracer("example")
+		reg    = prometheus.DefaultRegisterer
 	)
 	mockServer := httptest.NewServer(http.HandlerFunc(getMockServer(reqCh, respCh)))
 	defer mockServer.Close()
@@ -81,7 +87,7 @@ func TestHTTPGoClient(t *testing.T) {
 		ctx,
 		&fasthttp.Client{},
 		mockServer.URL,
-		fasthttpmdlwr.ClientMiddlewares,
+		fasthttpmdlwr.GetClientMiddlewares(logger, tracer, reg),
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +95,7 @@ func TestHTTPGoClient(t *testing.T) {
 		ctx,
 		&http.Client{},
 		mockServer.URL,
-		nethttpmdlwr.ClientMiddlewares,
+		nethttpmdlwr.GetClientMiddlewares(logger, tracer, reg),
 	); err != nil {
 		t.Fatal(err)
 	}
@@ -323,17 +329,20 @@ func TestHTTPGoServer(t *testing.T) {
 		fasthttpRouter                                    = router.New()
 		ginRouter                                         = gin.New()
 		fiberApp                                          = v3.New()
+		logger                                            = slog.Default()
+		tracer                                            = noop.NewTracerProvider().Tracer("example")
+		reg                                               = prometheus.DefaultRegisterer
 	)
-	if err = fastproto.RegisterServiceNameHTTPGoServer(ctx, fasthttpRouter, handler, fasthttpmdlwr.ServerMiddlewares); err != nil {
+	if err = fastproto.RegisterServiceNameHTTPGoServer(ctx, fasthttpRouter, handler, fasthttpmdlwr.GetServerMiddlewares(logger, tracer, reg)); err != nil {
 		t.Fatal(err)
 	}
-	if err = httpproto.RegisterServiceNameHTTPGoServer(ctx, rHttp, handler, nethttpmdlwr.ServerMiddlewares); err != nil {
+	if err = httpproto.RegisterServiceNameHTTPGoServer(ctx, rHttp, handler, nethttpmdlwr.GetServerMiddlewares(logger, tracer, reg)); err != nil {
 		t.Fatal(err)
 	}
-	if err = ginproto.RegisterServiceNameHTTPGoServer(ctx, ginRouter, handler, ginmdlwr.ServerMiddlewares); err != nil {
+	if err = ginproto.RegisterServiceNameHTTPGoServer(ctx, ginRouter, handler, ginmdlwr.GetServerMiddlewares(logger, tracer, reg)); err != nil {
 		t.Fatal(err)
 	}
-	if err = fiberproto.RegisterServiceNameHTTPGoServer(ctx, fiberApp, handler, fibermdlwr.ServerMiddlewares); err != nil {
+	if err = fiberproto.RegisterServiceNameHTTPGoServer(ctx, fiberApp, handler, fibermdlwr.GetServerMiddlewares(logger, tracer, reg)); err != nil {
 		t.Fatal(err)
 	}
 
