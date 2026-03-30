@@ -74,7 +74,7 @@ Status code is derived from `ctx.Err()` (504) or the error type (HttpError.Code 
 
 ### 2. TimeoutServerMiddleware
 
-Sets a 5-second deadline on the request. Runs the rest of the chain in a goroutine and waits for either completion or
+Sets a deadline on the request. Runs the rest of the chain in a goroutine and waits for either completion or
 timeout.
 
 - On timeout: writes HTTP 504 via `ginctx.Writer.WriteHeader`, returns `respError{"request timeout"}`

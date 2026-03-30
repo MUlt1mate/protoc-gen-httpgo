@@ -76,7 +76,7 @@ Status code is derived from `ctx.Err()` (504) or the error type (HttpError.Code 
 
 ### 2. TimeoutServerMiddleware
 
-Sets a 5-second deadline on the request. Runs the rest of the chain in a goroutine and waits for either completion or
+Sets a deadline on the request. Runs the rest of the chain in a goroutine and waits for either completion or
 timeout.
 
 - On timeout: writes HTTP 504 to the ResponseWriter, returns `respError{"request timeout"}`
@@ -196,6 +196,6 @@ Converts HTTP error responses (status >= 400) into Go errors.
 
 ### 5. TimeoutClientMiddleware (innermost)
 
-Sets a 5-second timeout on the outgoing request via `context.WithTimeout` and `req.WithContext`.
+Sets a timeout on the outgoing request via `context.WithTimeout` and `req.WithContext`.
 
 **Dependencies:** None. Innermost because it configures the request before the actual HTTP transport call.

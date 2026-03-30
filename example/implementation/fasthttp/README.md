@@ -76,7 +76,7 @@ Handles context timeout by falling back to 504 status code.
 
 ### 2. TimeoutServerMiddleware
 
-Sets a 5-second deadline on the request. Runs the rest of the chain in a goroutine and waits for either completion or
+Sets a deadline on the request. Runs the rest of the chain in a goroutine and waits for either completion or
 timeout.
 
 - On timeout: sets HTTP 504, returns `respError{"request timeout"}`
