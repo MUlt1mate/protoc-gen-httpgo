@@ -73,7 +73,7 @@ func TestHTTPGoClient(t *testing.T) {
 		respCh = make(chan responseData)
 		logger = slog.Default()
 		tracer = noop.NewTracerProvider().Tracer("example")
-		reg    = prometheus.DefaultRegisterer
+		reg    = prometheus.NewRegistry()
 	)
 	mockServer := httptest.NewServer(http.HandlerFunc(getMockServer(reqCh, respCh)))
 	defer mockServer.Close()
@@ -331,7 +331,7 @@ func TestHTTPGoServer(t *testing.T) {
 		fiberApp                                          = v3.New()
 		logger                                            = slog.Default()
 		tracer                                            = noop.NewTracerProvider().Tracer("example")
-		reg                                               = prometheus.DefaultRegisterer
+		reg                                               = prometheus.NewRegistry()
 	)
 	if err = fastproto.RegisterServiceNameHTTPGoServer(ctx, fasthttpRouter, handler, fasthttpmdlwr.GetServerMiddlewares(logger, tracer, reg)); err != nil {
 		t.Fatal(err)

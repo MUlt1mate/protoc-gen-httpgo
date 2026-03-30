@@ -84,7 +84,7 @@ timeout.
 
 ### 3. RecoveryServerMiddleware
 
-Catches panics from any inner middleware or the handler using `defer/recover`. Logs the panic value and full stack
+Catches panics from any inner middleware or the handler using `defer/recover`. Logs the panic value and full-stack
 trace via `slog.Error`.
 
 - On panic: writes HTTP 500 directly via `ginctx.Writer.WriteHeader`, returns `respError{"internal server error"}` with `err = nil`
@@ -108,8 +108,8 @@ Sets the HTTP status code on the response based on the error type.
 - `err` is `*HttpError`: uses `HttpError.Code`
 - `err` is any other error: 500 Internal Server Error
 
-**Dependencies:** Depends on `HttpError` returned by ValidationServerMiddleware, AuthServerMiddleware, and
-RecoveryServerMiddleware.
+**Dependencies:** Depends on `HttpError` returned by ValidationServerMiddleware and AuthServerMiddleware.
+RecoveryServerMiddleware handles panics directly (sets 500 and returns `err = nil`), so Headers never sees panic errors.
 
 ### 6. TracingServerMiddleware
 

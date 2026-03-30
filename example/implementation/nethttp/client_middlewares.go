@@ -1,6 +1,7 @@
 package nethttp
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -136,7 +137,12 @@ func ErrorClientMiddleware() ClientMiddleware {
 	) (resp *http.Response, err error) {
 		resp, err = next(ctx, req)
 		if err == nil && resp != nil && resp.StatusCode >= http.StatusBadRequest {
-			body, _ := io.ReadAll(resp.Body)
+			body, readErr := io.ReadAll(resp.Body)
+			_ = resp.Body.Close()
+			resp.Body = io.NopCloser(bytes.NewReader(body))
+			if readErr != nil {
+				return resp, fmt.Errorf("%w, code: %d, body read failed: %w", errRequestFailed, resp.StatusCode, readErr)
+			}
 			return resp, fmt.Errorf("%w, code: %d, body: %s", errRequestFailed, resp.StatusCode, string(body))
 		}
 		return resp, err

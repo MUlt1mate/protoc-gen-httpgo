@@ -162,11 +162,14 @@ func clientExample(ctx context.Context) (err error) {
 You can define custom middlewares with specific arguments and return values.
 Pass a slice of middlewares to the constructor, and they will be invoked in the specified order.
 There are ready-to-use examples with 9 server middlewares (monitoring, timeout, recovery, response, headers,
-tracing, auth, logging, validation) and 5 client middlewares (monitoring, tracing, logging, error handling, timeout):
+tracing, auth, logging, validation) across all four implementations:
 [fasthttp](example/implementation/fasthttp/README.md),
 [fiber](example/implementation/fiber/README.md),
 [gin](example/implementation/gin/README.md),
 [nethttp](example/implementation/nethttp/README.md).
+Additionally, 5 client middlewares (monitoring, tracing, logging, error handling, timeout) are included in the
+[fasthttp](example/implementation/fasthttp/README.md) and [nethttp](example/implementation/nethttp/README.md) examples;
+the fiber and gin examples are server-only.
 
 ```go
 package fasthttp

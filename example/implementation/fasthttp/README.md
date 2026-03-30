@@ -86,7 +86,7 @@ timeout.
 
 ### 3. RecoveryServerMiddleware
 
-Catches panics from any inner middleware or the handler using `defer/recover`. Logs the panic value and full stack
+Catches panics from any inner middleware or the handler using `defer/recover`. Logs the panic value and full-stack
 trace via `slog.Error`.
 
 - On panic: sets HTTP 500 directly on fastCtx, returns `respError{"internal server error"}` with `err = nil`
@@ -111,11 +111,12 @@ the raw error), then Response converts the error to a body and nils it.
 Sets the HTTP status code on the fasthttp response based on the error type.
 
 - `err == nil`: 200 OK
-- `err` is `*HttpError`: uses `HttpError.Code` (e.g. 400 for validation, 401 for auth, 500 for panic)
+- `err` is `*HttpError`: uses `HttpError.Code` (e.g. 400 for validation, 401 for auth)
 - `err` is any other error: 500 Internal Server Error
 
-**Dependencies:** Depends on `HttpError` type returned by ValidationServerMiddleware, AuthServerMiddleware, and
-RecoveryServerMiddleware. Must run before ResponseServerMiddleware on the return path so it sees the raw error.
+**Dependencies:** Depends on `HttpError` type returned by ValidationServerMiddleware and AuthServerMiddleware.
+RecoveryServerMiddleware handles panics directly (sets 500 and returns `err = nil`), so Headers never sees panic errors.
+Must run before ResponseServerMiddleware on the return path so it sees the raw error.
 
 ### 6. TracingServerMiddleware
 
