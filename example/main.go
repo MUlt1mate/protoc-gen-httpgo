@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -13,7 +14,9 @@ import (
 	v3 "github.com/gofiber/fiber/v3"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/valyala/fasthttp"
+	"go.opentelemetry.io/otel"
 
 	"github.com/MUlt1mate/protoc-gen-httpgo/example/implementation"
 	fasthttpmdlwr "github.com/MUlt1mate/protoc-gen-httpgo/example/implementation/fasthttp"
@@ -80,16 +83,20 @@ func main() {
 func serverInit(ctx context.Context) (err error) {
 	gin.SetMode(gin.ReleaseMode)
 	var (
+		logger = slog.Default()
+		tracer = otel.Tracer("example")
+		reg    = prometheus.DefaultRegisterer
+
 		handler        fastproto.ServiceNameHTTPGoService = &implementation.Handler{}
 		fasthttpRouter                                    = router.New()
 		rHttp                                             = http.NewServeMux()
 		ginRouter                                         = gin.New()
 		fiberApp                                          = v3.New()
 	)
-	if err = fastproto.RegisterServiceNameHTTPGoServer(ctx, fasthttpRouter, handler, fasthttpmdlwr.ServerMiddlewares); err != nil {
+	if err = fastproto.RegisterServiceNameHTTPGoServer(ctx, fasthttpRouter, handler, fasthttpmdlwr.GetServerMiddlewares(logger, tracer, reg)); err != nil {
 		return err
 	}
-	if err = httpproto.RegisterServiceNameHTTPGoServer(ctx, rHttp, handler, nethttpmdlwr.ServerMiddlewares); err != nil {
+	if err = httpproto.RegisterServiceNameHTTPGoServer(ctx, rHttp, handler, nethttpmdlwr.GetServerMiddlewares(logger, tracer, reg)); err != nil {
 		return err
 	}
 	/*
@@ -97,10 +104,10 @@ func serverInit(ctx context.Context) (err error) {
 		with context.Context that can be populated with the same keys in both HTTP and GRPC middlewares.
 		And of course if you have only HTTP you can use gin middleware format and pass nil to httpgo middlewares
 	*/
-	if err = ginproto.RegisterServiceNameHTTPGoServer(ctx, ginRouter, handler, ginmdlwr.ServerMiddlewares); err != nil {
+	if err = ginproto.RegisterServiceNameHTTPGoServer(ctx, ginRouter, handler, ginmdlwr.GetServerMiddlewares(logger, tracer, reg)); err != nil {
 		return err
 	}
-	if err = fiberproto.RegisterServiceNameHTTPGoServer(ctx, fiberApp, handler, fibermdlwr.ServerMiddlewares); err != nil {
+	if err = fiberproto.RegisterServiceNameHTTPGoServer(ctx, fiberApp, handler, fibermdlwr.GetServerMiddlewares(logger, tracer, reg)); err != nil {
 		return err
 	}
 
@@ -129,11 +136,16 @@ func serverInit(ctx context.Context) (err error) {
 
 func clientInit(ctx context.Context) (err error) {
 	var fasthttpClientTransport = &fasthttp.Client{}
+	var (
+		logger = slog.Default()
+		tracer = otel.Tracer("example")
+		reg    = prometheus.DefaultRegisterer
+	)
 	if fastClient, err = fastproto.GetServiceNameHTTPGoClient(
 		ctx,
 		fasthttpClientTransport,
 		"http://"+fasthttpAddr,
-		fasthttpmdlwr.ClientMiddlewares,
+		fasthttpmdlwr.GetClientMiddlewares(logger, tracer, reg),
 	); err != nil {
 		return err
 	}
@@ -143,7 +155,7 @@ func clientInit(ctx context.Context) (err error) {
 		ctx,
 		httpClientTransport,
 		"http://"+nethttpAddr,
-		nethttpmdlwr.ClientMiddlewares,
+		nethttpmdlwr.GetClientMiddlewares(logger, tracer, reg),
 	); err != nil {
 		return err
 	}
@@ -153,7 +165,7 @@ func clientInit(ctx context.Context) (err error) {
 		ctx,
 		httpClientTransport,
 		"http://"+ginAddr,
-		nethttpmdlwr.ClientMiddlewares,
+		nethttpmdlwr.GetClientMiddlewares(logger, tracer, reg),
 	); err != nil {
 		return err
 	}
@@ -163,7 +175,7 @@ func clientInit(ctx context.Context) (err error) {
 		ctx,
 		httpClientTransport,
 		"http://"+fiberAddr,
-		nethttpmdlwr.ClientMiddlewares,
+		nethttpmdlwr.GetClientMiddlewares(logger, tracer, reg),
 	); err != nil {
 		return err
 	}
