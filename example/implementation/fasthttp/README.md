@@ -203,7 +203,7 @@ Converts HTTP error responses (status >= 400) into Go errors.
 
 ### 5. TimeoutClientMiddleware (innermost)
 
-Sets a 1-second timeout on the outgoing HTTP request via `req.SetTimeout`.
+Sets a timeout on the outgoing HTTP request via `req.SetTimeout`.
 
 **Dependencies:** None. Innermost because it configures the request object before the actual HTTP transport call.
 
