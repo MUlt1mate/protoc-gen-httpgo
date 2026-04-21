@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package example;
+option go_package = "github.com/MUlt1mate/protoc-gen-httpgo/example/proto;proto";
+
+import "google/api/annotations.proto";
+import "common/structs.proto";
+
+service StreamingService {
+  rpc Streaming(common.InputMsgName) returns (stream common.OutputMsgName){
+    option (google.api.http) = {
+      post: "/v1/sse"
+    };
+  }
+};

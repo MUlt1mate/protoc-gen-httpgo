@@ -86,10 +86,14 @@ func TimeoutServerMiddleware() ServerMiddleware {
 
 		select {
 		case <-ctx.Done():
-			if fiberctx, ok := ctx.Value("request").(v3.Ctx); ok && fiberctx != nil {
-				fiberctx.Status(http.StatusGatewayTimeout)
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				if fiberctx, ok := ctx.Value("request").(v3.Ctx); ok && fiberctx != nil {
+					fiberctx.Status(http.StatusGatewayTimeout)
+				}
+				return respError{Error: "request timeout"}, nil
 			}
-			return respError{Error: "request timeout"}, nil
+			// request is canceled by client
+			return nil, ctx.Err()
 		case res := <-done:
 			return res.resp, res.err
 		}

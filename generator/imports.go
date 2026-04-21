@@ -5,6 +5,7 @@ import "google.golang.org/protobuf/compiler/protogen"
 var (
 	errorsPackage    = protogen.GoImportPath("errors")
 	contextPackage   = protogen.GoImportPath("context")
+	bufioPackage     = protogen.GoImportPath("bufio")
 	jsonPackage      = protogen.GoImportPath("encoding/json")
 	fmtPackage       = protogen.GoImportPath("fmt")
 	strconvPackage   = protogen.GoImportPath("strconv")

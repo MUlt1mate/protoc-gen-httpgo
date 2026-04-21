@@ -86,10 +86,14 @@ func TimeoutServerMiddleware() ServerMiddleware {
 
 		select {
 		case <-ctx.Done():
-			if ginctx, ok := ctx.Value("request").(*gin.Context); ok && ginctx != nil {
-				ginctx.Writer.WriteHeader(http.StatusGatewayTimeout)
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				if ginctx, ok := ctx.Value("request").(*gin.Context); ok && ginctx != nil {
+					ginctx.Writer.WriteHeader(http.StatusGatewayTimeout)
+				}
+				return respError{Error: "request timeout"}, nil
 			}
-			return respError{Error: "request timeout"}, nil
+			// request is canceled by client
+			return nil, ctx.Err()
 		case res := <-done:
 			return res.resp, res.err
 		}

@@ -88,6 +88,22 @@ func GetServerMiddlewares(
 	}
 }
 
+// GetSSEServerMiddlewares returns the server middleware for SSE.
+// ResponseServerMiddleware is excluded, because we shouldn't replace body with error
+// HeadersServerMiddleware is excluded, because headers can't be set after the response
+func GetSSEServerMiddlewares(
+	l *slog.Logger, tracer trace.Tracer, reg prometheus.Registerer,
+) []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error) {
+	return []func(ctx context.Context, req any, handler func(ctx context.Context, req any) (resp any, err error)) (resp any, err error){
+		MonitoringServerMiddleware(reg),
+		TimeoutServerMiddleware(),
+		RecoveryServerMiddleware(),
+		TracingServerMiddleware(tracer),
+		LoggerServerMiddleware(l),
+		ValidationServerMiddleware(),
+	}
+}
+
 // GetServerSecureMiddlewares returns the server middleware chain with authentication.
 func GetServerSecureMiddlewares(
 	l *slog.Logger, tracer trace.Tracer, reg prometheus.Registerer,

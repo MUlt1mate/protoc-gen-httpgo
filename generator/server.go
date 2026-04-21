@@ -36,6 +36,13 @@ func (g *generator) GenerateServers(file *protogen.File) (err error) {
 func (g *generator) genServiceInterface(service serviceParams) {
 	g.gf.P("type ", service.name, "HTTPGoService interface {")
 	for _, method := range service.methods {
+		if method.isServerStreaming {
+			g.gf.P(
+				"	", method.name, "(", contextPackage.Ident("Context"), ", *", method.inputMsgName, ", ",
+				"func(*", method.outputMsgName, ") error) error",
+			)
+			continue
+		}
 		g.gf.P(
 			"	", method.name, "(", contextPackage.Ident("Context"), ", *", method.inputMsgName, ") ",
 			"(*", method.outputMsgName, ", error)",
@@ -82,17 +89,20 @@ func (g *generator) genServiceServer(service serviceParams) (err error) {
 
 // genMethodDeclaration generates binding route with handler
 func (g *generator) genMethodDeclaration(serviceName string, method methodParams) (err error) {
+	if method.isServerStreaming {
+		return g.genServerStreamMethodDeclaration(serviceName, method)
+	}
 	g.gf.P(method.comment)
 	switch *g.cfg.Library {
 	case libraryNetHTTP:
 		g.gf.P("r.HandleFunc( \"", method.httpMethodName, " ", method.uri.protoURI, "\", func(w ", g.lib.Ident("ResponseWriter"), ", r *", g.lib.Ident("Request"), ") { ")
-		g.gf.P("	w.Header().Set(\"Content-Type\", \"application/json\")")
+		g.genSetResponseHeader("Content-Type", "application/json")
 		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(r)")
 		g.gf.P("	if err != nil {")
 		g.gf.P("		w.WriteHeader(", g.lib.Ident("StatusBadRequest"), ")")
 		// can't use protojson on inline structure
 		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
-		g.gf.P("		_, _ = w.Write(respJson)")
+		g.genWriteResponseBody("respJson")
 		g.gf.P("		return")
 		g.gf.P("	}")
 		g.gf.P("	ctx := r.Context()")
@@ -100,13 +110,13 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		g.gf.P("	ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"request\", r)")
 	case libraryFastHTTP:
 		g.gf.P("r.", method.httpMethodName, "( \"", method.uri.protoURI, "\", func(fastctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
-		g.gf.P("	fastctx.Response.Header.SetContentType(\"application/json\")")
+		g.genSetResponseHeader("Content-Type", "application/json")
 		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(fastctx)")
 		g.gf.P("	if err != nil {")
 		g.gf.P("		fastctx.SetStatusCode(", fasthttpPackage.Ident("StatusBadRequest"), ")")
 		// can't use protojson on inline structure
 		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
-		g.gf.P("		_, _ = fastctx.Write(respJson)")
+		g.genWriteResponseBody("respJson")
 		g.gf.P("		return")
 		g.gf.P("	}")
 		// wrap fasthttp.RequestCtx further usage
@@ -114,30 +124,32 @@ func (g *generator) genMethodDeclaration(serviceName string, method methodParams
 		g.gf.P("	ctx := context.WithValue(fastctx, \"request\", fastctx)")
 	case libraryGin:
 		g.gf.P("r.", method.httpMethodName, "( \"", method.uri.protoURI, "\", func(ginctx *", ginPackage.Ident("Context"), ") { ")
-		g.gf.P("	ginctx.Header(\"Content-Type\", \"application/json\")")
+		g.genSetResponseHeader("Content-Type", "application/json")
 		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(ginctx)")
 		g.gf.P("	if err != nil {")
-		g.gf.P("		ginctx.JSON(400, struct{ Error string }{Error: err.Error()})")
+		g.gf.P("		ginctx.Status(400)")
+		// can't use protojson on inline structure
+		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
+		g.genWriteResponseBody("respJson")
 		g.gf.P("		return")
 		g.gf.P("	}")
 		// wrap gin.Context further usage
 		g.gf.P("	ctx := context.WithValue(ginctx, \"request\", ginctx)")
 	case libraryFiber:
 		g.gf.P("r.", titleString(method.httpMethodName), "( \"", method.uri.protoURI, "\", func(fiberctx ", fiberPackage.Ident("Ctx"), ") { ")
-		g.gf.P("	fiberctx.Set(\"Content-Type\", \"application/json\")")
+		g.genSetResponseHeader("Content-Type", "application/json")
 		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(fiberctx)")
 		g.gf.P("	if err != nil {")
 		g.gf.P("		fiberctx.Status(400)")
 		// can't use protojson on inline structure
 		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
-		g.gf.P("		_, _ = fiberctx.Write(respJson)")
+		g.genWriteResponseBody("respJson")
 		g.gf.P("		return")
 		g.gf.P("	}")
 		// wrap fiber.Ctx further usage
 		g.gf.P("	ctx := context.WithValue(fiberctx.Context(), \"request\", fiberctx)")
 	}
-	g.gf.P("	ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"proto_service\", \""+serviceName+"\")")
-	g.gf.P("	ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"proto_method\", \""+method.name+"\")")
+	g.genSetProtoContextValues(serviceName, method.name)
 	g.gf.P("	handler := func(", g.serverInput, ") (", g.serverOutput, ") {")
 	g.gf.P("		return h.", method.name, "(ctx, input)")
 	g.gf.P("	}")
@@ -191,16 +203,11 @@ func (g *generator) genMarshalServerResponse(source string) {
 		g.gf.P("	respJson, _ := ", g.marshaller.Ident("Marshal"), "(", source, ")")
 	}
 
-	switch *g.cfg.Library {
-	case libraryFastHTTP:
-		g.gf.P("	_, _ = fastctx.Write(respJson)")
-	case libraryNetHTTP:
-		g.gf.P("	_, _ = w.Write(respJson)")
-	case libraryGin:
+	if *g.cfg.Library == libraryGin {
 		g.gf.P("	ginctx.Data(ginctx.Writer.Status(), \"application/json\", respJson)")
-	case libraryFiber:
-		g.gf.P("	_, _ = fiberctx.Write(respJson)")
+		return
 	}
+	g.genWriteResponseBody("respJson")
 }
 
 // getBuildMethodInputName creates name for function that builds method request
@@ -592,6 +599,158 @@ func (g *generator) genMultipartServerRequestField(methodField field) {
 	g.gf.P("	if err != nil {")
 	g.gf.P("		return nil, fmt.Errorf(\"failed to read file: ", methodField.protoName, ": %w\", err)")
 	g.gf.P("	}")
+	g.gf.P("}")
+}
+
+// genServerStreamMethodDeclaration generates route handler that streams
+// server-side responses as Server-Sent Events.
+func (g *generator) genServerStreamMethodDeclaration(serviceName string, method methodParams) (err error) {
+	g.gf.P(method.comment)
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("r.HandleFunc( \"", method.httpMethodName, " ", method.uri.protoURI, "\", func(w ", g.lib.Ident("ResponseWriter"), ", r *", g.lib.Ident("Request"), ") { ")
+		g.genSetSSEHeaders()
+		g.gf.P("	flusher, ok := w.(", g.lib.Ident("Flusher"), ")")
+		g.gf.P("	if !ok {")
+		g.gf.P("		", g.lib.Ident("Error"), "(w, \"Streaming unsupported\", ", g.lib.Ident("StatusInternalServerError"), ")")
+		g.gf.P("		return")
+		g.gf.P("	}")
+		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(r)")
+		g.gf.P("	if err != nil {")
+		g.gf.P("		w.WriteHeader(", g.lib.Ident("StatusBadRequest"), ")")
+		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
+		g.genWriteResponseBody("respJson")
+		g.gf.P("		return")
+		g.gf.P("	}")
+		g.gf.P("	ctx := r.Context()")
+		g.gf.P("	ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"writer\", w)")
+		g.gf.P("	ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"request\", r)")
+		g.genSetProtoContextValues(serviceName, method.name)
+		g.genSSESendFunc(method, "w", "flusher.Flush()")
+		g.gf.P("})")
+	case libraryFastHTTP:
+		g.gf.P("r.", method.httpMethodName, "( \"", method.uri.protoURI, "\", func(fastctx *", fasthttpPackage.Ident("RequestCtx"), ") { ")
+		g.genSetSSEHeaders()
+		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(fastctx)")
+		g.gf.P("	if err != nil {")
+		g.gf.P("		fastctx.SetStatusCode(", fasthttpPackage.Ident("StatusBadRequest"), ")")
+		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
+		g.genWriteResponseBody("respJson")
+		g.gf.P("		return")
+		g.gf.P("	}")
+		g.gf.P("	ctx := ", contextPackage.Ident("WithValue"), "(fastctx, \"request\", fastctx)")
+		g.genSetProtoContextValues(serviceName, method.name)
+		g.gf.P("	fastctx.SetBodyStreamWriter(func(w *", bufioPackage.Ident("Writer"), ") {")
+		g.genSSESendFunc(method, "w", "_ = w.Flush()")
+		g.gf.P("	})")
+		g.gf.P("})")
+	case libraryGin:
+		g.gf.P("r.", method.httpMethodName, "( \"", method.uri.protoURI, "\", func(ginctx *", ginPackage.Ident("Context"), ") { ")
+		g.genSetSSEHeaders()
+		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(ginctx)")
+		g.gf.P("	if err != nil {")
+		g.gf.P("		ginctx.Status(400)")
+		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
+		g.genWriteResponseBody("respJson")
+		g.gf.P("		return")
+		g.gf.P("	}")
+		g.gf.P("	ctx := ", contextPackage.Ident("WithValue"), "(ginctx, \"request\", ginctx)")
+		g.genSetProtoContextValues(serviceName, method.name)
+		g.genSSESendFunc(method, "ginctx.Writer", "ginctx.Writer.Flush()")
+		g.gf.P("})")
+	case libraryFiber:
+		g.gf.P("r.", titleString(method.httpMethodName), "( \"", method.uri.protoURI, "\", func(fiberctx ", fiberPackage.Ident("Ctx"), ") { ")
+		g.genSetSSEHeaders()
+		g.gf.P("	input, err := build", g.getBuildMethodInputName(serviceName, method), "(fiberctx)")
+		g.gf.P("	if err != nil {")
+		g.gf.P("		fiberctx.Status(400)")
+		g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
+		g.genWriteResponseBody("respJson")
+		g.gf.P("		return")
+		g.gf.P("	}")
+		g.gf.P("	ctx := ", contextPackage.Ident("WithValue"), "(fiberctx.Context(), \"request\", fiberctx)")
+		g.genSetProtoContextValues(serviceName, method.name)
+		g.gf.P("	fiberctx.Abandon()") // prevent connection reset before request is handled
+		g.gf.P("	fiberctx.RequestCtx().SetBodyStreamWriter(func(w *", bufioPackage.Ident("Writer"), ") {")
+		g.genSSESendFunc(method, "w", "_ = w.Flush()")
+		g.gf.P("	fiberctx.ForceRelease()") // reset connection
+		g.gf.P("	})")
+		g.gf.P("})")
+	}
+	g.gf.P()
+	return nil
+}
+
+// genSetSSEHeaders emits the standard Server-Sent Events response headers.
+func (g *generator) genSetSSEHeaders() {
+	g.genSetResponseHeader("Content-Type", "text/event-stream")
+	g.genSetResponseHeader("Cache-Control", "no-cache")
+	g.genSetResponseHeader("Connection", "keep-alive")
+}
+
+// genSetResponseHeader emits a library-specific response header write.
+func (g *generator) genSetResponseHeader(key, value string) {
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	w.Header().Set(\"", key, "\", \"", value, "\")")
+	case libraryFastHTTP:
+		g.gf.P("	fastctx.Response.Header.Set(\"", key, "\", \"", value, "\")")
+	case libraryGin:
+		g.gf.P("	ginctx.Header(\"", key, "\", \"", value, "\")")
+	case libraryFiber:
+		g.gf.P("	fiberctx.Set(\"", key, "\", \"", value, "\")")
+	}
+}
+
+// genSetProtoContextValues emits the two context.WithValue calls that expose
+// the proto service and method names to downstream handlers/middlewares.
+func (g *generator) genSetProtoContextValues(serviceName, methodName string) {
+	g.gf.P("	ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"proto_service\", \"", serviceName, "\")")
+	g.gf.P("	ctx = ", contextPackage.Ident("WithValue"), "(ctx, \"proto_method\", \"", methodName, "\")")
+}
+
+// genWriteResponseBody emits a library-specific write of a []byte body to the
+// response. `data` is the Go expression evaluating to the bytes to send.
+//
+//nolint:unparam // save variable for future changes
+func (g *generator) genWriteResponseBody(data string) {
+	switch *g.cfg.Library {
+	case libraryNetHTTP:
+		g.gf.P("	_, _ = w.Write(", data, ")")
+	case libraryFastHTTP:
+		g.gf.P("	_, _ = fastctx.Write(", data, ")")
+	case libraryGin:
+		g.gf.P("	_, _ = ginctx.Writer.Write(", data, ")")
+	case libraryFiber:
+		g.gf.P("	_, _ = fiberctx.Write(", data, ")")
+	}
+}
+
+// genSSESendFunc emits a `send` closure that marshals a message and writes
+// it as an SSE `data:` frame to the given writer.
+func (g *generator) genSSESendFunc(method methodParams, writer, flushStmt string) {
+	g.gf.P("var data []byte")
+	g.gf.P("send := func(msg *", method.outputMsgName, ") error {")
+	g.gf.P("	if data, err = ", g.marshaller.Ident("Marshal"), "(msg); err != nil {")
+	g.gf.P("		return err")
+	g.gf.P("	}")
+	g.gf.P("	if _, err = ", fmtPackage.Ident("Fprintf"), "(", writer, ", \"data: %s\\n\\n\", data); err != nil {")
+	g.gf.P("		return err")
+	g.gf.P("	}")
+	g.gf.P("	", flushStmt)
+	g.gf.P("	return nil")
+	g.gf.P("}")
+	g.gf.P("handler := func(ctx context.Context, req any) (resp any, err error) {")
+	g.gf.P("	return nil, h.", method.name, "(ctx, input, send)")
+	g.gf.P("}")
+	g.gf.P("if middleware == nil {")
+	g.gf.P("	_, err = handler(ctx, input)")
+	g.gf.P("} else {")
+	g.gf.P("	_, err = middleware(ctx, input, handler)")
+	g.gf.P("}")
+	g.gf.P("if err != nil {")
+	g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
+	g.genWriteResponseBody("respJson")
 	g.gf.P("}")
 }
 
