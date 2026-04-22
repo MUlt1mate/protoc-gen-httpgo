@@ -749,8 +749,9 @@ func (g *generator) genSSESendFunc(method methodParams, writer, flushStmt string
 	g.gf.P("	_, err = middleware(ctx, input, handler)")
 	g.gf.P("}")
 	g.gf.P("if err != nil {")
-	g.gf.P("		respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
-	g.genWriteResponseBody("respJson")
+	g.gf.P("	respJson, _ := ", jsonPackage.Ident("Marshal"), "(struct{ Error string }{Error: err.Error()})")
+	g.gf.P("	_, _ = ", fmtPackage.Ident("Fprintf"), "(", writer, ", \"event: error\\ndata: %s\\n\\n\", respJson)")
+	g.gf.P("	", flushStmt)
 	g.gf.P("}")
 }
 

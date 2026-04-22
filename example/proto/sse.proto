@@ -10,6 +10,7 @@ service StreamingService {
   rpc Streaming(common.InputMsgName) returns (stream common.OutputMsgName){
     option (google.api.http) = {
       post: "/v1/sse"
+      body: "*"
     };
   }
 };

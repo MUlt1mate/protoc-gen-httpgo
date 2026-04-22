@@ -66,7 +66,8 @@ func RegisterStreamingServiceHTTPGoServer(
 		}
 		if err != nil {
 			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-			_, _ = w.Write(respJson)
+			_, _ = fmt.Fprintf(w, "event: error\ndata: %s\n\n", respJson)
+			flusher.Flush()
 		}
 	})
 

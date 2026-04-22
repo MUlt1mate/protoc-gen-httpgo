@@ -3,16 +3,14 @@
 package proto
 
 import (
-	"bufio"
-	"context"
-	"encoding/json"
-	"fmt"
-	"net/url"
-	"strconv"
-
+	bufio "bufio"
+	context "context"
+	json "encoding/json"
+	fmt "fmt"
+	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 	v3 "github.com/gofiber/fiber/v3"
-
-	"github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
+	url "net/url"
+	strconv "strconv"
 )
 
 type StreamingServiceHTTPGoService interface {
@@ -64,7 +62,8 @@ func RegisterStreamingServiceHTTPGoServer(
 			}
 			if err != nil {
 				respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
-				_, _ = fiberctx.Write(respJson)
+				_, _ = fmt.Fprintf(w, "event: error\ndata: %s\n\n", respJson)
+				_ = w.Flush()
 			}
 			fiberctx.ForceRelease()
 		})
