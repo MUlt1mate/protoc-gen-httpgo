@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
@@ -202,4 +203,17 @@ func (h *Handler) GetMessageV4(ctx context.Context, request *proto.GetMessageReq
 
 func (h *Handler) UpdateMessageV3(ctx context.Context, request *proto.UpdateMessageRequest) (*proto.UpdateMessageRequest, error) {
 	return request, nil
+}
+
+func (h *Handler) Streaming(ctx context.Context, request *proto.InputMsgName, send func(*proto.OutputMsgName) error) error {
+	for i := int64(0); i < request.Int64Argument; i++ {
+		time.Sleep(time.Millisecond * 100)
+		if err := send(&proto.OutputMsgName{
+			IntValue:    i,
+			StringValue: request.StringArgument,
+		}); err != nil {
+			return err
+		}
+	}
+	return nil
 }

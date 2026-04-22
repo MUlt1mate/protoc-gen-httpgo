@@ -56,7 +56,7 @@ func RegisterServiceNameHTTPGoServer(
 	var middleware = chainServerMiddlewaresExample(middlewares)
 
 	r.POST("/v1/RPCName/{stringArgument}/{int64Argument}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameRPCNameInputMsgName(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -81,7 +81,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/test/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTypesTestAllTypesMsg(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -106,7 +106,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -131,7 +131,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.GET("/v2/text/{String}/{RepeatedString}/{Bytes}/{RepeatedBytes}/{Enum}/{RepeatedEnum}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -156,7 +156,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/test/commonTypes", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCommonTypesAny(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -182,7 +182,7 @@ func RegisterServiceNameHTTPGoServer(
 
 	// same types but different query, we need different query builder function
 	r.POST("/v1/sameInputAndOutput/{stringArgument}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -207,7 +207,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/test/optional", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameOptionalOptionalField(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -232,7 +232,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.GET("/v1/test/get", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMethodInputMsgName(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -257,7 +257,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.GET("/v1/repeated/{BoolValue}/{EnumValue}/{Int32Value}/{Sint32Value}/{Uint32Value}/{Int64Value}/{Sint64Value}/{Uint64Value}/{Sfixed32Value}/{Fixed32Value}/{FloatValue}/{Sfixed64Value}/{Fixed64Value}/{DoubleValue}/{StringValue}/{BytesValue}/{StringValueQuery}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCheckRepeatedPathRepeatedCheck(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -282,7 +282,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.GET("/v2/repeated/{StringValue}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -307,7 +307,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v3/repeated/{StringValue}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCheckRepeatedPostRepeatedCheck(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -332,7 +332,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.GET("/v1/emptyGet", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameEmptyGetEmpty(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -357,7 +357,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/emptyPost", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameEmptyPostEmpty(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -382,7 +382,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/onlyStruct", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameOnlyStructInGetOnlyStruct(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -407,7 +407,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/multipart", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameMultipartFormMultipartFormRequest(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -432,7 +432,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/multipartall", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -457,7 +457,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.GET("/v1/max/{Int32Value}/{Uint32Value}/{Int64Value}/{Uint64Value}/{FloatValue}/{DoubleValue}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -482,7 +482,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.GET("/v1/maxquery", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -509,7 +509,7 @@ func RegisterServiceNameHTTPGoServer(
 	// http rule checks
 	// v1/{name=messages/*}
 	r.GET("/v1/messages/{name}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageGetMessageRequest(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -534,7 +534,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.GET("/v2/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageV2GetMessageRequestV2(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -559,7 +559,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.PATCH("/v1/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameUpdateMessageUpdateMessageRequest(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -584,7 +584,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.PATCH("/v2/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameUpdateMessageV2MessageV2(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -609,7 +609,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.GET("/v3/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -634,7 +634,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.GET("/v3/users/{user_id}/messages/{message_id}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -659,7 +659,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.GET("/v4/messages/base/{message_id:*}", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageV4GetMessageRequestV3(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -684,7 +684,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.POST("/v1/array", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameTopLevelArrayArray(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -714,7 +714,7 @@ func RegisterServiceNameHTTPGoServer(
 	})
 
 	r.PATCH("/v3/messages", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)

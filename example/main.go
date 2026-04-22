@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/fasthttp/router"
@@ -45,7 +50,7 @@ var (
 )
 
 func main() {
-	log.SetFlags(log.Lshortfile)
+	log.SetFlags(log.Lshortfile + log.Ltime + log.Lmicroseconds)
 	var (
 		err error
 		ctx = context.TODO()
@@ -57,6 +62,7 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// wait to init
 	time.Sleep(time.Millisecond * 100)
 
 	if err = clientRunRequests(ctx, fastClient, "fasthttp"); err != nil {
@@ -76,6 +82,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	streamHosts := map[string]string{
+		"fasthttp": fasthttpAddr,
+		"nethttp":  nethttpAddr,
+		"gin":      ginAddr,
+		"fiber":    fiberAddr,
+	}
+	for library, host := range streamHosts {
+		if err = clientRunStreaming(ctx, "http://"+host); err != nil {
+			log.Fatalf("%s SSE request failed: %v", library, err)
+		}
+	}
+
 	// f := make(chan bool)
 	// <-f
 }
@@ -87,11 +105,13 @@ func serverInit(ctx context.Context) (err error) {
 		tracer = otel.Tracer("example")
 		reg    = prometheus.DefaultRegisterer
 
-		handler        fastproto.ServiceNameHTTPGoService = &implementation.Handler{}
-		fasthttpRouter                                    = router.New()
-		rHttp                                             = http.NewServeMux()
-		ginRouter                                         = gin.New()
-		fiberApp                                          = v3.New()
+		_              fastproto.ServiceNameHTTPGoService      = &implementation.Handler{}
+		_              fastproto.StreamingServiceHTTPGoService = &implementation.Handler{}
+		handler                                                = &implementation.Handler{}
+		fasthttpRouter                                         = router.New()
+		rHttp                                                  = http.NewServeMux()
+		ginRouter                                              = gin.New()
+		fiberApp                                               = v3.New()
 	)
 	if err = fastproto.RegisterServiceNameHTTPGoServer(ctx, fasthttpRouter, handler, fasthttpmdlwr.GetServerMiddlewares(logger, tracer, reg)); err != nil {
 		return err
@@ -108,6 +128,19 @@ func serverInit(ctx context.Context) (err error) {
 		return err
 	}
 	if err = fiberproto.RegisterServiceNameHTTPGoServer(ctx, fiberApp, handler, fibermdlwr.GetServerMiddlewares(logger, tracer, reg)); err != nil {
+		return err
+	}
+
+	if err = fastproto.RegisterStreamingServiceHTTPGoServer(ctx, fasthttpRouter, handler, fasthttpmdlwr.GetSSEServerMiddlewares(logger, tracer, reg)); err != nil {
+		return err
+	}
+	if err = httpproto.RegisterStreamingServiceHTTPGoServer(ctx, rHttp, handler, nethttpmdlwr.GetSSEServerMiddlewares(logger, tracer, reg)); err != nil {
+		return err
+	}
+	if err = ginproto.RegisterStreamingServiceHTTPGoServer(ctx, ginRouter, handler, ginmdlwr.GetSSEServerMiddlewares(logger, tracer, reg)); err != nil {
+		return err
+	}
+	if err = fiberproto.RegisterStreamingServiceHTTPGoServer(ctx, fiberApp, handler, fibermdlwr.GetSSEServerMiddlewares(logger, tracer, reg)); err != nil {
 		return err
 	}
 
@@ -285,4 +318,64 @@ func clientRunRequests(ctx context.Context, client httpproto.ServiceNameHTTPGoSe
 	}
 
 	return nil
+}
+
+func clientRunStreaming(ctx context.Context, host string) error {
+	req := &common.InputMsgName{Int64Argument: 3, StringArgument: "tick"}
+	body, err := json.Marshal(req)
+	if err != nil {
+		return fmt.Errorf("marshal request: %w", err)
+	}
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, host+"/v1/sse", bytes.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("build request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "text/event-stream")
+
+	resp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		return fmt.Errorf("do request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if got := resp.Header.Get("Content-Type"); !strings.HasPrefix(got, "text/event-stream") {
+		return fmt.Errorf("expected Content-Type text/event-stream, got %q", got)
+	}
+
+	want := []*common.OutputMsgName{
+		{IntValue: 0, StringValue: "tick"},
+		{IntValue: 1, StringValue: "tick"},
+		{IntValue: 2, StringValue: "tick"},
+	}
+	got, err := parseSSE(resp.Body, len(want))
+	if err != nil {
+		return fmt.Errorf("read SSE: %w", err)
+	}
+	if diff := cmp.Diff(want, got, cmpopts.IgnoreUnexported(common.OutputMsgName{})); diff != "" {
+		return fmt.Errorf("stream mismatch: %s", diff)
+	}
+	return nil
+}
+
+func parseSSE(r io.Reader, expected int) ([]*common.OutputMsgName, error) {
+	br := bufio.NewReader(r)
+	msgs := make([]*common.OutputMsgName, 0, expected)
+	for len(msgs) < expected {
+		line, err := br.ReadString('\n')
+		if err != nil {
+			return msgs, err
+		}
+		line = strings.TrimRight(line, "\r\n")
+		payload, ok := strings.CutPrefix(line, "data: ")
+		if !ok {
+			continue
+		}
+		msg := &common.OutputMsgName{}
+		if err = json.Unmarshal([]byte(payload), msg); err != nil {
+			return msgs, fmt.Errorf("unmarshal frame %q: %w", payload, err)
+		}
+		msgs = append(msgs, msg)
+	}
+	return msgs, nil
 }

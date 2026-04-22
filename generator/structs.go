@@ -23,6 +23,8 @@ const (
 	libraryFiber             = "fiber"
 	contentTypeJSONApp       = "application/json"
 	contentTypeMultipart     = "multipart/form-data"
+	streamNone               = "none"
+	streamSSE                = "sse"
 )
 
 type (
@@ -46,18 +48,19 @@ type (
 	}
 
 	methodParams struct {
-		rule           *annotations.HttpRule
-		inputFields    map[string]field
-		outputFields   map[string]field
-		inputMsgName   protogen.GoIdent
-		outputMsgName  protogen.GoIdent
-		name           string
-		httpMethodName string
-		uri            methodURI
-		comment        string
-		inputFieldList []string // slice for constant sorting
-		hasBody        bool
-		withFiles      bool
+		rule              *annotations.HttpRule
+		inputFields       map[string]field
+		outputFields      map[string]field
+		inputMsgName      protogen.GoIdent
+		outputMsgName     protogen.GoIdent
+		name              string
+		httpMethodName    string
+		uri               methodURI
+		comment           string
+		inputFieldList    []string // slice for constant sorting
+		hasBody           bool
+		withFiles         bool
+		isServerStreaming bool
 	}
 
 	methodURI struct {
@@ -91,6 +94,7 @@ type (
 		AutoURI            *bool
 		BodylessMethodsStr *string
 		Library            *string
+		Stream             *string
 	}
 )
 
@@ -133,6 +137,14 @@ func newGenerator(
 	default:
 		return g, errors.New("unsupported library type: " + *cfg.Library)
 	}
+	if cfg.Stream == nil {
+		def := streamNone
+		cfg.Stream = &def
+		g.cfg.Stream = &def
+	}
+	if *cfg.Stream == streamSSE && *cfg.Only != onlyServer {
+		return g, errors.New("stream=sse requires only=server")
+	}
 	switch *cfg.Marshaller {
 	case marshallerProtoJSON:
 		g.marshaller = protojsonPackage
@@ -173,8 +185,11 @@ func (g *generator) fillServices(file *protogen.File) {
 	for _, srv := range file.Services {
 		var methods []methodParams
 		for _, protoMethod := range srv.Methods {
-			// not supported
-			if protoMethod.Desc.IsStreamingClient() || protoMethod.Desc.IsStreamingServer() {
+			if protoMethod.Desc.IsStreamingClient() {
+				continue
+			}
+			isServerStreaming := protoMethod.Desc.IsStreamingServer()
+			if isServerStreaming && *g.cfg.Stream != streamSSE {
 				continue
 			}
 			method, err := g.getRuleMethodAndURI(protoMethod, srv.GoName)
@@ -184,6 +199,7 @@ func (g *generator) fillServices(file *protogen.File) {
 			}
 
 			fillMethod(&method, protoMethod)
+			method.isServerStreaming = isServerStreaming
 			methods = append(methods, method)
 		}
 		if len(methods) != 0 {

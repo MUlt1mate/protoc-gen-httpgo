@@ -77,10 +77,14 @@ func TimeoutServerMiddleware() ServerMiddleware {
 
 		select {
 		case <-ctx.Done():
-			if fastCtx, ok := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx); ok && fastCtx != nil {
-				fastCtx.SetStatusCode(fasthttp.StatusGatewayTimeout)
+			if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+				if fastCtx, ok := ctx.Value(ContextFastHTTPCtx).(*fasthttp.RequestCtx); ok && fastCtx != nil {
+					fastCtx.SetStatusCode(fasthttp.StatusGatewayTimeout)
+				}
+				return respError{Error: "request timeout"}, nil
 			}
-			return respError{Error: "request timeout"}, nil
+			// request is canceled by client
+			return nil, ctx.Err()
 		case res := <-done:
 			return res.resp, res.err
 		}

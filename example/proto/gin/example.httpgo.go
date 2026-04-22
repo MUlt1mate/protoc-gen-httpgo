@@ -4,6 +4,7 @@ package proto
 
 import (
 	context "context"
+	json "encoding/json"
 	fmt "fmt"
 	common "github.com/MUlt1mate/protoc-gen-httpgo/example/proto/common"
 	gin "github.com/gin-gonic/gin"
@@ -55,7 +56,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameRPCNameInputMsgName(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -77,7 +80,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTypesTestAllTypesMsg(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -99,7 +104,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTextTypesPostAllTextTypesMsg(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -121,7 +128,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTextTypesGetAllTextTypesMsg(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -143,7 +152,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCommonTypesAny(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -166,7 +177,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameSameInputAndOutputInputMsgName(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -188,7 +201,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameOptionalOptionalField(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -210,7 +225,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMethodInputMsgName(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -232,7 +249,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCheckRepeatedPathRepeatedCheck(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -254,7 +273,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCheckRepeatedQueryRepeatedCheck(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -276,7 +297,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameCheckRepeatedPostRepeatedCheck(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -298,7 +321,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameEmptyGetEmpty(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -320,7 +345,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameEmptyPostEmpty(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -342,7 +369,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameOnlyStructInGetOnlyStruct(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -364,7 +393,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameMultipartFormMultipartFormRequest(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -386,7 +417,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameMultipartFormAllTypesMultipartFormAllTypes(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -408,7 +441,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTypesMaxTestAllNumberTypesMsg(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -430,7 +465,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameAllTypesMaxQueryTestAllNumberTypesMsg(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -454,7 +491,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageGetMessageRequest(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -476,7 +515,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageV2GetMessageRequestV2(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -498,7 +539,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameUpdateMessageUpdateMessageRequest(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -520,7 +563,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameUpdateMessageV2MessageV2(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -542,7 +587,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -564,7 +611,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageV3GetMessageRequestV3(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -586,7 +635,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameGetMessageV4GetMessageRequestV3(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -608,7 +659,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameTopLevelArrayArray(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)
@@ -634,7 +687,9 @@ func RegisterServiceNameHTTPGoServer(
 		ginctx.Header("Content-Type", "application/json")
 		input, err := buildExampleServiceNameUpdateMessageV3UpdateMessageRequest(ginctx)
 		if err != nil {
-			ginctx.JSON(400, struct{ Error string }{Error: err.Error()})
+			ginctx.Status(400)
+			respJson, _ := json.Marshal(struct{ Error string }{Error: err.Error()})
+			_, _ = ginctx.Writer.Write(respJson)
 			return
 		}
 		ctx := context.WithValue(ginctx, "request", ginctx)

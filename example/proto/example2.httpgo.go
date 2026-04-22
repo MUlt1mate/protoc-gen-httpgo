@@ -28,7 +28,7 @@ func RegisterServiceName2HTTPGoServer(
 	var middleware = chainServerMiddlewaresExample2(middlewares)
 
 	r.POST("/v1/test/imports", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExample2ServiceName2ImportsSomeCustomMsg(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)
@@ -105,7 +105,7 @@ func RegisterSecondServiceName2HTTPGoServer(
 	var middleware = chainServerMiddlewaresExample2(middlewares)
 
 	r.GET("/v1/test/imports", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildExample2SecondServiceName2ImportsSomeCustomMsg(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)

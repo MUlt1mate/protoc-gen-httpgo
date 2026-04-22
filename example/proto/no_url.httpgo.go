@@ -24,7 +24,7 @@ func RegisterNoURLHTTPGoServer(
 	var middleware = chainServerMiddlewaresNourl(middlewares)
 
 	r.POST("/NoURL/MethodWithoutURLAnnotation", func(fastctx *fasthttp.RequestCtx) {
-		fastctx.Response.Header.SetContentType("application/json")
+		fastctx.Response.Header.Set("Content-Type", "application/json")
 		input, err := buildNourlNoURLMethodWithoutURLAnnotationEmpty(fastctx)
 		if err != nil {
 			fastctx.SetStatusCode(fasthttp.StatusBadRequest)

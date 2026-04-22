@@ -13,6 +13,25 @@ Choose httpgo if you want to:
 - **Dual-Stack Support**: Use HTTP and gRPC simultaneously with minimal performance impact.
 - **Protobuf-First Design**: Define your API in Protobuf while leveraging the full flexibility of the HTTP ecosystem.
 
+## Table of Contents
+
+- [Performance](#performance)
+- [Features](#features)
+- [Usage](#usage)
+    - [Installation](#installation)
+    - [Definition](#definition)
+    - [Generation](#generation)
+        - [Parameters](#parameters)
+    - [Implementation](#implementation)
+        - [Server](#server)
+        - [Client](#client)
+        - [Middlewares](#middlewares)
+        - [Error handling](#error-handling)
+        - [Conventions](#conventions)
+        - [Files](#files)
+    - [Server-side streaming (SSE)](#server-side-streaming-sse)
+- [TODO](#todo)
+
 ## Performance
 
 Check [benchmark](./benchmark/README.md)
@@ -39,6 +58,7 @@ Check [benchmark](./benchmark/README.md)
 - Supports a wide range of data types in path parameters
 - Supports middlewares
 - Supports multipart form with files
+- Supports server-side streaming RPCs over Server-Sent Events (SSE)
 - Zero additional dependencies in generated code
 
 ## Usage
@@ -86,6 +106,7 @@ protoc -I=. --httpgo_out=paths=source_relative:. example/proto/example.proto
 | autoURI         | false, true                   | Create method URI if annotation is missing.                                                                      |
 | bodylessMethods | GET;DELETE                    | List of semicolon separated http methods that should not have a body.                                            |
 | library         | gin, fiber, fasthttp, nethttp | Server library                                                                                                   |
+| stream          | none, sse                     | Wire format for server-side streaming RPCs. `sse` emits Server-Sent Events handlers; requires `only=server`.     |
 
 Example of parameters usage:
 
@@ -213,6 +234,22 @@ func LoggerClientMiddleware(
 
 See [example](https://github.com/MUlt1mate/protoc-gen-httpgo/tree/main/example) for more details.
 
+#### Error handling
+
+The generated server code does not inspect the `error` returned by your handler: it marshals whatever value the handler
+returned and writes it to the response body. If you want a non-nil error to produce an error response, handle it in a
+middleware — check `err` after calling `next`, and write the desired payload (for example by replacing `resp` with an
+error struct, or setting the response status code directly via the transport-specific context stored on `ctx`).
+
+The example implementations in `ResponseServerMiddleware` does exactly this: after calling `next`, if `err` is
+non-nil it replaces `resp` with an error struct (`respError{Error: err.Error()}`) and clears `err` so the generated
+code marshals the error payload into the response body.  
+Pair it with `HeadersServerMiddleware` if you also need to map errors to HTTP status codes.
+
+For SSE handlers the response body is the event stream itself, so there is nothing for a middleware to overwrite after
+the stream completes. Middlewares still see the handler's `err` after `next` returns and can use it for logging,
+metrics, or propagating cancellation — but they cannot turn it into a structured error body.
+
 #### Conventions
 
 Golang protobuf generator can produce fields with different case:
@@ -262,9 +299,45 @@ message FileMsg {
 }
 ```
 
+### Server-side streaming (SSE)
+
+Mark an RPC as server-streaming in your proto and generate with `stream=sse`:
+
+```protobuf
+service TickerService {
+  rpc Ticks (TickRequest) returns (stream Tick) {
+    option (google.api.http) = {
+      get: "/v1/ticks"
+    };
+  }
+}
+```
+
+```bash
+protoc -I=. --httpgo_out=paths=source_relative,only=server,stream=sse,library=nethttp:. ticker.proto
+```
+
+Streaming methods appear on the generated service interface with a callback instead of a single return value:
+
+```go
+Ticks(context.Context, *TickRequest, func (*Tick) error) error
+```
+
+The generated handler sets the SSE response headers:
+
+- `Content-Type: text/event-stream`
+- `Cache-Control: no-cache`
+- `Connection: keep-alive`
+
+and writes each message as a `data: <json>\n\n` frame and flush.   
+Call `send` once per message from your implementation; return when the stream is complete or the client disconnects (
+observable via the passed `context`).
+
+Client-streaming and bidirectional-streaming RPCs are still skipped.
+
 ## TODO
 
 - implement more web servers
 - buf
-- streaming
+- WS streaming
 - optionally ignore unknown query parameters
